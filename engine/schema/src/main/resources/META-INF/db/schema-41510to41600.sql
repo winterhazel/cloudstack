@@ -29,6 +29,7 @@ ALTER TABLE `cloud`.`service_offering` ADD COLUMN `created` datetime COMMENT 'da
 ALTER TABLE `cloud`.`service_offering` ADD COLUMN `removed` datetime COMMENT 'date when service offering was removed';
 ALTER TABLE `cloud`.`service_offering` ADD COLUMN `state` CHAR(40) NOT NULL DEFAULT 'Active' COMMENT 'state of service offering either Active or Inactive';
 ALTER TABLE `cloud`.`service_offering` ADD COLUMN `disk_offering_id` bigint unsigned;
+ALTER TABLE `cloud`.`service_offering` ADD COLUMN `system_use` tinyint(1) unsigned NOT NULL DEFAULT 0 COMMENT 'is this offering for system used only';
 ALTER TABLE `cloud`.`service_offering` ADD CONSTRAINT `fk_service_offering__disk_offering_id` FOREIGN KEY `fk_service_offering__disk_offering_id`(`disk_offering_id`) REFERENCES `disk_offering`(`id`) ON DELETE CASCADE;
 ALTER TABLE `cloud`.`service_offering` ADD COLUMN `disk_offering_strictness` tinyint(1) unsigned NOT NULL DEFAULT 0  COMMENT 'strict binding with disk offering or not';
 
