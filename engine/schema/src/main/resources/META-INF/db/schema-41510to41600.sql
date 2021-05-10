@@ -39,6 +39,8 @@ ALTER TABLE `cloud`.`disk_offering` DROP COLUMN `type`;
 
 ALTER TABLE `cloud`.`vm_instance` DROP COLUMN `disk_offering_id`;
 
+UPDATE `cloud`.`service_offering` so, `cloud`.`disk_offering` do SET so.`name` = do.`name`, so.`display_text` = do.`display_text` WHERE so.`id` = do.`id`;
+
 DROP VIEW IF EXISTS `cloud`.`user_vm_view`;
 CREATE
 VIEW `user_vm_view` AS
@@ -287,15 +289,15 @@ DROP VIEW IF EXISTS `cloud`.`service_offering_view`;
 CREATE VIEW `cloud`.`service_offering_view` AS
     SELECT
         `service_offering`.`id` AS `id`,
-        `disk_offering`.`uuid` AS `uuid`,
-        `disk_offering`.`name` AS `name`,
-        `disk_offering`.`display_text` AS `display_text`,
+        `service_offering`.`uuid` AS `uuid`,
+        `service_offering`.`name` AS `name`,
+        `service_offering`.`display_text` AS `display_text`,
         `disk_offering`.`provisioning_type` AS `provisioning_type`,
-        `disk_offering`.`created` AS `created`,
+        `service_offering`.`created` AS `created`,
         `disk_offering`.`tags` AS `tags`,
-        `disk_offering`.`removed` AS `removed`,
+        `service_offering`.`removed` AS `removed`,
         `disk_offering`.`use_local_storage` AS `use_local_storage`,
-        `disk_offering`.`system_use` AS `system_use`,
+        `service_offering`.`system_use` AS `system_use`,
         `disk_offering`.`customized_iops` AS `customized_iops`,
         `disk_offering`.`min_iops` AS `min_iops`,
         `disk_offering`.`max_iops` AS `max_iops`,
@@ -342,7 +344,7 @@ CREATE VIEW `cloud`.`service_offering_view` AS
     FROM
         `cloud`.`service_offering`
             INNER JOIN
-        `cloud`.`disk_offering_view` AS `disk_offering` ON service_offering.id = disk_offering.id
+        `cloud`.`disk_offering_view` AS `disk_offering` ON service_offering.disk_offering_id = disk_offering.id
             LEFT JOIN
         `cloud`.`service_offering_details` AS `domain_details` ON `domain_details`.`service_offering_id` = `disk_offering`.`id` AND `domain_details`.`name`='domainid'
             LEFT JOIN
