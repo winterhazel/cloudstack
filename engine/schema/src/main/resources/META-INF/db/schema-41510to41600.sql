@@ -33,7 +33,7 @@ ALTER TABLE `cloud`.`service_offering` ADD COLUMN `system_use` tinyint(1) unsign
 ALTER TABLE `cloud`.`service_offering` ADD CONSTRAINT `fk_service_offering__disk_offering_id` FOREIGN KEY `fk_service_offering__disk_offering_id`(`disk_offering_id`) REFERENCES `disk_offering`(`id`) ON DELETE CASCADE;
 ALTER TABLE `cloud`.`service_offering` ADD COLUMN `disk_offering_strictness` tinyint(1) unsigned NOT NULL DEFAULT 0  COMMENT 'strict binding with disk offering or not';
 
-ALTER TABLE `cloud`.`disk_offering` ADD COLUMN `disk_size_strictness` tinyint(1) unsigned NOT NULL DEFAULT 0  COMMENT 'allow resize disk when not stri';
+ALTER TABLE `cloud`.`disk_offering` ADD COLUMN `disk_size_strictness` tinyint(1) unsigned NOT NULL DEFAULT 0  COMMENT 'To allow or disallow the resize operation on the disks created from this offering';
 ALTER TABLE `cloud`.`disk_offering` ADD COLUMN `compute_only` tinyint(1) unsigned NOT NULL DEFAULT 0  COMMENT 'when set to 1, disk offering has one to one binding with service offering';
 ALTER TABLE `cloud`.`disk_offering` DROP COLUMN `type`;
 
