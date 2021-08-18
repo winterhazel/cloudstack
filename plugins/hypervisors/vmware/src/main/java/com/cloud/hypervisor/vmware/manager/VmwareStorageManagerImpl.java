@@ -76,6 +76,7 @@ import com.cloud.hypervisor.vmware.mo.VirtualMachineMO;
 import com.cloud.hypervisor.vmware.mo.VmwareHypervisorHost;
 import com.cloud.hypervisor.vmware.util.VmwareContext;
 import com.cloud.hypervisor.vmware.util.VmwareHelper;
+import com.cloud.serializer.GsonHelper;
 import com.cloud.storage.JavaStorageLayer;
 import com.cloud.storage.Storage.ImageFormat;
 import com.cloud.storage.StorageLayer;
@@ -89,10 +90,12 @@ import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.script.Script;
 import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.snapshot.VMSnapshot;
+import com.google.gson.Gson;
 
 public class VmwareStorageManagerImpl implements VmwareStorageManager {
 
     private String _nfsVersion;
+    private final Gson _gson = GsonHelper.getGsonLogger();
 
 
     @Override
@@ -302,6 +305,8 @@ public class VmwareStorageManagerImpl implements VmwareStorageManager {
     @Override
     @Deprecated
     public Answer execute(VmwareHostService hostService, BackupSnapshotCommand cmd) {
+        s_logger.debug(String.format("Received BackupSnapshotCommand: [%s].", _gson.toJson(cmd)));
+
         Long accountId = cmd.getAccountId();
         Long volumeId = cmd.getVolumeId();
         String secondaryStorageUrl = cmd.getSecondaryStorageUrl();
@@ -906,7 +911,6 @@ public class VmwareStorageManagerImpl implements VmwareStorageManager {
                 Script command = new Script(false, "mkdir", _timeout, s_logger);
                 command.add("-p");
                 command.add(exportPath);
-
                 String result = command.execute();
                 if (result != null) {
                     String errorMessage = String.format("Unable to prepare snapshot backup directory: [%s] due to [%s].", exportPath, result);
@@ -936,13 +940,18 @@ public class VmwareStorageManagerImpl implements VmwareStorageManager {
                     s_logger.error(msg);
                     throw new Exception(msg);
                 }
+
+                s_logger.debug(String.format("Exporting volume to export path [%s], with VM config [%s].", exportPath, _gson.toJson(clonedVm)));
                 clonedVm.exportVm(exportPath, exportName, false, false);  //Note: volss: not to create ova.
             } else {
+                s_logger.debug(String.format("Exporting volume to export path [%s], with VM config [%s].", exportPath, _gson.toJson(vmMo)));
                 vmMo.exportVm(exportPath, exportName, false, false);
             }
         } finally {
             if (clonedVm != null) {
-                clonedVm.detachAllDisksAndDestroy();
+                s_logger.debug(String.format("Executing detach of all disks for VM [%s], and destroying it.", _gson.toJson(clonedVm)));
+                clonedVm.detachAllDisks();
+                clonedVm.destroy();
             }
         }
     }

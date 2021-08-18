@@ -1762,7 +1762,7 @@ public class VmwareStorageProcessor implements StorageProcessor {
                 command.add(exportPath);
                 String result = command.execute();
                 if (result != null) {
-                    String errorMessage = String.format("Unable to prepare snapshot backup directory: [%s] due to [%s].", exportPath, result);
+                    String errorMessage = String.format("Unable to prepare snapshot backup directory: [%s] due to [%s]", exportPath, result);
                     s_logger.error(errorMessage);
                     throw new Exception(errorMessage);
                 }
@@ -1795,11 +1795,15 @@ public class VmwareStorageProcessor implements StorageProcessor {
                 vmMo = clonedVm;
             }
 
+            s_logger.debug(String.format("Exporting volume to export path [%s], with VM config [%s].", exportPath, _gson.toJson(vmMo)));
+            vmMo.exportVm(exportPath, exportName, false, false);
+
             vmMo.exportVm(exportPath, exportName, false, false);
             return new Pair<>(diskDevice, disks);
         } finally {
             if (clonedVm != null) {
-                s_logger.debug(String.format("Destroying cloned VM: %s with its disks", clonedVm.getName()));
+                s_logger.debug(String.format("Detaching all VM [%s] disks and destroying it.", _gson.toJson(clonedVm)));
+                clonedVm.detachAllDisks();
                 clonedVm.destroy();
             }
         }
@@ -1817,6 +1821,8 @@ public class VmwareStorageProcessor implements StorageProcessor {
 
     @Override
     public Answer backupSnapshot(CopyCommand cmd) {
+        s_logger.debug(String.format("Receive CopyCommand: [%s].", _gson.toJson(cmd)));
+
         SnapshotObjectTO srcSnapshot = (SnapshotObjectTO)cmd.getSrcTO();
         DataStoreTO primaryStore = srcSnapshot.getDataStore();
         SnapshotObjectTO destSnapshot = (SnapshotObjectTO)cmd.getDestTO();
@@ -1969,7 +1975,10 @@ public class VmwareStorageProcessor implements StorageProcessor {
 
                 try {
                     if (workerVm != null) {
-                        workerVm.detachAllDisksAndDestroy();
+                        s_logger.debug(String.format("Detaching disks and destroying worker VM: [%S].", _gson.toJson(workerVm)));
+                        // detach volume and destroy worker vm
+                        workerVm.detachAllDisks();
+                        workerVm.destroy();
                     }
                 } catch (Throwable e) {
                     s_logger.warn(String.format("Failed to destroy worker VM [%s] due to: [%s]", workerVMName, e.getMessage()), e);
