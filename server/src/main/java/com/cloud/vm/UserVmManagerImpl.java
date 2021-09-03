@@ -88,6 +88,8 @@ import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
 import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.backup.BackupManager;
 import org.apache.cloudstack.backup.dao.BackupDao;
+
+import com.cloud.agent.api.to.deployasis.OVFNetworkTO;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.cloud.entity.api.VirtualMachineEntity;
 import org.apache.cloudstack.engine.cloud.entity.api.db.dao.VMNetworkMapDao;
@@ -121,6 +123,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -3184,9 +3187,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         stopVirtualMachine(vmId, VmDestroyForcestop.value());
 
-        // Detach all data disks from VM
-        List<VolumeVO> dataVols = _volsDao.findByInstanceAndType(vmId, Volume.Type.DATADISK);
-        detachVolumesFromVm(dataVols);
+        if (vm.getHypervisorType() == HypervisorType.VMware) {
+            validateVmwareVmDetailsAndDetachVolumes(vm);
+        } else {
+            detachVolumesFromVm(volumesToBeDeleted);
+        }
 
         UserVm destroyedVm = destroyVm(vmId, expunge);
         if (expunge) {
@@ -3198,6 +3203,17 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         deleteVolumesFromVm(volumesToBeDeleted, expunge);
 
         return destroyedVm;
+    }
+
+    protected void validateVmwareVmDetailsAndDetachVolumes(UserVmVO vm) {
+        if (ObjectUtils.anyNotNull(vm.getBackupExternalId(), vm.getBackupOfferingId()) || CollectionUtils.isNotEmpty(vm.getBackupVolumeList())) {
+            throw new CloudRuntimeException(String.format("This VM [uuid: %s, name: %s] has a Backup Offering [id: %s, external id: %s]. Please, remove the backup offering "
+                    + "before proceeding to VM exclusion!", vm.getUuid(), vm.getInstanceName(), vm.getBackupOfferingId(), vm.getBackupExternalId()));
+        }
+
+        List<VolumeVO> allVolumes = _volsDao.findByInstance(vm.getId());
+        allVolumes.removeIf(vol -> vol.getVolumeType() == Volume.Type.ROOT);
+        detachVolumesFromVm(allVolumes);
     }
 
     private List<VolumeVO> getVolumesFromIds(DestroyVMCmd cmd) {

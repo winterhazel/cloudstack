@@ -37,6 +37,7 @@ import com.cloud.configuration.Resource;
 import com.cloud.hypervisor.Hypervisor;
 import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.VMTemplateVO;
+import com.cloud.storage.Volume;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -45,6 +46,7 @@ import com.cloud.user.dao.AccountDao;
 import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
 import org.apache.cloudstack.api.command.user.vm.UpdateVMCmd;
 import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
+import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
 import org.junit.After;
@@ -79,6 +81,7 @@ import com.cloud.user.AccountManager;
 import com.cloud.user.AccountVO;
 import com.cloud.user.UserVO;
 import com.cloud.uservm.UserVm;
+import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.vm.dao.NicDao;
 import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
@@ -550,6 +553,30 @@ public class UserVmManagerImplTest {
     @Test (expected = InvalidParameterValueException.class)
     public void prepareResizeVolumeCmdTestNewOfferingSmaller() {
         prepareAndRunResizeVolumeTest(2L, 10L, 20L, largerDisdkOffering, smallerDisdkOffering);
+    }
+
+    @Test (expected = CloudRuntimeException.class)
+    public void destroyVmWithBackupOfferingExternalId() {
+        Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(null);
+        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn("teste");
+        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
+    }
+
+    @Test (expected = CloudRuntimeException.class)
+    public void destroyVmWithBackupOfferingId() {
+        Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(1l);
+        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn(null);
+        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
+    }
+
+    @Test (expected = CloudRuntimeException.class)
+    public void destroyVmWithBackupVolumeList() {
+        Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(null);
+        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn(null);
+        List<Backup.VolumeInfo> volumes = new ArrayList<>();
+        volumes.add(new Backup.VolumeInfo("123", "test", Volume.Type.ROOT, 10L));
+        Mockito.when(userVmVoMock.getBackupVolumeList()).thenReturn(volumes);
+        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
     }
 
     private void prepareAndRunResizeVolumeTest(Long expectedOfferingId, long expectedMinIops, long expectedMaxIops, DiskOfferingVO currentRootDiskOffering, DiskOfferingVO newRootDiskOffering) {
