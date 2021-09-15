@@ -38,6 +38,7 @@ import org.apache.cloudstack.framework.config.ConfigKey;
 import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 
 import com.cloud.hypervisor.Hypervisor;
@@ -259,6 +260,10 @@ public class VeeamBackupProvider extends AdapterBase implements BackupProvider, 
                 final List<Backup> backupsInDb = backupDao.listByVmId(null, vm.getId());
                 final List<Long> removeList = backupsInDb.stream().map(InternalIdentity::getId).collect(Collectors.toList());
                 for (final Backup.RestorePoint restorePoint : restorePoints) {
+                    if (ObjectUtils.anyNull(restorePoint.getId(), restorePoint.getType(), restorePoint.getCreated())) {
+                        LOG.warn(String.format("Can't find any usefull information for restore point [id: %s, type: %s, created: %s]. Skipping it.", restorePoint.getId(), restorePoint.getType(), restorePoint.getCreated()));
+                        continue;
+                    }
                     boolean backupExists = false;
                     for (final Backup backup : backupsInDb) {
                         if (restorePoint.getId().equals(backup.getExternalId())) {
