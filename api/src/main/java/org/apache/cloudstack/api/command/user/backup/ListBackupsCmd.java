@@ -37,6 +37,7 @@ import org.apache.cloudstack.api.response.ZoneResponse;
 import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.backup.BackupManager;
 import org.apache.cloudstack.context.CallContext;
+import org.apache.log4j.Logger;
 
 import com.cloud.exception.ConcurrentOperationException;
 import com.cloud.exception.InsufficientCapacityException;
@@ -50,6 +51,7 @@ import com.cloud.utils.Pair;
         responseObject = BackupResponse.class, since = "4.14.0",
         authorized = {RoleType.Admin, RoleType.ResourceAdmin, RoleType.DomainAdmin, RoleType.User})
 public class ListBackupsCmd extends BaseListProjectAndAccountResourcesCmd {
+    public static final Logger LOGGER = Logger.getLogger(ListBackupsCmd.class.getName());
     public static final String APINAME = "listBackups";
 
     @Inject
@@ -118,6 +120,7 @@ public class ListBackupsCmd extends BaseListProjectAndAccountResourcesCmd {
             Pair<List<Backup>, Integer> result = backupManager.listBackups(this);
             setupResponseBackupList(result.first(), result.second());
         } catch (Exception e) {
+            LOGGER.error(String.format("Failed to list backups due to: [%s].", e.getMessage()), e);
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, e.getMessage());
         }
     }
