@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -511,6 +512,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
      * Get pool ID from datastore UUID
      */
     private Long getPoolIdFromDatastoreUuid(String datastoreUuid) {
+        s_logger.debug(String.format("Trying to find pool uuid for datastore uuid: [%s].", datastoreUuid));
         String poolUuid = UuidUtils.normalize(datastoreUuid);
         StoragePoolVO pool = _storagePoolDao.findByUuid(poolUuid);
         if (pool == null) {
@@ -524,12 +526,28 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
      */
     private Long getPoolId(VirtualDisk disk) {
         VirtualDeviceBackingInfo backing = disk.getBacking();
-        checkBackingInfo(backing);
         VirtualDiskFlatVer2BackingInfo info = (VirtualDiskFlatVer2BackingInfo)backing;
-        s_logger.debug(String.format("VirtualDiskFlatVer2BackingInfo filename is: [%s].", info.getFileName()));
         String[] fileNameParts = info.getFileName().split(" ");
-        String datastoreUuid = StringUtils.substringBetween(fileNameParts[0], "[", "]");
-        return getPoolIdFromDatastoreUuid(datastoreUuid);
+        String datastore = StringUtils.substringBetween(fileNameParts[0], "[", "]");
+        if (UuidUtils.isUuid(datastore)) {
+            return getPoolIdFromDatastoreUuid(datastore);
+        }
+        return getPoolIdFromDatastoreName(datastore);
+    }
+
+    private Long getPoolIdFromDatastoreName(String datastoreName) {
+        s_logger.debug(String.format("Trying to find pool id for datastore name: [%s].", datastoreName));
+
+        String errorMessage = String.format("Couldn't find storage pool with name: [%s].", datastoreName);
+        List<StoragePoolVO> pool = _storagePoolDao.findPoolByName(datastoreName);
+        if (CollectionUtils.isEmpty(pool)) {
+            throw new CloudRuntimeException(errorMessage);
+        }
+        Optional<StoragePoolVO> first = pool.stream().filter(f -> f.getRemoved() == null).findFirst();
+        if (!first.isPresent()) {
+            throw new CloudRuntimeException(errorMessage);
+        }
+        return first.get().getId();
     }
 
     /**

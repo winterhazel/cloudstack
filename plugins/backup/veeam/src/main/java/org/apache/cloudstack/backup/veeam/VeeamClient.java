@@ -364,7 +364,7 @@ public class VeeamClient {
     private String getRepositoryNameFromJob(String backupName) {
         final List<String> cmds = Arrays.asList(
                 String.format("$Job = Get-VBRJob -name \"%s\"", backupName),
-                "$Job.GetBackupTargetRepository() ^| select Name | Format-List"
+                "$Job.GetBackupTargetRepository() ^| select Name ^| Format-List"
         );
         Pair<Boolean, String> result = executePowerShellCommands(cmds);
         if (result == null || !result.first()) {

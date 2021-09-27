@@ -106,7 +106,9 @@ public class ListBackupsCmd extends BaseListProjectAndAccountResourcesCmd {
                 continue;
             }
             BackupResponse backupResponse = _responseGenerator.createBackupResponse(backup);
-            responses.add(backupResponse);
+            if (backupResponse != null) {
+                responses.add(backupResponse);
+            }
         }
         final ListResponse<BackupResponse> response = new ListResponse<>();
         response.setResponses(responses, count);
