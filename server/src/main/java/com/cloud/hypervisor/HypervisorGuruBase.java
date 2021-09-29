@@ -65,6 +65,10 @@ import com.cloud.vm.dao.NicDao;
 import com.cloud.vm.dao.NicSecondaryIpDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
 import com.cloud.vm.dao.VMInstanceDao;
+import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.Configurable;
+import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public abstract class HypervisorGuruBase extends AdapterBase implements HypervisorGuru, Configurable {
     public static final Logger s_logger = Logger.getLogger(HypervisorGuruBase.class);
@@ -199,14 +203,11 @@ public abstract class HypervisorGuruBase extends AdapterBase implements Hypervis
     protected VirtualMachineTO toVirtualMachineTO(VirtualMachineProfile vmProfile) {
         ServiceOffering offering = _serviceOfferingDao.findById(vmProfile.getId(), vmProfile.getServiceOfferingId());
         VirtualMachine vm = vmProfile.getVirtualMachine();
-        HostVO host = hostDao.findById(vm.getHostId());
-        boolean divideMemoryByOverprovisioning = true;
-        boolean divideCpuByOverprovisioning = true;
 
-        if (host != null) {
-            divideMemoryByOverprovisioning = VmMinMemoryEqualsMemoryDividedByMemOverprovisioningFactor.valueIn(host.getClusterId());
-            divideCpuByOverprovisioning = VmMinCpuSpeedEqualsCpuSpeedDividedByCpuOverprovisioningFactor.valueIn(host.getClusterId());
-        }
+        Long clusterId = findClusterOfVm(vm);
+
+        boolean divideMemoryByOverprovisioning = VM_MIN_MEMORY_EQUALS_MEMORY_DIVIDED_BY_MEM_OVERPROVISIONING_FACTOR.valueIn(clusterId);
+        boolean divideCpuByOverprovisioning = VM_MIN_CPU_SPEED_EQUALS_CPU_SPEED_DIVIDED_BY_CPU_OVERPROVISIONING_FACTOR.valueIn(clusterId);
 
         Long minMemory = (long)(offering.getRamSize() / (divideMemoryByOverprovisioning ? vmProfile.getMemoryOvercommitRatio() : 1));
         int minspeed = (int)(offering.getSpeed() / (divideCpuByOverprovisioning ? vmProfile.getCpuOvercommitRatio() : 1));
@@ -278,6 +279,22 @@ public abstract class HypervisorGuruBase extends AdapterBase implements Hypervis
         to.setState(vm.getState());
 
         return to;
+    }
+
+    protected Long findClusterOfVm(VirtualMachine vm) {
+        HostVO host = hostDao.findById(vm.getHostId());
+        if (host != null) {
+            return host.getClusterId();
+        }
+
+        s_logger.debug(String.format("VM [%s] does not have a host id. Trying the last host.", ReflectionToStringBuilderUtils.reflectOnlySelectedFieldsAsJson(vm, "instanceName", "id", "uuid")));
+        host = hostDao.findById(vm.getLastHostId());
+        if (host != null) {
+            return host.getClusterId();
+        }
+
+        s_logger.debug(String.format("VM [%s] does not have a last host id.", ReflectionToStringBuilderUtils.reflectOnlySelectedFieldsAsJson(vm, "instanceName", "id", "uuid")));
+        return null;
     }
 
     @Override
