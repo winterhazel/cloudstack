@@ -65,6 +65,7 @@ import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.log4j.Logger;
 
 import com.cloud.api.ApiDispatcher;
@@ -613,12 +614,12 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         }
         accountManager.checkAccess(CallContext.current().getCallingAccount(), null, true, vmFromBackup);
 
-        Pair<String, String> restoreInfo = getRestoreVolumeHostAndDatastore(vm);
-        String hostIp = restoreInfo.first();
+        Pair<HostVO, String> restoreInfo = getRestoreVolumeHostAndDatastore(vm);
+        HostVO host = restoreInfo.first();
         String datastoreUuid = restoreInfo.second();
 
-        LOG.debug("Asking provider to restore volume " + backedUpVolumeUuid + " from backup " + backupId +
-                " (with external ID " + backup.getExternalId() + ") and attach it to VM: " + vm.getUuid());
+        LOG.debug(String.format("Asking provider to restore volume [%s] from backup [%s] (with external ID [%s]) and attach it to VM: [%s].",
+                backedUpVolumeUuid, backupId, backup.getExternalId(), vm.getUuid()));
 
         final BackupOffering offering = backupOfferingDao.findByIdIncludingRemoved(backup.getBackupOfferingId());
         if (offering == null) {
@@ -626,8 +627,16 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         }
 
         BackupProvider backupProvider = getBackupProvider(offering.getProvider());
-        Pair<Boolean, String> result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, hostIp, datastoreUuid);
-        if (!result.first()) {
+        LOG.debug(String.format("Trying to restore volume using host private IP address: [%s].", host.getPrivateIpAddress()));
+        Pair<Boolean, String> result = null;
+        try {
+            result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, host.getPrivateIpAddress(), datastoreUuid);
+        } catch (Exception e) {
+            LOG.error(String.format("Failed to restore volume using host IP address [%s] due to: [%s].", host.getPrivateIpAddress(), e.getMessage()), e);
+            LOG.debug(String.format("Trying to restore volume using host name: [%s].", host.getName()));
+            result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, host.getName(), datastoreUuid);
+        }
+        if (BooleanUtils.isFalse(result.first())) {
             throw new CloudRuntimeException("Error restoring volume " + backedUpVolumeUuid);
         }
         if (!attachVolumeToVM(vm.getDataCenterId(), result.second(), vmFromBackup.getBackupVolumeList(),
@@ -673,21 +682,21 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
     /**
      * Get the pair: hostIp, datastoreUuid in which to restore the volume, based on the VM to be attached information
      */
-    private Pair<String, String> getRestoreVolumeHostAndDatastore(VMInstanceVO vm) {
+    private Pair<HostVO, String> getRestoreVolumeHostAndDatastore(VMInstanceVO vm) {
         List<VolumeVO> rootVmVolume = volumeDao.findIncludingRemovedByInstanceAndType(vm.getId(), Volume.Type.ROOT);
         Long poolId = rootVmVolume.get(0).getPoolId();
         StoragePoolVO storagePoolVO = primaryDataStoreDao.findById(poolId);
         String datastoreUuid = storagePoolVO.getUuid();
-        String hostIp = vm.getHostId() == null ?
-                            getHostIp(storagePoolVO) :
-                            hostDao.findById(vm.getHostId()).getPrivateIpAddress();
-        return new Pair<>(hostIp, datastoreUuid);
+        HostVO hostVO = vm.getHostId() == null ?
+                            getFirstHostFromStoragePool(storagePoolVO) :
+                            hostDao.findById(vm.getHostId());
+        return new Pair<>(hostVO, datastoreUuid);
     }
 
     /**
      * Find a host IP from storage pool access
      */
-    private String getHostIp(StoragePoolVO storagePoolVO) {
+    private HostVO getFirstHostFromStoragePool(StoragePoolVO storagePoolVO) {
         List<HostVO> hosts = null;
         if (storagePoolVO.getScope().equals(ScopeType.CLUSTER)) {
             hosts = hostDao.findByClusterId(storagePoolVO.getClusterId());
@@ -695,7 +704,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         } else if (storagePoolVO.getScope().equals(ScopeType.ZONE)) {
             hosts = hostDao.findByDataCenterId(storagePoolVO.getDataCenterId());
         }
-        return hosts.get(0).getPrivateIpAddress();
+        return hosts.get(0);
     }
 
     /**

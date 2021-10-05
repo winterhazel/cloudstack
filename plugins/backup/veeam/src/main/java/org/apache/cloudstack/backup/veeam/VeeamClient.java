@@ -363,15 +363,15 @@ public class VeeamClient {
 
     private String getRepositoryNameFromJob(String backupName) {
         final List<String> cmds = Arrays.asList(
-                String.format("$Job = Get-VBRJob -name \"%s\"", backupName),
-                "$Job.GetBackupTargetRepository() ^| select Name ^| Format-List"
+                String.format("$job = Get-VBRJob -Name \"%s\"", backupName),
+                "$job.GetBackupTargetRepository() ^| Select Name ^| Format-List"
         );
         Pair<Boolean, String> result = executePowerShellCommands(cmds);
         if (result == null || !result.first()) {
             throw new CloudRuntimeException(String.format("Failed to get Repository Name from Job [name: %s].", backupName));
         }
 
-        for (String block : result.second().split("\n\n")) {
+        for (String block : result.second().split("\r\n\r\n")) {
            if (block.matches("Name(\\s)+:(.)*")) {
                return block.split(":")[1].trim();
            }
