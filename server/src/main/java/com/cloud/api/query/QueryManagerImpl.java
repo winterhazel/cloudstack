@@ -984,6 +984,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         Object affinityGroupId = cmd.getAffinityGroupId();
         Object keyPairName = cmd.getKeyPairName();
         Object serviceOffId = cmd.getServiceOfferingId();
+        Object backupOfferingId = cmd.getBackupOfferingId();
         Object securityGroupId = cmd.getSecurityGroupId();
         Object isHaEnabled = cmd.getHaEnabled();
         Object pod = null;
@@ -1016,6 +1017,9 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
 
         if (serviceOffId != null) {
             sb.and("serviceOfferingId", sb.entity().getServiceOfferingId(), SearchCriteria.Op.EQ);
+        }
+        if (backupOfferingId != null) {
+            sb.and("backupOfferingId", sb.entity().getBackupOfferingId(), SearchCriteria.Op.EQ);
         }
         if (display != null) {
             sb.and("display", sb.entity().isDisplayVm(), SearchCriteria.Op.EQ);
@@ -1101,6 +1105,10 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
 
         if (serviceOffId != null) {
             sc.setParameters("serviceOfferingId", serviceOffId);
+        }
+
+        if (backupOfferingId != null) {
+            sc.setParameters("backupOfferingId", backupOfferingId);
         }
 
         if (securityGroupId != null) {
