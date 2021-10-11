@@ -690,7 +690,7 @@ public class VeeamClient {
      * Special characters with accents, like ç, are not escaped.
      */
     protected String escapeSpecialCharactersInPowerShell(String varName, String value) {
-        return String.format("$%s = [Regex]::Escape(\"%s\")", varName, value);
+        return String.format("$%s = [Regex]::Escape(\\\"%s\\\")", varName, value);
     }
 
     public Pair<Boolean, String> restoreVMToDifferentLocation(String restorePointId, String host, String dataStoreUuid) {
