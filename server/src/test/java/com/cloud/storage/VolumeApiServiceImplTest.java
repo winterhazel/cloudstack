@@ -16,6 +16,7 @@
 // under the License.
 package com.cloud.storage;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
@@ -84,6 +85,7 @@ import com.cloud.hypervisor.Hypervisor.HypervisorType;
 import com.cloud.org.Grouping;
 import com.cloud.serializer.GsonHelper;
 import com.cloud.server.TaggedResourceService;
+import com.cloud.storage.Storage.ProvisioningType;
 import com.cloud.storage.Volume.Type;
 import com.cloud.storage.dao.StoragePoolTagsDao;
 import com.cloud.storage.dao.VolumeDao;
@@ -1085,50 +1087,62 @@ public class VolumeApiServiceImplTest {
     }
 
     @Test
-    public void isNotPossibleToResizeTestAllFormats() {
-        Storage.ImageFormat[] imageFormat = Storage.ImageFormat.values();
-        for (int i = 0; i < imageFormat.length - 1; i++) {
-            if (imageFormat[i] != Storage.ImageFormat.ISO) {
-                prepareAndRunTestOfIsNotPossibleToResize(Type.ROOT, 10l, imageFormat[i], true);
-            } else {
-                prepareAndRunTestOfIsNotPossibleToResize(Type.ROOT, 10l, imageFormat[i], false);
-            }
+    public void validateIfVMHaveBackupsTestExceptionWhenTryToDetachVolumeFromVMWhichBackupOffering() {
+        try {
+            UserVmVO vm = Mockito.mock(UserVmVO.class);
+            when(vm.getBackupOfferingId()).thenReturn(1l);
+            volumeApiServiceImpl.validateIfVmHasBackups(vm, false);
+        } catch (Exception e) {
+            Assert.assertEquals("Unable to detach volume, cannot detach volume from a VM that has backups. First remove the VM from the backup offering or set the global configuration 'backup.enable.attach.detach.of.volumes' to true.", e.getMessage());
         }
     }
 
     @Test
-    public void isNotPossibleToResizeTestAllTypes() {
-        Type[] types = Type.values();
-        for (int i = 0; i < types.length - 1; i++) {
-            if (types[i] != Type.ROOT) {
-                prepareAndRunTestOfIsNotPossibleToResize(types[i], 10l, Storage.ImageFormat.QCOW2, false);
-            } else {
-                prepareAndRunTestOfIsNotPossibleToResize(types[i], 10l, Storage.ImageFormat.QCOW2, true);
-            }
+    public void validateIfVMHaveBackupsTestExceptionWhenTryToAttachVolumeFromVMWhichBackupOffering() {
+        try {
+            UserVmVO vm = Mockito.mock(UserVmVO.class);
+            when(vm.getBackupOfferingId()).thenReturn(1l);
+            volumeApiServiceImpl.validateIfVmHasBackups(vm, true);
+        } catch (Exception e) {
+            Assert.assertEquals("Unable to attach volume, please specify a VM that does not have any backups or set the global configuration 'backup.enable.attach.detach.of.volumes' to true.", e.getMessage());
         }
     }
 
     @Test
-    public void isNotPossibleToResizeTestNoRootDiskSize() {
-        prepareAndRunTestOfIsNotPossibleToResize(Type.ROOT, 0l, Storage.ImageFormat.QCOW2, false);
+    public void validateIfVMHaveBackupsTestSucessWhenVMDontHaveBackupOffering() {
+        UserVmVO vm = Mockito.mock(UserVmVO.class);
+        when(vm.getBackupOfferingId()).thenReturn(null);
+        when(vm.getBackupVolumeList()).thenReturn(Collections.emptyList());
+        volumeApiServiceImpl.validateIfVmHasBackups(vm, true);
     }
 
-    private void prepareAndRunTestOfIsNotPossibleToResize(Type volumeType, Long rootDisk, Storage.ImageFormat imageFormat, boolean expectedIsNotPossibleToResize) {
-        VolumeVO volume = Mockito.mock(VolumeVO.class);
-        when(volume.getVolumeType()).thenReturn(volumeType);
+    @Test
+    public void createVolumeInfoFromVolumesTestEmptyVolumeListReturnEmptyArray() {
+        String volumeInfo = volumeApiServiceImpl.createVolumeInfoFromVolumes(new ArrayList<>());
+        assertEquals("[]", volumeInfo);
+    }
 
-        when(volume.getTemplateId()).thenReturn(1l);
-        DiskOfferingVO diskOffering = Mockito.mock(DiskOfferingVO.class);
+    @Test(expected = NullPointerException.class)
+    public void createVolumeInfoFromVolumesTestNullVolume() {
+        volumeApiServiceImpl.createVolumeInfoFromVolumes(null);
+    }
 
-        ServiceOfferingJoinVO serviceOfferingJoinVO = Mockito.mock(ServiceOfferingJoinVO.class);
-        when(serviceOfferingJoinVO.getRootDiskSize()).thenReturn(rootDisk);
-        when(serviceOfferingJoinDao.findById(Mockito.anyLong())).thenReturn(serviceOfferingJoinVO);
+    @Test
+    public void createVolumeInfoFromVolumesTestCorrectlyConvertOfVolumes() {
+        List<VolumeVO> volumesToTest = new ArrayList<>();
 
-        VMTemplateVO template = Mockito.mock(VMTemplateVO.class);
-        when(template.getFormat()).thenReturn(imageFormat);
-        when(templateDao.findByIdIncludingRemoved(Mockito.anyLong())).thenReturn(template);
+        VolumeVO root = new VolumeVO("test", 1l, 1l, 1l, 1l, 1l, "test", "/root/dir", ProvisioningType.THIN, 555l, Type.ROOT);
+        String rootUuid = root.getUuid();
 
-        boolean result = volumeApiServiceImpl.isNotPossibleToResize(volume, diskOffering);
-        Assert.assertEquals(expectedIsNotPossibleToResize, result);
+        VolumeVO data = new VolumeVO("test", 1l, 1l, 1l, 1l, 1l, "test", "/root/dir/data", ProvisioningType.THIN, 1111000l, Type.DATADISK);
+        String dataUuid = data.getUuid();
+
+        volumesToTest.add(root);
+        volumesToTest.add(data);
+
+        String result = volumeApiServiceImpl.createVolumeInfoFromVolumes(volumesToTest);
+        String expected = String.format("[{\"uuid\":\"%s\",\"type\":\"ROOT\",\"size\":555,\"path\":\"/root/dir\"},{\"uuid\":\"%s\",\"type\":\"DATADISK\",\"size\":1111000,\"path\":\"/root/dir/data\"}]", rootUuid, dataUuid);
+
+        assertEquals(expected, result);
     }
 }
