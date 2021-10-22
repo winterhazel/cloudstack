@@ -16,6 +16,8 @@
 // under the License.
 package com.cloud.hypervisor.vmware.mo;
 
+import org.apache.commons.lang3.StringUtils;
+
 public enum DiskControllerType {
     ide,
     scsi,
@@ -28,22 +30,19 @@ public enum DiskControllerType {
     public static DiskControllerType getType(String diskController) {
         if (diskController == null || diskController.equalsIgnoreCase("osdefault")) {
             return DiskControllerType.osdefault;
-        } else if (diskController.equalsIgnoreCase("vim.vm.device.VirtualLsiLogicSASController") || diskController.equalsIgnoreCase("VirtualLsiLogicSASController")
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.LSILOGIC_SAS_1068)
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.LSILOGIC_SAS)) {
+        } else if (StringUtils.equalsAnyIgnoreCase(diskController, "vim.vm.device.VirtualLsiLogicSASController", "VirtualLsiLogicSASController",
+                ScsiDiskControllerType.LSILOGIC_SAS_1068, ScsiDiskControllerType.LSILOGIC_SAS)) {
             return DiskControllerType.lsisas1068;
-        } else if (diskController.equalsIgnoreCase("vim.vm.device.VirtualLsiLogicController") || diskController.equalsIgnoreCase("VirtualLsiLogicController")
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.LSILOGIC_PARALLEL) || diskController.equalsIgnoreCase("scsi")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(diskController, "vim.vm.device.VirtualLsiLogicController", "VirtualLsiLogicController",
+                ScsiDiskControllerType.LSILOGIC_PARALLEL, "scsi")) {
             return DiskControllerType.lsilogic;
-        } else if (diskController.equalsIgnoreCase("vim.vm.device.VirtualIDEController") || diskController.equalsIgnoreCase("VirtualIDEController")
-                || diskController.equalsIgnoreCase("ide")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(diskController, "vim.vm.device.VirtualIDEController", "VirtualIDEController", "ide")) {
             return DiskControllerType.ide;
-        } else if (diskController.equalsIgnoreCase("vim.vm.device.ParaVirtualSCSIController") || diskController.equalsIgnoreCase("ParaVirtualSCSIController")
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.VMWARE_PARAVIRTUAL)
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.VIRTUAL_SCSI)) {
+        } else if (StringUtils.equalsAnyIgnoreCase(diskController, "vim.vm.device.ParaVirtualSCSIController", "ParaVirtualSCSIController",
+                ScsiDiskControllerType.VIRTUAL_SCSI, ScsiDiskControllerType.VMWARE_PARAVIRTUAL)) {
             return DiskControllerType.pvscsi;
-        } else if (diskController.equalsIgnoreCase("vim.vm.device.VirtualBusLogicController") || diskController.equalsIgnoreCase("VirtualBusLogicController")
-                || diskController.equalsIgnoreCase(ScsiDiskControllerType.BUSLOGIC)) {
+        } else if (StringUtils.equalsAnyIgnoreCase(diskController, "vim.vm.device.VirtualBusLogicController", "VirtualBusLogicController",
+                ScsiDiskControllerType.BUSLOGIC)) {
             return DiskControllerType.buslogic;
         } else {
             return DiskControllerType.none;

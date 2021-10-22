@@ -64,6 +64,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.joda.time.Duration;
@@ -265,6 +266,7 @@ import com.cloud.storage.template.TemplateProp;
 import com.cloud.template.TemplateManager;
 import com.cloud.utils.DateUtil;
 import com.cloud.utils.ExecutionResult;
+import com.cloud.utils.LogUtils;
 import com.cloud.utils.NumbersUtil;
 import com.cloud.utils.Pair;
 import com.cloud.utils.Ternary;
@@ -1816,6 +1818,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
 
     protected StartAnswer execute(StartCommand cmd) {
         VirtualMachineTO vmSpec = cmd.getVirtualMachine();
+        s_logger.debug(LogUtils.logGsonWithoutException("Trying to start VM with specs: [%s].", vmSpec));
         boolean vmAlreadyExistsInVcenter = false;
 
         String existingVmName = null;
@@ -2017,6 +2020,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             DiskTO[] sortedDisks = sortVolumesByDeviceId(disks);
             VmwareHelper.setBasicVmConfig(vmConfigSpec, vmSpec.getCpus(), vmSpec.getMaxSpeed(), getReservedCpuMHZ(vmSpec), (int) (vmSpec.getMaxRam() / (1024 * 1024)),
                     getReservedMemoryMb(vmSpec), guestOsId, vmSpec.getLimitCpuUse(), deployAsIs);
+            s_logger.debug(LogUtils.logGsonWithoutException("Basic VM [name: %s] configs applieds: [%s].", vmMo.getVmName(), vmConfigSpec));
 
             // Check for multi-cores per socket settings
             int numCoresPerSocket = 1;
@@ -2093,7 +2097,33 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 if (volIso != null) {
                     for (DiskTO vol : disks) {
                         if (vol.getType() == Volume.Type.ISO) {
-                            configureIso(hyperHost, vmMo, vol, deviceConfigSpecArray, ideUnitNumber++, i);
+
+                            TemplateObjectTO iso = (TemplateObjectTO) vol.getData();
+
+                            if (iso.getPath() != null && !iso.getPath().isEmpty()) {
+                                DataStoreTO imageStore = iso.getDataStore();
+                                if (!(imageStore instanceof NfsTO)) {
+                                    s_logger.debug("unsupported protocol");
+                                    throw new Exception("unsupported protocol");
+                                }
+                                NfsTO nfsImageStore = (NfsTO) imageStore;
+                                String isoPath = nfsImageStore.getUrl() + File.separator + iso.getPath();
+                                Pair<String, ManagedObjectReference> isoDatastoreInfo = getIsoDatastoreInfo(hyperHost, isoPath);
+                                assert (isoDatastoreInfo != null);
+                                assert (isoDatastoreInfo.second() != null);
+
+                                deviceConfigSpecArray[i] = new VirtualDeviceConfigSpec();
+                                Pair<VirtualDevice, Boolean> isoInfo =
+                                        VmwareHelper.prepareIsoDevice(vmMo, isoDatastoreInfo.first(), isoDatastoreInfo.second(), true, true, ideUnitNumber++, i + 1);
+                                deviceConfigSpecArray[i].setDevice(isoInfo.first());
+                                boolean isIsoInfo = BooleanUtils.isTrue(isoInfo.second());
+                                if (isIsoInfo) {
+                                    deviceConfigSpecArray[i].setOperation(VirtualDeviceConfigSpecOperation.ADD);
+                                } else {
+                                    deviceConfigSpecArray[i].setOperation(VirtualDeviceConfigSpecOperation.EDIT);
+                                }
+                                s_logger.debug(LogUtils.logGsonWithoutException("%s ISO volume at %s device: [%s].", isIsoInfo ? "Add" : "Edit", isIsoInfo ? "new" : "existing", isoInfo.first()));
+                            }
                             i++;
                         }
                     }
@@ -2101,17 +2131,13 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                     deviceConfigSpecArray[i] = new VirtualDeviceConfigSpec();
                     Pair<VirtualDevice, Boolean> isoInfo = VmwareHelper.prepareIsoDevice(vmMo, null, null, true, true, ideUnitNumber++, i + 1);
                     deviceConfigSpecArray[i].setDevice(isoInfo.first());
-                    if (isoInfo.second()) {
-                        if (s_logger.isDebugEnabled())
-                            s_logger.debug("Prepare ISO volume at existing device " + _gson.toJson(isoInfo.first()));
-
+                    boolean isIsoInfo = BooleanUtils.isTrue(isoInfo.second());
+                    if (isIsoInfo) {
                         deviceConfigSpecArray[i].setOperation(VirtualDeviceConfigSpecOperation.ADD);
                     } else {
-                        if (s_logger.isDebugEnabled())
-                            s_logger.debug("Prepare ISO volume at existing device " + _gson.toJson(isoInfo.first()));
-
                         deviceConfigSpecArray[i].setOperation(VirtualDeviceConfigSpecOperation.EDIT);
                     }
+                    s_logger.debug(LogUtils.logGsonWithoutException("%s ISO volume at existing device: [%s].", isIsoInfo ? "Add" : "Edit", isoInfo.first()));
                     i++;
                 }
             }
@@ -2142,6 +2168,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
 
                 VirtualMachineDiskInfo matchingExistingDisk = getMatchingExistingDisk(diskInfoBuilder, vol, hyperHost, context);
                 String diskController = getDiskController(vmMo, matchingExistingDisk, vol, controllerInfo, deployAsIs);
+                s_logger.debug(String.format("Setup disk [type: %s, diskController: %s].", vol.getType().name(), diskController));
                 if (DiskControllerType.getType(diskController) == DiskControllerType.osdefault) {
                     diskController = vmMo.getRecommendedDiskController(null);
                 }
@@ -2229,7 +2256,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                     }
 
                     VirtualDevice device = VmwareHelper.prepareDiskDevice(vmMo, null, controllerKey, diskChain, volumeDsDetails.first(), deviceNumber, i + 1);
-
+                    s_logger.debug(LogUtils.logGsonWithoutException("VirtualDevice definition: [%s].", device));
                     diskStoragePolicyId = volumeTO.getvSphereStoragePolicyId();
                     if (!StringUtils.isEmpty(diskStoragePolicyId)) {
                         PbmProfileManagerMO profMgrMo = new PbmProfileManagerMO(context);
@@ -2247,9 +2274,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                     deviceConfigSpecArray[i].setDevice(device);
                     deviceConfigSpecArray[i].setOperation(VirtualDeviceConfigSpecOperation.ADD);
 
-                    if (s_logger.isDebugEnabled())
-                        s_logger.debug("Prepare volume at new device " + _gson.toJson(device));
-
+                    s_logger.debug(LogUtils.logGsonWithoutException("Prepare volume at new device: [%s].", device));
                     i++;
                 } else {
                     if (controllerKey == vmMo.getIDEControllerKey(ideUnitNumber))
@@ -2418,9 +2443,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
 
             if (!StringUtils.isEmpty(vmStoragePolicyId)) {
                 vmConfigSpec.getVmProfile().add(vmProfileSpec);
-                if (s_logger.isTraceEnabled()) {
-                    s_logger.trace(String.format("Configuring the VM %s with storage policy: %s", vmInternalCSName, vmStoragePolicyId));
-                }
+                s_logger.debug(String.format("Configuring the VM [internalName: %s] with storage policy: [%s].", vmInternalCSName, vmStoragePolicyId));
             }
             //
             // Configure VM
@@ -2725,9 +2748,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
         if (StringUtils.isNotBlank(bootMode) && !bootMode.equalsIgnoreCase("bios")) {
             vmConfigSpec.setFirmware("efi");
             if (vmSpec.getDetails().containsKey(ApiConstants.BootType.UEFI.toString()) && "secure".equalsIgnoreCase(vmSpec.getDetails().get(ApiConstants.BootType.UEFI.toString()))) {
-                if (bootOptions == null) {
-                    bootOptions = new VirtualMachineBootOptions();
-                }
+                bootOptions = new VirtualMachineBootOptions();
                 bootOptions.setEfiSecureBootEnabled(true);
             }
         }
@@ -3170,6 +3191,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             if (entry.getKey().equalsIgnoreCase(VmDetailConstants.BOOT_MODE)) {
                 continue;
             }
+            s_logger.debug(String.format("Configuring extra options [key: %s, value: %s] to VM: [uuid: %s].", entry.getKey(), entry.getValue(), vmSpec.getUuid()));
             OptionValue newVal = new OptionValue();
             newVal.setKey(entry.getKey());
             newVal.setValue(entry.getValue());
