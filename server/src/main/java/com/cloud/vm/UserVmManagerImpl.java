@@ -272,6 +272,7 @@ import com.cloud.resource.ResourceManager;
 import com.cloud.resource.ResourceState;
 import com.cloud.server.ManagementService;
 import com.cloud.server.ResourceTag;
+import com.cloud.server.StatsCollector;
 import com.cloud.service.ServiceOfferingVO;
 import com.cloud.service.dao.ServiceOfferingDao;
 import com.cloud.service.dao.ServiceOfferingDetailsDao;
@@ -555,6 +556,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     @Autowired
     @Qualifier("networkHelper")
     protected NetworkHelper nwHelper;
+    private StorageManager storageMgr;
+    @Inject
+    private StatsCollector statsCollector;
 
     private ScheduledExecutorService _executor = null;
     private ScheduledExecutorService _vmIpFetchExecutor = null;
@@ -5017,6 +5021,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new InvalidParameterValueException("unable to find a virtual machine with id " + vmId);
         }
 
+        statsCollector.removeVirtualMachineStats(vmId);
+
         _userDao.findById(userId);
         boolean status = false;
         try {
@@ -5321,6 +5327,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             s_logger.trace("Vm id=" + vmId + " is already destroyed");
             return vm;
         }
+
+        statsCollector.removeVirtualMachineStats(vmId);
 
         boolean status;
         State vmState = vm.getState();
