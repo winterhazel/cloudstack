@@ -81,7 +81,7 @@ import org.apache.cloudstack.utils.mailing.SMTPMailSender;
 import org.apache.commons.lang3.math.NumberUtils;
 
 public class AlertManagerImpl extends ManagerBase implements AlertManager, Configurable {
-    private static final Logger s_logger = Logger.getLogger(AlertManagerImpl.class.getName());
+    protected Logger logger = Logger.getLogger(AlertManagerImpl.class.getName());
 
     private static final long INITIAL_CAPACITY_CHECK_DELAY = 30L * 1000L; // Thirty seconds expressed in milliseconds.
 
@@ -712,8 +712,9 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
             return;
         }
 
-        if (recipients == null) {
-            s_logger.warn(String.format("No recipients set in 'alert.email.addresses', skipping sending alert with subject: %s and content: %s", subject, content));
+        if (ArrayUtils.isEmpty(recipients)) {
+            logger.warn(String.format("No recipients set in global setting 'alert.email.addresses', "
+                    + "skipping sending alert with subject [%s] and content [%s].", subject, content));
             return;
         }
 
@@ -734,8 +735,8 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
 
     }
 
-    private void sendMessage(SMTPMailProperties mailProps) {
-        _executor.execute(new Runnable() {
+    protected void sendMessage(SMTPMailProperties mailProps) {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 mailSender.sendMail(mailProps);

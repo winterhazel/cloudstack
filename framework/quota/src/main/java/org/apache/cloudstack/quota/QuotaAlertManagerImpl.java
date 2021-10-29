@@ -222,8 +222,8 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
             final String subject = templateEngine.replace(emailTemplate.getTemplateSubject());
             final String body = templateEngine.replace(emailTemplate.getTemplateBody());
             try {
-                sendQuotaAlert(emailRecipients, subject, body);
-                emailToBeSent.sentSuccessfully(_quotaAcc);
+                sendQuotaAlert(account.getUuid(), emailRecipients, subject, body);
+                emailToBeSent.sentSuccessfully(quotaAccountDao);
             } catch (Exception e) {
                 s_logger.error(String.format("Unable to send quota alert email (subject=%s; body=%s) to account %s (%s) recipients (%s) due to error (%s)", subject, body, account.getAccountName(),
                         account.getUuid(), emailRecipients, e));
@@ -325,13 +325,19 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
         }
     };
 
-    protected void sendQuotaAlert(List<String> emails, String subject, String body) {
+    protected void sendQuotaAlert(String accountUuid, List<String> emails, String subject, String body) {
         SMTPMailProperties mailProperties = new SMTPMailProperties();
 
         mailProperties.setSender(new MailAddress(senderAddress));
         mailProperties.setSubject(subject);
         mailProperties.setContent(body);
         mailProperties.setContentType("text/html; charset=utf-8");
+
+        if (CollectionUtils.isEmpty(emails)) {
+            logger.warn(String.format("Unable to send quota alert email with subject [%s] and content [%s]. "
+                    + "Account [%s] does not have users with email registered.", subject, body, accountUuid));
+            return;
+        }
 
         Set<MailAddress> addresses = new HashSet<>();
         for (String email : emails) {

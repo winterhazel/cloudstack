@@ -37,15 +37,16 @@ import org.apache.cloudstack.utils.mailing.SMTPMailProperties;
 import org.apache.cloudstack.utils.mailing.SMTPMailSender;
 
 @Component
-public class UsageAlertManagerImpl extends ManagerBase implements AlertManager {
-    private static final Logger s_logger = Logger.getLogger(UsageAlertManagerImpl.class.getName());
+public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, Configurable {
+
+    protected Logger logger = Logger.getLogger(UsageAlertManagerImpl.class.getName());
 
     private String senderAddress;
     protected SMTPMailSender mailSender;
     protected String[] recipients;
 
     @Inject
-    private AlertDao _alertDao;
+    protected AlertDao alertDao;
     @Inject
     private ConfigurationDao _configDao;
 
@@ -96,7 +97,13 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager {
             newAlert.setName(alertType.getName());
             _alertDao.persist(newAlert);
         } else {
-            s_logger.debug(String.format("Have already sent: [%s] emails for alert type [%s] -- skipping send email.", alert.getSentCount(), alertType));
+            logger.debug(String.format("Have already sent [%s] emails for alert type [%s] -- skipping send email.", alert.getSentCount(), alertType));
+            return;
+        }
+
+        if (ArrayUtils.isEmpty(recipients)) {
+            logger.warn(String.format("No recipients set in global setting 'alert.email.addresses', "
+                    + "skipping sending alert with subject [%s] and content [%s].", subject, content));
             return;
         }
 
