@@ -787,8 +787,10 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
 
         try {
             if (newSize < oldSize) {
-                throw new Exception(
-                        "VMware doesn't support shrinking volume from larger size: " + oldSize / ResourceType.bytesToMiB + " GB to a smaller size: " + newSize / ResourceType.bytesToMiB + " GB");
+                String errorMsg = String.format("VMware doesn't support shrinking volume from larger size [%s] GB to a smaller size [%s] GB. Can't resize volume of VM [name: %s].",
+                        oldSize / Float.valueOf(ResourceType.bytesToMiB), newSize / Float.valueOf(ResourceType.bytesToMiB), vmName);
+                s_logger.error(errorMsg);
+                throw new Exception(errorMsg);
             } else if (newSize == oldSize) {
                 return new ResizeVolumeAnswer(cmd, true, "success", newSize * ResourceType.bytesToKiB);
             }
@@ -820,7 +822,6 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 synchronized (this) {
                     // OfflineVmwareMigration: 3. attach the disk to the worker
                     vmdkDataStorePath = VmwareStorageLayoutHelper.getLegacyDatastorePathFromVmdkFileName(dsMo, path + VMDK_EXTENSION);
-
                     vmMo.attachDisk(new String[]{vmdkDataStorePath}, morDS);
                 }
             }
@@ -830,13 +831,30 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             vmMo = hyperHost.findVmOnPeerHyperHost(vmName);
 
             if (vmMo == null) {
-                String msg = "VM " + vmName + " does not exist in VMware datacenter";
-
-                s_logger.error(msg);
-
-                throw new Exception(msg);
+                String errorMsg = String.format("VM [name: %s] does not exist in VMware datacenter.", vmName);
+                s_logger.error(errorMsg);
+                throw new Exception(errorMsg);
             }
 
+            // OfflineVmwareMigration: 5. ignore/replace the rest of the try-block; It is the functional bit
+            Pair<VirtualDisk, String> vdisk = vmMo.getDiskDevice(path);
+
+            if (vdisk == null) {
+                String errorMsg = String.format("Resize volume of VM [name: %s] failed because disk device [path: %s] doesn't exist.", vmName, path);
+                s_logger.error(errorMsg);
+                throw new Exception(errorMsg);
+            }
+
+            // IDE virtual disk cannot be re-sized if VM is running
+            if (vdisk.second() != null && vdisk.second().contains("ide")) {
+                String errorMsg = String.format("Re-sizing a virtual disk over an IDE controller is not supported in the VMware hypervisor. "
+                        + "Please re-try when virtual disk is attached to VM [name: %s] using a SCSI controller.", vmName);
+                s_logger.error(errorMsg);
+                throw new Exception(errorMsg);
+            }
+
+            if (cmd.isManaged()) {
+                VmwareContext context = getServiceContext();
 
             if (managed) {
                 ManagedObjectReference morCluster = hyperHost.getHyperHostCluster();
@@ -859,22 +877,12 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 _storageProcessor.expandDatastore(hostDatastoreSystem, dsMo);
             }
 
-            boolean volumePathChangeObserved = false;
-            boolean datastoreChangeObserved = false;
-
-            Pair<String, String> pathAndChainInfo = getNewPathAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
-            Pair<String, String> poolUUIDandChainInfo = getNewPoolUUIDAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
-
-            if (pathAndChainInfo != null) {
-                volumePathChangeObserved = true;
-                path = pathAndChainInfo.first();
-                chainInfo = pathAndChainInfo.second();
-            }
-
-            if (poolUUIDandChainInfo != null) {
-                datastoreChangeObserved = true;
-                poolUUID = poolUUIDandChainInfo.first();
-                chainInfo = poolUUIDandChainInfo.second();
+            VirtualDisk disk = vdisk.first();
+            if ((VirtualDiskFlatVer2BackingInfo) disk.getBacking() != null && ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent() != null) {
+                String errorMsg = String.format("Resize of volume in VM [name: %s] is not supported because Disk device [path: %s] has Parents: [%s].",
+                        vmName, path, ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent().getUuid());
+                s_logger.error(errorMsg);
+                throw new Exception(errorMsg);
             }
 
             // OfflineVmwareMigration: 5. ignore/replace the rest of the try-block; It is the functional bit
@@ -897,7 +905,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             vmConfigSpec.getDeviceChange().add(deviceConfigSpec);
 
             if (!vmMo.configureVm(vmConfigSpec)) {
-                throw new Exception("Failed to configure VM to resize disk. vmName: " + vmName);
+                throw new Exception(String.format("Failed to configure VM [name: %s] to resize disk.", vmName));
             }
 
             ResizeVolumeAnswer answer = new ResizeVolumeAnswer(cmd, true, "success", newSize * 1024);
@@ -912,11 +920,9 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             }
             return answer;
         } catch (Exception e) {
-            s_logger.error("Unable to resize volume", e);
-
-            String error = "Failed to resize volume: " + e.getMessage();
-
-            return new ResizeVolumeAnswer(cmd, false, error);
+            String errorMsg = String.format("Failed to resize volume of VM [name: %s] due to: [%s].", vmName, e.getMessage());
+            s_logger.error(errorMsg, e);
+            return new ResizeVolumeAnswer(cmd, false, errorMsg);
         } finally {
             // OfflineVmwareMigration: 6. check if a worker was used and destroy it if needed
             try {
@@ -927,7 +933,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                     vmMo.destroy();
                 }
             } catch (Throwable e) {
-                s_logger.info("Failed to destroy worker VM: " + vmName);
+                s_logger.error(String.format("Failed to destroy worker VM [name: %s] due to: [%s].", vmName, e.getMessage()), e);
             }
         }
     }
