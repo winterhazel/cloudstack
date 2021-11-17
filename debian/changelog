@@ -1,14 +1,260 @@
-cloudstack (4.16.0.0) unstable; urgency=low
+cloudstack (4.16.0.0-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.16.0.0-scclouds
 
-  * Update the version to 4.16.0.0
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 17 Nov 2021 17:37:06 -0300
 
- -- the Apache CloudStack project <dev@cloudstack.apache.org>  Thu, 04 Nov 2021 14:14:57 -0300
+cloudstack (4.15.0.34-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.34-scclouds
 
-cloudstack (4.16.0.0-SNAPSHOT) unstable; urgency=low
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 01 Nov 2021 10:10:10 -0300
 
-  * Update the version to 4.16.0.0-SNAPSHOT
+cloudstack (4.15.0.33-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.33-scclouds
 
- -- the Apache CloudStack project <dev@cloudstack.apache.org>  Tue, 11 Jan 2021 10:51:02 +0000
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 26 Oct 2021 08:39:01 -0300
+
+cloudstack (4.15.0.32-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.32-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 12 Oct 2021 09:52:31 -0300
+
+cloudstack (4.15.0.31-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.31-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 11 Oct 2021 13:28:11 -0300
+
+cloudstack (4.15.0.30-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.30-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 05 Oct 2021 08:08:19 -0300
+
+cloudstack (4.15.0.29-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.29-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 30 Sep 2021 08:40:23 -0300
+
+cloudstack (4.15.0.28-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.28-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 27 Sep 2021 13:29:27 -0300
+
+cloudstack (4.15.0.27-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.27-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 23 Sep 2021 10:07:34 -0300
+
+cloudstack (4.15.0.26-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.26-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 20 Sep 2021 10:10:24 -0300
+
+cloudstack (4.15.0.25-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.25-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 16 Sep 2021 10:09:46 -0300
+
+cloudstack (4.15.0.24-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.24-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 09 Sep 2021 15:45:23 -0300
+
+cloudstack (4.15.0.23-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.23-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 25 Aug 2021 10:58:23 -0300
+
+cloudstack (4.15.0.22-scclouds) unstable; urgency=low
+  
+  * Update the version to 4.15.0.22-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Fri, 20 Aug 2021 14:34:28 -0300
+
+cloudstack (4.15.0.21-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.21-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 18 Aug 2021 15:59:43 -0300
+
+cloudstack (4.15.0.20-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.20-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Fri, 13 Aug 2021 16:31:33 -0300
+
+cloudstack (4.15.0.19-scclouds) unstable; urgency=low                                                                             
+                                                                                                                                  
+  * Update the version to 4.15.0.19-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 11 Aug 2021 11:43:43 -0300
+
+cloudstack (4.15.0.18-scclouds) unstable; urgency=low                                                                             
+                                                                                                                                  
+  * Update the version to 4.15.0.18-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 19 Jul 2021 16:29:08 -0300
+
+cloudstack (4.15.0.17-scclouds) unstable; urgency=low                                                                             
+                                                                                                                                  
+  * Update the version to 4.15.0.17-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 12 Jul 2021 12:32:53 -0300
+
+cloudstack (4.15.0.16-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.16-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 15 Jun 2021 08:35:45 -0300
+
+cloudstack (4.15.0.15-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.15-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 26 May 2021 15:31:11 -0300
+
+cloudstack (4.15.0.14-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.14-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 5 May 2021 11:51:30 +0300
+
+cloudstack (4.15.0.13-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.13-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 22 Apr 2021 16:15:15 +0300
+
+cloudstack (4.15.0.12-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.12-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 6 Apr 2021 11:35:21 +0300
+
+cloudstack (4.15.0.11-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.11-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 31 Mar 2021 11:39:07 +0300
+
+cloudstack (4.15.0.10-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.10-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 30 Mar 2021 17:52:15 +0300
+
+cloudstack (4.15.0.9-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.9-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 29 Mar 2021 00:17:58 +0300
+
+cloudstack (4.15.0.8-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.8-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 23 Mar 2021 18:43:20 +0300
+
+cloudstack (4.15.0.7-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.7-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 15 Mar 2021 09:30:16 +0300
+
+cloudstack (4.15.0.6-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.6-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 10 Mar 2021 11:58:47 +0300
+
+cloudstack (4.15.0.5-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.5-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 08 Mar 2021 16:34:26 +0300
+
+cloudstack (4.15.0.4-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.4-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 22 Feb 2021 09:57:54 +0300
+
+cloudstack (4.15.0.3-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.3-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 16 Feb 2021 20:29:31 +0300
+
+cloudstack (4.15.0.2-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.2-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 11 Feb 2021 16:02:35 +0300
+
+cloudstack (4.15.0.1-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.1-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 09 Feb 2021 17:40:07 +0300
+
+cloudstack (4.15.0.0-scclouds) unstable; urgency=low
+
+  * Update the version to 4.15.0.0-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Tue, 02 Feb 2021 08:53:22 +0300
+
+cloudstack (4.13.1.14-scclouds) stable; urgency=low
+
+ * Update the version to 4.13.1.14-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 25 Jan 2021 10:45:21 +0300
+
+cloudstack (4.13.1.13-scclouds) stable; urgency=low
+
+ * Update the version to 4.13.1.13-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 21 Jan 2021 17:45:30 +0300
+
+cloudstack (4.13.1.12-scclouds) stable; urgency=low
+
+ * Update the version to 4.13.1.12-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Thu, 14 Jan 2021 09:51:44 +0300
+
+cloudstack (4.13.1.11-scclouds) stable; urgency=low
+
+ * Update the version to 4.13.1.11-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Mon, 11 Jan 2021 15:56:23 +0300
+
+cloudstack (4.13.1.10-scclouds) stable; urgency=low
+
+ * Update the version to 4.13.1.10-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 06 Jan 2021 14:19:35 +0300
+
+cloudstack (4.15.0.0) unstable; urgency=low
+
+  * Update the version to 4.15.0.0
+
+ -- the Apache CloudStack project <dev@cloudstack.apache.org>  Tue, 05 Jan 2021 15:51:02 +0000
+
+cloudstack (4.13.1.9-scclouds) stable; urgency=low
+
+  * Update the version to 4.13.1.9-scclouds
+
+ -- SC Clouds <contato@scclouds.com.br>  Wed, 30 Dec 2020 08:28:35 +0300
 
 cloudstack (4.15.0.0) unstable; urgency=low
 
