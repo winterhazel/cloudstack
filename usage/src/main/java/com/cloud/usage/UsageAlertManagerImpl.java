@@ -35,9 +35,10 @@ import java.util.Set;
 import org.apache.cloudstack.utils.mailing.MailAddress;
 import org.apache.cloudstack.utils.mailing.SMTPMailProperties;
 import org.apache.cloudstack.utils.mailing.SMTPMailSender;
+import org.apache.commons.lang3.ArrayUtils;
 
 @Component
-public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, Configurable {
+public class UsageAlertManagerImpl extends ManagerBase implements AlertManager {
 
     protected Logger logger = Logger.getLogger(UsageAlertManagerImpl.class.getName());
 
@@ -73,7 +74,7 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, 
         try {
             clearAlert(alertType.getType(), dataCenterId, podId);
         } catch (Exception ex) {
-            s_logger.error("Problem clearing email alert", ex);
+            logger.error("Problem clearing email alert", ex);
         }
     }
 
@@ -84,7 +85,7 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, 
                 && (alertType != AlertManager.AlertType.ALERT_TYPE_DOMAIN_ROUTER) && (alertType != AlertManager.AlertType.ALERT_TYPE_CONSOLE_PROXY)
                 && (alertType != AlertManager.AlertType.ALERT_TYPE_SSVM) && (alertType != AlertManager.AlertType.ALERT_TYPE_STORAGE_MISC)
                 && (alertType != AlertManager.AlertType.ALERT_TYPE_MANAGMENT_NODE)) {
-            alert = _alertDao.getLastAlert(alertType.getType(), dataCenterId, podId);
+            alert = alertDao.getLastAlert(alertType.getType(), dataCenterId, podId);
         }
         if (alert == null) {
             AlertVO newAlert = new AlertVO();
@@ -95,7 +96,7 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, 
             newAlert.setSentCount(1);
             newAlert.setLastSent(new Date());
             newAlert.setName(alertType.getName());
-            _alertDao.persist(newAlert);
+            alertDao.persist(newAlert);
         } else {
             logger.debug(String.format("Have already sent [%s] emails for alert type [%s] -- skipping send email.", alert.getSentCount(), alertType));
             return;
@@ -124,11 +125,11 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, 
 
     public void clearAlert(short alertType, long dataCenterId, Long podId) {
         if (alertType != -1) {
-            AlertVO alert = _alertDao.getLastAlert(alertType, dataCenterId, podId);
+            AlertVO alert = alertDao.getLastAlert(alertType, dataCenterId, podId);
             if (alert != null) {
-                AlertVO updatedAlert = _alertDao.createForUpdate();
+                AlertVO updatedAlert = alertDao.createForUpdate();
                 updatedAlert.setResolved(new Date());
-                _alertDao.update(alert.getId(), updatedAlert);
+                alertDao.update(alert.getId(), updatedAlert);
             }
         }
     }
@@ -145,7 +146,7 @@ public class UsageAlertManagerImpl extends ManagerBase implements AlertManager, 
             sendAlert(alertType, dataCenterId, podId, msg, msg);
             return true;
         } catch (Exception ex) {
-            s_logger.warn("Failed to generate an alert of type=" + alertType + "; msg=" + msg, ex);
+            logger.warn("Failed to generate an alert of type=" + alertType + "; msg=" + msg, ex);
             return false;
         }
     }

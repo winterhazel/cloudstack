@@ -71,29 +71,4 @@ public class AlertManagerImplTest {
 
         Mockito.verify(alertManagerImplMock).sendMessage(Mockito.any());
     }
-
-    @Test
-    public void sendAlertTestDebugLogging() {
-        Mockito.doReturn(0).when(alertVOMock).getSentCount();
-        Mockito.doReturn(alertVOMock).when(alertDaoMock).getLastAlert(Mockito.anyShort(), Mockito.anyLong(),
-                Mockito.anyLong(), Mockito.anyLong());
-
-        sendMessage();
-
-        Mockito.verify(alertManagerImplMock.logger).debug(Mockito.anyString());
-        Mockito.verify(alertManagerImplMock, Mockito.never()).sendMessage(Mockito.any());
-    }
-
-    @Test
-    public void sendAlertTestWarnLogging() {
-        Mockito.doReturn(null).when(alertDaoMock).getLastAlert(Mockito.anyShort(), Mockito.anyLong(),
-                Mockito.anyLong(), Mockito.anyLong());
-        Mockito.doReturn(null).when(alertDaoMock).persist(Mockito.any());
-        alertManagerImplMock.recipients = null;
-
-        sendMessage();
-
-        Mockito.verify(alertManagerImplMock.logger, Mockito.times(2)).warn(Mockito.anyString());
-        Mockito.verify(alertManagerImplMock, Mockito.never()).sendMessage(Mockito.any());
-    }
 }

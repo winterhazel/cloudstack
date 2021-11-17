@@ -53,6 +53,7 @@ import java.util.Set;
 import org.apache.cloudstack.utils.mailing.MailAddress;
 import org.apache.cloudstack.utils.mailing.SMTPMailProperties;
 import org.apache.cloudstack.utils.mailing.SMTPMailSender;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 
 @Component
@@ -223,7 +224,7 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
             final String body = templateEngine.replace(emailTemplate.getTemplateBody());
             try {
                 sendQuotaAlert(account.getUuid(), emailRecipients, subject, body);
-                emailToBeSent.sentSuccessfully(quotaAccountDao);
+                emailToBeSent.sentSuccessfully(_quotaAcc);
             } catch (Exception e) {
                 s_logger.error(String.format("Unable to send quota alert email (subject=%s; body=%s) to account %s (%s) recipients (%s) due to error (%s)", subject, body, account.getAccountName(),
                         account.getUuid(), emailRecipients, e));
@@ -334,7 +335,7 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
         mailProperties.setContentType("text/html; charset=utf-8");
 
         if (CollectionUtils.isEmpty(emails)) {
-            logger.warn(String.format("Unable to send quota alert email with subject [%s] and content [%s]. "
+            s_logger.warn(String.format("Unable to send quota alert email with subject [%s] and content [%s]. "
                     + "Account [%s] does not have users with email registered.", subject, body, accountUuid));
             return;
         }

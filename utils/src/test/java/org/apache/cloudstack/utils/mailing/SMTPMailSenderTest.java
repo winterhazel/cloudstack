@@ -64,7 +64,7 @@ public class SMTPMailSenderTest extends TestCase {
 
     @Before
     public void before() {
-        smtpMailSender = new SMTPMailSender(configsMock, namespace);
+        smtpMailSender = new SMTPMailSender(configs, namespace);
     }
 
     private String getConfigName(String config) {
@@ -95,7 +95,7 @@ public class SMTPMailSenderTest extends TestCase {
 
     @Test
     public void validateSetSessionPropertiesUseStartTLSUndefinedUseDefaultFalse() {
-        SMTPMailSender smtpMailSender = new SMTPMailSender(configsMock, namespace);
+        SMTPMailSender smtpMailSender = new SMTPMailSender(configs, namespace);
 
         SMTPSessionProperties props = smtpMailSender.configureSessionProperties();
 
@@ -126,7 +126,7 @@ public class SMTPMailSenderTest extends TestCase {
 
     @Test
     public void validateSetSessionPropertiesUseAuthUndefinedUseDefaultFalse() {
-        SMTPMailSender smtpMailSender = new SMTPMailSender(configsMock, namespace);
+        SMTPMailSender smtpMailSender = new SMTPMailSender(configs, namespace);
 
         SMTPSessionProperties props = smtpMailSender.configureSessionProperties();
 
@@ -157,7 +157,7 @@ public class SMTPMailSenderTest extends TestCase {
 
     @Test
     public void validateSetSessionPropertiesDebugModeUndefinedUseDefaultFalse() {
-        SMTPMailSender smtpMailSender = new SMTPMailSender(configsMock, namespace);
+        SMTPMailSender smtpMailSender = new SMTPMailSender(configs, namespace);
 
         SMTPSessionProperties props = smtpMailSender.configureSessionProperties();
 
@@ -464,8 +464,6 @@ public class SMTPMailSenderTest extends TestCase {
         mailProps.setContent("A simple test");
         mailProps.setContentType("text/plain");
 
-        Mockito.doNothing().when(smtpMailSender).setMailRecipients(Mockito.any(SMTPMessage.class), Mockito.anySet(), Mockito.anyString());
-
         SMTPMessage message = smtpMailSender.createMessage(mailProps);
 
         assertEquals("\"test@test.com\" <test@test.com>", message.getFrom()[0].toString());
@@ -481,8 +479,6 @@ public class SMTPMailSenderTest extends TestCase {
         mailProps.setFrom(new MailAddress("test2@test2.com", "TEST2"));
         mailProps.setContent("A simple test");
         mailProps.setContentType("text/plain");
-
-        Mockito.doNothing().when(smtpMailSender).setMailRecipients(Mockito.any(SMTPMessage.class), Mockito.anySet(), Mockito.anyString());
 
         SMTPMessage message = smtpMailSender.createMessage(mailProps);
 
@@ -507,8 +503,6 @@ public class SMTPMailSenderTest extends TestCase {
 
         mailProps.setSentDate(cal.getTime());
 
-        Mockito.doNothing().when(smtpMailSender).setMailRecipients(Mockito.any(SMTPMessage.class), Mockito.anySet(), Mockito.anyString());
-
         SMTPMessage message = smtpMailSender.createMessage(mailProps);
         assertTrue(DateUtils.truncatedEquals(cal.getTime(), message.getSentDate(), Calendar.SECOND));
     }
@@ -527,8 +521,6 @@ public class SMTPMailSenderTest extends TestCase {
         mailProps.setSubject(subject);
         mailProps.setContent(content);
         mailProps.setContentType(contentType);
-
-        Mockito.doNothing().when(smtpMailSender).setMailRecipients(Mockito.any(SMTPMessage.class), Mockito.anySet(), Mockito.anyString());
 
         SMTPMessage message = smtpMailSender.createMessage(mailProps);
         assertEquals(subject, message.getSubject());
