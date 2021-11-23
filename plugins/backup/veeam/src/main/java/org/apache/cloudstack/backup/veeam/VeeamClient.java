@@ -685,8 +685,8 @@ public class VeeamClient {
     }
 
     /*
-     * Escape special characters, like space, +, -, etc, in PowerShell, and 
-     * assigns the generated string to passed variable name. 
+     * Escape special characters, like space, +, -, etc, in PowerShell, and
+     * assigns the generated string to passed variable name.
      * Special characters with accents, like ç, are not escaped.
      */
     protected String escapeSpecialCharactersInPowerShell(String varName, String value) {
