@@ -1802,8 +1802,7 @@ public class VmwareStorageProcessor implements StorageProcessor {
             return new Pair<>(diskDevice, disks);
         } finally {
             if (clonedVm != null) {
-                s_logger.debug(String.format("Detaching all VM [%s] disks and destroying it.", _gson.toJson(clonedVm)));
-                clonedVm.detachAllDisks();
+                s_logger.debug(String.format("Destroying cloned VM [%s].", _gson.toJson(clonedVm)));
                 clonedVm.destroy();
             }
         }

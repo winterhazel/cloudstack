@@ -635,7 +635,8 @@ public class VmwareStorageManagerImpl implements VmwareStorageManager {
 
         } finally {
             if (clonedVm != null) {
-                clonedVm.detachAllDisksAndDestroy();
+                s_logger.debug(String.format("Destroying cloned VM [%s].", _gson.toJson(clonedVm)));
+                clonedVm.destroy();
             }
 
             vmMo.removeSnapshot(templateUniqueName, false);

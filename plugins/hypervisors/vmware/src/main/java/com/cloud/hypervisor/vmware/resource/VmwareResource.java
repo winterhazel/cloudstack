@@ -853,9 +853,6 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 throw new Exception(errorMsg);
             }
 
-            if (cmd.isManaged()) {
-                VmwareContext context = getServiceContext();
-
             if (managed) {
                 ManagedObjectReference morCluster = hyperHost.getHyperHostCluster();
                 ClusterMO clusterMO = new ClusterMO(context, morCluster);
@@ -877,12 +874,22 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 _storageProcessor.expandDatastore(hostDatastoreSystem, dsMo);
             }
 
-            VirtualDisk disk = vdisk.first();
-            if ((VirtualDiskFlatVer2BackingInfo) disk.getBacking() != null && ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent() != null) {
-                String errorMsg = String.format("Resize of volume in VM [name: %s] is not supported because Disk device [path: %s] has Parents: [%s].",
-                        vmName, path, ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent().getUuid());
-                s_logger.error(errorMsg);
-                throw new Exception(errorMsg);
+            boolean volumePathChangeObserved = false;
+            boolean datastoreChangeObserved = false;
+
+            Pair<String, String> pathAndChainInfo = getNewPathAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
+            Pair<String, String> poolUUIDandChainInfo = getNewPoolUUIDAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
+
+            if (pathAndChainInfo != null) {
+                volumePathChangeObserved = true;
+                path = pathAndChainInfo.first();
+                chainInfo = pathAndChainInfo.second();
+            }
+
+            if (poolUUIDandChainInfo != null) {
+                datastoreChangeObserved = true;
+                poolUUID = poolUUIDandChainInfo.first();
+                chainInfo = poolUUIDandChainInfo.second();
             }
 
             // OfflineVmwareMigration: 5. ignore/replace the rest of the try-block; It is the functional bit
@@ -959,8 +966,11 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
         }
         VirtualDisk disk = vdisk.first();
         if ((VirtualDiskFlatVer2BackingInfo) disk.getBacking() != null && ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent() != null) {
-            s_logger.error("Resize is not supported because Disk device has Parent " + ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent().getUuid());
-            throw new Exception("Resize is not supported because Disk device has Parent " + ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent().getUuid());
+            String errorMsg = String.format("Resize of volume in VM [name: %s] is not supported because Disk device [path: %s] has Parents: [%s].",
+                    vmMo.getName(), volumePath, ((VirtualDiskFlatVer2BackingInfo) disk.getBacking()).getParent().getUuid());
+            s_logger.error(errorMsg);
+            throw new Exception(errorMsg);
+
         }
         return disk;
     }

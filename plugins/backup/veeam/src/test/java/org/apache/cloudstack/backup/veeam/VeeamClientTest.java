@@ -85,7 +85,7 @@ public class VeeamClientTest {
 
     @Test
     public void testRegexEscape() {
-        String expected = "$test = [Regex]::Escape(\"_test_ ++ Argf--\"";
+        String expected = "$test = [Regex]::Escape(\\\"_test_ ++ Argf--\\\")";
         String value = "_test_ ++ Argf--";
 
         String result = client.escapeSpecialCharactersInPowerShell("test", value);
