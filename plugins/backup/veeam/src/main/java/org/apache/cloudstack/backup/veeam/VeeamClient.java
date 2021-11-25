@@ -363,8 +363,7 @@ public class VeeamClient {
 
     private String getRepositoryNameFromJob(String backupName) {
         final List<String> cmds = Arrays.asList(
-                escapeSpecialCharactersInPowerShell("name", backupName),
-                "if ($name) { $job = Get-VBRJob -Name $name }",
+                String.format("$job = Get-VBRJob -Name \"%s\"", backupName),
                 "if ($job) { $job.GetBackupTargetRepository() ^| Select Name ^| Format-List }"
         );
         Pair<Boolean, String> result = executePowerShellCommands(cmds);
@@ -661,10 +660,8 @@ public class VeeamClient {
 
     public List<Backup.RestorePoint> listRestorePoints(String backupName, String vmInternalName) {
         final List<String> cmds = Arrays.asList(
-                escapeSpecialCharactersInPowerShell("name", backupName),
-                escapeSpecialCharactersInPowerShell("vmName", vmInternalName),
-                "if ($name) { $backup = Get-VBRBackup -Name $name }",
-                "if ($backup) { $restore = (Get-VBRRestorePoint -Backup:$backup -Name $vmName ^| Where-Object {$_.IsConsistent -eq $true})",
+                String.format("$backup = Get-VBRBackup -Name \"%s\"", backupName),
+                String.format("if ($backup) { $restore = (Get-VBRRestorePoint -Backup:$backup -Name \"%s\" ^| Where-Object {$_.IsConsistent -eq $true})", vmInternalName),
                 "if ($restore) { $restore ^| Format-List } }"
         );
         Pair<Boolean, String> response = executePowerShellCommands(cmds);
@@ -684,27 +681,15 @@ public class VeeamClient {
         return restorePoints;
     }
 
-    /*
-     * Escape special characters, like space, +, -, etc, in PowerShell, and
-     * assigns the generated string to passed variable name.
-     * Special characters with accents, like ç, are not escaped.
-     */
-    protected String escapeSpecialCharactersInPowerShell(String varName, String value) {
-        return String.format("$%s = [Regex]::Escape(\\\"%s\\\")", varName, value);
-    }
-
     public Pair<Boolean, String> restoreVMToDifferentLocation(String restorePointId, String host, String dataStoreUuid) {
         final String restoreLocation = RESTORE_VM_SUFFIX + UUID.randomUUID().toString();
         final String datastoreId = dataStoreUuid.replace("-","");
         final List<String> cmds = Arrays.asList(
                 "$points = Get-VBRRestorePoint",
-                escapeSpecialCharactersInPowerShell("host", host),
-                escapeSpecialCharactersInPowerShell("restoreLocation", restoreLocation),
-                escapeSpecialCharactersInPowerShell("datastore", datastoreId),
                 String.format("foreach($point in $points) { if ($point.Id -eq '%s') { break; } }", restorePointId),
-                "$server = Get-VBRServer -Name $host",
-                "$ds = Find-VBRViDatastore -Server:$server -Name $datastore",
-                "$job = Start-VBRRestoreVM -RestorePoint:$point -Server:$server -Datastore:$ds -VMName $restoreLocation -RunAsync",
+                String.format("$server = Get-VBRServer -Name \"%s\"", host),
+                String.format("$ds = Find-VBRViDatastore -Server:$server -Name \"%s\"", datastoreId),
+                String.format("$job = Start-VBRRestoreVM -RestorePoint:$point -Server:$server -Datastore:$ds -VMName \"%s\" -RunAsync", restoreLocation),
                 "while (-not (Get-VBRRestoreSession -Id $job.Id).IsCompleted) { Start-Sleep -Seconds 10 }"
         );
         Pair<Boolean, String> result = executePowerShellCommands(cmds);

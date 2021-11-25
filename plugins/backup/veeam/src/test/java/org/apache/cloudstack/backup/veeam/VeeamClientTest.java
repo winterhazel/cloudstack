@@ -82,13 +82,4 @@ public class VeeamClientTest {
         Assert.assertEquals(policies.size(), 1);
         Assert.assertEquals(policies.get(0).getName(), "ZONE1-GOLD");
     }
-
-    @Test
-    public void testRegexEscape() {
-        String expected = "$test = [Regex]::Escape(\\\"_test_ ++ Argf--\\\")";
-        String value = "_test_ ++ Argf--";
-
-        String result = client.escapeSpecialCharactersInPowerShell("test", value);
-        Assert.assertEquals(expected, result);
-    }
 }
