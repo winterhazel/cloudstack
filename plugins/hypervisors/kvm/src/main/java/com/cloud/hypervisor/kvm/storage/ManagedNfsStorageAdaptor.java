@@ -306,6 +306,11 @@ public class ManagedNfsStorageAdaptor implements StorageAdaptor {
 
     @Override
     public boolean createFolder(String uuid, String path) {
+        return createFolder(uuid, path, null);
+    }
+
+    @Override
+    public boolean createFolder(String uuid, String path, String sharedMountPoint) {
         String mountPoint = _mountPoint + File.separator + uuid;
         File f = new File(mountPoint + File.separator + path);
         if (!f.exists()) {
@@ -338,4 +343,5 @@ public class ManagedNfsStorageAdaptor implements StorageAdaptor {
     public KVMPhysicalDisk createDiskFromTemplate(KVMPhysicalDisk template, String name, PhysicalDiskFormat format, ProvisioningType provisioningType, long size, KVMStoragePool destPool, int timeout) {
         return null;
     }
+
 }

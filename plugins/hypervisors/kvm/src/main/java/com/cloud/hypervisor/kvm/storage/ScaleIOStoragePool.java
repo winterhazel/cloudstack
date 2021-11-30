@@ -171,6 +171,11 @@ public class ScaleIOStoragePool implements KVMStoragePool {
 
     @Override
     public boolean createFolder(String path) {
+        return createFolder(path, null);
+    }
+
+    @Override
+    public boolean createFolder(String path, String sharedMountPoint) {
         return false;
     }
 

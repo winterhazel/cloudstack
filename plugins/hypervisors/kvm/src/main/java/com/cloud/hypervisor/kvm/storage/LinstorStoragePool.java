@@ -176,6 +176,11 @@ public class LinstorStoragePool implements KVMStoragePool {
     @Override
     public boolean createFolder(String path)
     {
+        return createFolder(path, null);
+    }
+
+    @Override
+    public boolean createFolder(String path, String sharedMountPoint) {
         return _storageAdaptor.createFolder(_uuid, path);
     }
 
@@ -188,4 +193,5 @@ public class LinstorStoragePool implements KVMStoragePool {
     public String getResourceGroup() {
         return _resourceGroup;
     }
+
 }

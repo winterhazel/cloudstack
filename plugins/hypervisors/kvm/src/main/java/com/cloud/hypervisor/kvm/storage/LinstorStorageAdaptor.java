@@ -451,6 +451,11 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     @Override
     public boolean createFolder(String uuid, String path)
     {
+        return createFolder(uuid, path, null);
+    }
+
+    @Override
+    public boolean createFolder(String uuid, String path, String sharedMountPoint) {
         throw new UnsupportedOperationException("A folder cannot be created in this configuration.");
     }
 
@@ -582,4 +587,5 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
             throw new CloudRuntimeException(apiEx.getBestMessage(), apiEx);
         }
     }
+
 }
