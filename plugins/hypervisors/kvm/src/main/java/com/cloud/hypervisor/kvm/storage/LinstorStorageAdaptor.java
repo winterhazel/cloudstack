@@ -134,8 +134,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public KVMPhysicalDisk getPhysicalDisk(String name, KVMStoragePool pool)
-    {
+    public KVMPhysicalDisk getPhysicalDisk(String name, KVMStoragePool pool) {
         s_logger.debug("Linstor: getPhysicalDisk for " + name);
         if (name == null) {
             return null;
@@ -174,8 +173,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
 
     @Override
     public KVMStoragePool createStoragePool(String name, String host, int port, String path, String userInfo,
-                                            Storage.StoragePoolType type)
-    {
+                                            Storage.StoragePoolType type) {
         s_logger.debug(String.format(
             "Linstor createStoragePool: name: '%s', host: '%s', path: %s, userinfo: %s", name, host, path, userInfo));
         LinstorStoragePool storagePool = new LinstorStoragePool(name, host, port, userInfo, type, this);
@@ -197,8 +195,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
 
     @Override
     public KVMPhysicalDisk createPhysicalDisk(String name, KVMStoragePool pool, QemuImg.PhysicalDiskFormat format,
-                                              Storage.ProvisioningType provisioningType, long size)
-    {
+                                              Storage.ProvisioningType provisioningType, long size) {
         final String rscName = getLinstorRscName(name);
         LinstorStoragePool lpool = (LinstorStoragePool) pool;
         final DevelopersApi api = getLinstorAPI(pool);
@@ -244,8 +241,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public boolean connectPhysicalDisk(String volumePath, KVMStoragePool pool, Map<String, String> details)
-    {
+    public boolean connectPhysicalDisk(String volumePath, KVMStoragePool pool, Map<String, String> details) {
         s_logger.debug(String.format("Linstor: connectPhysicalDisk %s:%s -> %s", pool.getUuid(), volumePath, details));
         if (volumePath == null) {
             s_logger.warn("volumePath is null, ignoring");
@@ -279,15 +275,13 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public boolean disconnectPhysicalDisk(String volumePath, KVMStoragePool pool)
-    {
+    public boolean disconnectPhysicalDisk(String volumePath, KVMStoragePool pool) {
         s_logger.debug("Linstor: disconnectPhysicalDisk " + pool.getUuid() + ":" + volumePath);
         return true;
     }
 
     @Override
-    public boolean disconnectPhysicalDisk(Map<String, String> volumeToDisconnect)
-    {
+    public boolean disconnectPhysicalDisk(Map<String, String> volumeToDisconnect) {
         s_logger.debug("Linstor: disconnectPhysicalDisk map");
         return true;
     }
@@ -307,8 +301,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
      * We will just take the first stored storagepool.
      */
     @Override
-    public boolean disconnectPhysicalDiskByPath(String localPath)
-    {
+    public boolean disconnectPhysicalDiskByPath(String localPath) {
         s_logger.debug("Linstor: disconnectPhysicalDiskByPath " + localPath);
         // get first storage pool from the map, as we don't know any better:
         if (!MapStorageUuidToStoragePool.isEmpty())
@@ -354,8 +347,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public boolean deletePhysicalDisk(String name, KVMStoragePool pool, Storage.ImageFormat format)
-    {
+    public boolean deletePhysicalDisk(String name, KVMStoragePool pool, Storage.ImageFormat format) {
         s_logger.debug("Linstor: deletePhysicalDisk " + name);
         final DevelopersApi api = getLinstorAPI(pool);
 
@@ -378,15 +370,13 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         Storage.ProvisioningType provisioningType,
         long size,
         KVMStoragePool destPool,
-        int timeout)
-    {
+        int timeout) {
         s_logger.info("Linstor: createDiskFromTemplate");
         return copyPhysicalDisk(template, name, destPool, timeout);
     }
 
     @Override
-    public List<KVMPhysicalDisk> listPhysicalDisks(String storagePoolUuid, KVMStoragePool pool)
-    {
+    public List<KVMPhysicalDisk> listPhysicalDisks(String storagePoolUuid, KVMStoragePool pool) {
         throw new UnsupportedOperationException("Listing disks is not supported for this configuration.");
     }
 
@@ -396,14 +386,12 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         String name,
         QemuImg.PhysicalDiskFormat format,
         long size,
-        KVMStoragePool destPool)
-    {
+        KVMStoragePool destPool) {
         throw new UnsupportedOperationException("Copying a template from disk is not supported in this configuration.");
     }
 
     @Override
-    public KVMPhysicalDisk copyPhysicalDisk(KVMPhysicalDisk disk, String name, KVMStoragePool destPools, int timeout)
-    {
+    public KVMPhysicalDisk copyPhysicalDisk(KVMPhysicalDisk disk, String name, KVMStoragePool destPools, int timeout) {
         s_logger.debug("Linstor: copyPhysicalDisk");
         final QemuImg.PhysicalDiskFormat sourceFormat = disk.getFormat();
         final String sourcePath = disk.getPath();
@@ -435,22 +423,19 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         String snapshotName,
         String name,
         KVMStoragePool destPool,
-        int timeout)
-    {
+        int timeout) {
         s_logger.debug("Linstor: createDiskFromSnapshot");
         return null;
     }
 
     @Override
-    public boolean refresh(KVMStoragePool pool)
-    {
+    public boolean refresh(KVMStoragePool pool) {
         s_logger.debug("Linstor: refresh");
         return true;
     }
 
     @Override
-    public boolean createFolder(String uuid, String path)
-    {
+    public boolean createFolder(String uuid, String path) {
         return createFolder(uuid, path, null);
     }
 
@@ -466,8 +451,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
         QemuImg.PhysicalDiskFormat format,
         long size,
         KVMStoragePool destPool,
-        int timeout)
-    {
+        int timeout) {
         s_logger.debug("Linstor: createDiskFromTemplateBacking");
         return null;
     }
@@ -475,8 +459,7 @@ public class LinstorStorageAdaptor implements StorageAdaptor {
     @Override
     public KVMPhysicalDisk createTemplateFromDirectDownloadFile(String templateFilePath, String destTemplatePath,
                                                                 KVMStoragePool destPool, Storage.ImageFormat format,
-                                                                int timeout)
-    {
+                                                                int timeout) {
         s_logger.debug("Linstor: createTemplateFromDirectDownloadFile");
         return null;
     }
