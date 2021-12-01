@@ -271,7 +271,7 @@ public class LibvirtStoragePool implements KVMStoragePool {
 
     @Override
     public boolean createFolder(String path) {
-        return this._storageAdaptor.createFolder(this.uuid, path);
+        return this._storageAdaptor.createFolder(this.uuid, path, this.type == StoragePoolType.Filesystem ? this.localPath : null);
     }
 
     @Override
@@ -286,4 +286,5 @@ public class LibvirtStoragePool implements KVMStoragePool {
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.JSON_STYLE).append("uuid", getUuid()).append("path", getLocalPath()).toString();
     }
+
 }

@@ -305,6 +305,11 @@ public class ScaleIOStorageAdaptor implements StorageAdaptor {
 
     @Override
     public boolean createFolder(String uuid, String path) {
+        return createFolder(uuid, path, null);
+    }
+
+    @Override
+    public boolean createFolder(String uuid, String path, String localPath) {
         return true;
     }
 
@@ -400,4 +405,5 @@ public class ScaleIOStorageAdaptor implements StorageAdaptor {
             throw new CloudRuntimeException("Unable to extract template " + downloadedTemplateFile);
         }
     }
+
 }
