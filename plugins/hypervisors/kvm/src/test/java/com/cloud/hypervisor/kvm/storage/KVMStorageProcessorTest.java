@@ -21,7 +21,6 @@ package com.cloud.hypervisor.kvm.storage;
 import com.cloud.hypervisor.kvm.resource.LibvirtComputingResource;
 import com.cloud.hypervisor.kvm.resource.LibvirtVMDef;
 import com.cloud.hypervisor.kvm.resource.wrapper.LibvirtUtilitiesHelper;
-import com.cloud.storage.Storage.StoragePoolType;
 import com.cloud.storage.template.TemplateConstants;
 import com.cloud.utils.Pair;
 import com.cloud.utils.exception.CloudRuntimeException;
@@ -87,9 +86,6 @@ public class KVMStorageProcessorTest {
 
     @Mock
     Connect connectMock;
-
-    @Mock
-    StoragePoolType storagePoolTypeMock;
 
     private static final String directDownloadTemporaryPath = "/var/lib/libvirt/images/dd";
     private static final long templateSize = 80000L;
@@ -251,11 +247,11 @@ public class KVMStorageProcessorTest {
         String errorMessage = "error";
         String expectedResult = String.format("Unable to copy %s snapshot [%s] to [%s] due to [%s].", volumeObjectToMock, baseFile, snapshotPath, errorMessage);
 
-        Mockito.doReturn(true).when(kvmStoragePoolMock).createFolder(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(true).when(kvmStoragePoolMock).createFolder(Mockito.anyString());
         PowerMockito.mockStatic(Files.class);
         PowerMockito.when(Files.copy(Mockito.any(Path.class), Mockito.any(Path.class), Mockito.any())).thenThrow(new IOException(errorMessage));
 
-        String result = storageProcessorSpy.copySnapshotToPrimaryStorageDir(kvmStoragePoolMock, baseFile, snapshotPath, volumeObjectToMock, storagePoolTypeMock);
+        String result = storageProcessorSpy.copySnapshotToPrimaryStorageDir(kvmStoragePoolMock, baseFile, snapshotPath, volumeObjectToMock);
 
         Assert.assertEquals(expectedResult, result);
     }
@@ -266,11 +262,11 @@ public class KVMStorageProcessorTest {
         String baseFile = "baseFile";
         String snapshotPath = "snapshotPath";
 
-        Mockito.doReturn(true).when(kvmStoragePoolMock).createFolder(Mockito.anyString(), Mockito.anyString());
+        Mockito.doReturn(true).when(kvmStoragePoolMock).createFolder(Mockito.anyString());
         PowerMockito.mockStatic(Files.class);
         PowerMockito.when(Files.copy(Mockito.any(Path.class), Mockito.any(Path.class), Mockito.any())).thenReturn(null);
 
-        String result = storageProcessorSpy.copySnapshotToPrimaryStorageDir(kvmStoragePoolMock, baseFile, snapshotPath, volumeObjectToMock, storagePoolTypeMock);
+        String result = storageProcessorSpy.copySnapshotToPrimaryStorageDir(kvmStoragePoolMock, baseFile, snapshotPath, volumeObjectToMock);
 
         Assert.assertNull(result);
     }

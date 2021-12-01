@@ -140,11 +140,6 @@ public class IscsiAdmStoragePool implements KVMStoragePool {
 
     @Override
     public boolean createFolder(String path) {
-        return createFolder(path, null);
-    }
-
-    @Override
-    public boolean createFolder(String path, String sharedMountPoint) {
         return this._storageAdaptor.createFolder(_uuid, path);
     }
 

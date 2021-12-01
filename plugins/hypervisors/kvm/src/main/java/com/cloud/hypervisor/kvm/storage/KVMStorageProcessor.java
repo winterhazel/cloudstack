@@ -1539,10 +1539,9 @@ public class KVMStorageProcessor implements StorageProcessor {
                 }
             }
 
-            StoragePoolType poolType = primaryStore.getPoolType();
-            final KVMStoragePool primaryPool = storagePoolMgr.getStoragePool(poolType, primaryStore.getUuid());
+            final KVMStoragePool primaryPool = storagePoolMgr.getStoragePool(primaryStore.getPoolType(), primaryStore.getUuid());
 
-            final KVMPhysicalDisk disk = storagePoolMgr.getPhysicalDisk(poolType, primaryStore.getUuid(), volume.getPath());
+            final KVMPhysicalDisk disk = storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(), primaryStore.getUuid(), volume.getPath());
 
             String diskPath = disk.getPath();
             String snapshotPath = diskPath + File.separator + snapshotName;
@@ -1552,7 +1551,7 @@ public class KVMStorageProcessor implements StorageProcessor {
 
                 String diskLabel = takeVolumeSnapshot(resource.getDisks(conn, vmName), snapshotName, diskPath, vm);
                 snapshotPath = getSnapshotPathInPrimaryStorage(primaryPool.getLocalPath(), snapshotName);
-                String copyResult = copySnapshotToPrimaryStorageDir(primaryPool, diskPath, snapshotPath, volume, poolType);
+                String copyResult = copySnapshotToPrimaryStorageDir(primaryPool, diskPath, snapshotPath, volume);
 
                 mergeSnapshotIntoBaseFile(vm, diskLabel, diskPath, snapshotName, volume, conn);
 
@@ -1609,7 +1608,7 @@ public class KVMStorageProcessor implements StorageProcessor {
                     }
                 } else {
                     snapshotPath = getSnapshotPathInPrimaryStorage(primaryPool.getLocalPath(), snapshotName);
-                    String copyResult = copySnapshotToPrimaryStorageDir(primaryPool, diskPath, snapshotPath, volume, poolType);
+                    String copyResult = copySnapshotToPrimaryStorageDir(primaryPool, diskPath, snapshotPath, volume);
                     validateCopyResult(copyResult, snapshotPath);
                 }
             }
@@ -1695,9 +1694,9 @@ public class KVMStorageProcessor implements StorageProcessor {
      * @param snapshotPath Path to copy the base file;
      * @return null if copies successfully or a error message.
      */
-    protected String copySnapshotToPrimaryStorageDir(KVMStoragePool primaryPool, String baseFile, String snapshotPath, VolumeObjectTO volume, StoragePoolType primaryPoolType) {
+    protected String copySnapshotToPrimaryStorageDir(KVMStoragePool primaryPool, String baseFile, String snapshotPath, VolumeObjectTO volume) {
         try {
-            primaryPool.createFolder(TemplateConstants.DEFAULT_SNAPSHOT_ROOT_DIR, primaryPoolType == StoragePoolType.SharedMountPoint ? primaryPool.getLocalPath() : null);
+            primaryPool.createFolder(TemplateConstants.DEFAULT_SNAPSHOT_ROOT_DIR);
             Files.copy(Paths.get(baseFile), Paths.get(snapshotPath));
             s_logger.debug(String.format("Copied %s snapshot from [%s] to [%s].", volume, baseFile, snapshotPath));
             return null;

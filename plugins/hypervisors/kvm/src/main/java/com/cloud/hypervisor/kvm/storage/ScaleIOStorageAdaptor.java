@@ -309,7 +309,7 @@ public class ScaleIOStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public boolean createFolder(String uuid, String path, String sharedMountPoint) {
+    public boolean createFolder(String uuid, String path, String localPath) {
         return true;
     }
 

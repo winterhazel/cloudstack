@@ -98,8 +98,15 @@ public class LibvirtStorageAdaptor implements StorageAdaptor {
     }
 
     @Override
-    public boolean createFolder(String uuid, String path, String sharedMountPoint) {
-        String mountPoint = sharedMountPoint == null ? (_mountPoint + File.separator + uuid) : sharedMountPoint;
+    public boolean createFolder(String uuid, String path, String localPath) {
+        String mountPoint = _mountPoint + File.separator + uuid;
+
+        if (localPath != null) {
+            s_logger.debug(String.format("Pool [%s] is a local or shared mount point pool, therefore we will use the local path [%s] to create the folder [%s] (if it not exist).",
+                    uuid, localPath, path));
+
+            mountPoint = localPath;
+        }
 
         File f = new File(mountPoint + File.separator + path);
         if (!f.exists()) {

@@ -74,7 +74,7 @@ public interface StorageAdaptor {
 
     public boolean createFolder(String uuid, String path);
 
-    public boolean createFolder(String uuid, String path, String sharedMountPoint);
+    public boolean createFolder(String uuid, String path, String localPath);
 
     /**
      * Creates disk using template backing.
