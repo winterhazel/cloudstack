@@ -42,127 +42,150 @@ public class LinstorStoragePool implements KVMStoragePool {
 
     @Override
     public KVMPhysicalDisk createPhysicalDisk(String name, QemuImg.PhysicalDiskFormat format,
-                                              Storage.ProvisioningType provisioningType, long size) {
+                                              Storage.ProvisioningType provisioningType, long size)
+    {
         return _storageAdaptor.createPhysicalDisk(name, this, format, provisioningType, size);
     }
 
     @Override
-    public KVMPhysicalDisk createPhysicalDisk(String volumeUuid, Storage.ProvisioningType provisioningType, long size) {
+    public KVMPhysicalDisk createPhysicalDisk(String volumeUuid, Storage.ProvisioningType provisioningType, long size)
+    {
         return _storageAdaptor.createPhysicalDisk(volumeUuid,this, getDefaultFormat(), provisioningType, size);
     }
 
     @Override
-    public boolean connectPhysicalDisk(String volumeUuid, Map<String, String> details) {
+    public boolean connectPhysicalDisk(String volumeUuid, Map<String, String> details)
+    {
         return _storageAdaptor.connectPhysicalDisk(volumeUuid, this, details);
     }
 
     @Override
-    public KVMPhysicalDisk getPhysicalDisk(String volumeUuid) {
+    public KVMPhysicalDisk getPhysicalDisk(String volumeUuid)
+    {
         return _storageAdaptor.getPhysicalDisk(volumeUuid, this);
     }
 
     @Override
-    public boolean disconnectPhysicalDisk(String volumeUuid) {
+    public boolean disconnectPhysicalDisk(String volumeUuid)
+    {
         return _storageAdaptor.disconnectPhysicalDisk(volumeUuid, this);
     }
 
     @Override
-    public boolean deletePhysicalDisk(String volumeUuid, Storage.ImageFormat format) {
+    public boolean deletePhysicalDisk(String volumeUuid, Storage.ImageFormat format)
+    {
         return _storageAdaptor.deletePhysicalDisk(volumeUuid, this, format);
     }
 
     @Override
-    public List<KVMPhysicalDisk> listPhysicalDisks() {
+    public List<KVMPhysicalDisk> listPhysicalDisks()
+    {
         return _storageAdaptor.listPhysicalDisks(_uuid, this);
     }
 
     @Override
-    public String getUuid() {
+    public String getUuid()
+    {
         return _uuid;
     }
 
     @Override
-    public long getCapacity() {
+    public long getCapacity()
+    {
         return ((LinstorStorageAdaptor)_storageAdaptor).getCapacity(this);
     }
 
     @Override
-    public long getUsed() {
+    public long getUsed()
+    {
         return ((LinstorStorageAdaptor)_storageAdaptor).getUsed(this);
     }
 
     @Override
-    public long getAvailable() {
+    public long getAvailable()
+    {
         return ((LinstorStorageAdaptor)_storageAdaptor).getAvailable(this);
     }
 
     @Override
-    public boolean refresh() {
+    public boolean refresh()
+    {
         return _storageAdaptor.refresh(this);
     }
 
     @Override
-    public boolean isExternalSnapshot() {
+    public boolean isExternalSnapshot()
+    {
         return true;
     }
 
     @Override
-    public String getLocalPath() {
+    public String getLocalPath()
+    {
         return null;
     }
 
     @Override
-    public String getSourceHost() {
+    public String getSourceHost()
+    {
         return _sourceHost;
     }
 
     @Override
-    public String getSourceDir() {
+    public String getSourceDir()
+    {
         return null;
     }
 
     @Override
-    public int getSourcePort() {
+    public int getSourcePort()
+    {
         return _sourcePort;
     }
 
     @Override
-    public String getAuthUserName() {
+    public String getAuthUserName()
+    {
         return null;
     }
 
     @Override
-    public String getAuthSecret() {
+    public String getAuthSecret()
+    {
         return null;
     }
 
     @Override
-    public Storage.StoragePoolType getType() {
+    public Storage.StoragePoolType getType()
+    {
         return _storagePoolType;
     }
 
     @Override
-    public boolean delete() {
+    public boolean delete()
+    {
         return _storageAdaptor.deleteStoragePool(this);
     }
 
     @Override
-    public QemuImg.PhysicalDiskFormat getDefaultFormat() {
+    public QemuImg.PhysicalDiskFormat getDefaultFormat()
+    {
         return QemuImg.PhysicalDiskFormat.RAW;
     }
 
     @Override
-    public boolean createFolder(String path) {
+    public boolean createFolder(String path)
+    {
         return _storageAdaptor.createFolder(_uuid, path);
     }
 
     @Override
-    public boolean supportsConfigDriveIso() {
+    public boolean supportsConfigDriveIso()
+    {
         return false;
     }
 
     public String getResourceGroup() {
         return _resourceGroup;
     }
-
 }
