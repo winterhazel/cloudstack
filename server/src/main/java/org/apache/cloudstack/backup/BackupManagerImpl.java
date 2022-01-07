@@ -632,9 +632,9 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         }
         accountManager.checkAccess(CallContext.current().getCallingAccount(), null, true, vmFromBackup);
 
-        Pair<HostVO, String> restoreInfo = getRestoreVolumeHostAndDatastore(vm);
+        Pair<HostVO, StoragePoolVO> restoreInfo = getRestoreVolumeHostAndDatastore(vm);
         HostVO host = restoreInfo.first();
-        String datastoreUuid = restoreInfo.second();
+        StoragePoolVO datastore = restoreInfo.second();
 
         LOG.debug(String.format("Asking provider to restore volume [%s] from backup [%s] (with external ID [%s]) and attach it to VM: [%s].",
                 backedUpVolumeUuid, backupId, backup.getExternalId(), vm.getUuid()));
@@ -646,22 +646,44 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
 
         BackupProvider backupProvider = getBackupProvider(offering.getProvider());
         LOG.debug(String.format("Trying to restore volume using host private IP address: [%s].", host.getPrivateIpAddress()));
-        Pair<Boolean, String> result = null;
-        try {
-            result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, host.getPrivateIpAddress(), datastoreUuid);
-        } catch (Exception e) {
-            LOG.error(String.format("Failed to restore volume using host IP address [%s] due to: [%s].", host.getPrivateIpAddress(), e.getMessage()), e);
-            LOG.debug(String.format("Trying to restore volume using host name: [%s].", host.getName()));
-            result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, host.getName(), datastoreUuid);
-        }
+
+        String[] hostPossibleValues = {host.getPrivateIpAddress(), host.getName()};
+        String[] datastoresPossibleValues = {datastore.getUuid(), datastore.getName()};
+
+        Pair<Boolean, String> result = restoreBackedUpVolume(backedUpVolumeUuid, backup, backupProvider, hostPossibleValues, datastoresPossibleValues);
+
         if (BooleanUtils.isFalse(result.first())) {
-            throw new CloudRuntimeException("Error restoring volume " + backedUpVolumeUuid);
+            throw new CloudRuntimeException(String.format("Error restoring volume [%s] of VM [%s] to host [%s] using backup provider [%s] due to: [%s].",
+                    backedUpVolumeUuid, vm.getUuid(), host.getUuid(), backupProvider.getName(), result.second()));
         }
         if (!attachVolumeToVM(vm.getDataCenterId(), result.second(), vmFromBackup.getBackupVolumeList(),
-                            backedUpVolumeUuid, vm, datastoreUuid, backup)) {
-            throw new CloudRuntimeException("Error attaching volume " + backedUpVolumeUuid + " to VM " + vm.getUuid());
+                            backedUpVolumeUuid, vm, datastore.getUuid(), backup)) {
+            throw new CloudRuntimeException(String.format("Error attaching volume [%s] to VM [%s]." + backedUpVolumeUuid, vm.getUuid()));
         }
         return true;
+    }
+
+    protected Pair<Boolean, String> restoreBackedUpVolume(final String backedUpVolumeUuid, final BackupVO backup, BackupProvider backupProvider, String[] hostPossibleValues,
+            String[] datastoresPossibleValues) {
+        Pair<Boolean, String> result = new  Pair<>(false, "");
+        for (String hostData : hostPossibleValues) {
+            for (String datastoreData : datastoresPossibleValues) {
+                LOG.debug(String.format("Trying to restore volume [UUID: %s], using host [%s] and datastore [%s].",
+                        backedUpVolumeUuid, hostData, datastoreData));
+
+                try {
+                    result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, hostData, datastoreData);
+
+                    if (BooleanUtils.isTrue(result.first())) {
+                        return result;
+                    }
+                } catch (Exception e) {
+                    LOG.debug(String.format("Failed to restore volume [UUID: %s], using host [%s] and datastore [%s] due to: [%s].",
+                            backedUpVolumeUuid, hostData, datastoreData, e.getMessage()), e);
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -700,15 +722,14 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
     /**
      * Get the pair: hostIp, datastoreUuid in which to restore the volume, based on the VM to be attached information
      */
-    private Pair<HostVO, String> getRestoreVolumeHostAndDatastore(VMInstanceVO vm) {
+    private Pair<HostVO, StoragePoolVO> getRestoreVolumeHostAndDatastore(VMInstanceVO vm) {
         List<VolumeVO> rootVmVolume = volumeDao.findIncludingRemovedByInstanceAndType(vm.getId(), Volume.Type.ROOT);
         Long poolId = rootVmVolume.get(0).getPoolId();
         StoragePoolVO storagePoolVO = primaryDataStoreDao.findById(poolId);
-        String datastoreUuid = storagePoolVO.getUuid();
         HostVO hostVO = vm.getHostId() == null ?
                             getFirstHostFromStoragePool(storagePoolVO) :
                             hostDao.findById(vm.getHostId());
-        return new Pair<>(hostVO, datastoreUuid);
+        return new Pair<>(hostVO, storagePoolVO);
     }
 
     /**
