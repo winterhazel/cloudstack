@@ -97,6 +97,7 @@ import com.cloud.storage.StorageLayer;
 import com.cloud.storage.Volume;
 import com.cloud.storage.template.OVAProcessor;
 import com.cloud.template.TemplateManager;
+import com.cloud.utils.LogUtils;
 import com.cloud.utils.Pair;
 import com.cloud.utils.Ternary;
 import com.cloud.utils.exception.CloudRuntimeException;
@@ -1795,14 +1796,14 @@ public class VmwareStorageProcessor implements StorageProcessor {
                 vmMo = clonedVm;
             }
 
-            s_logger.debug(String.format("Exporting volume to export path [%s], with VM config [%s].", exportPath, _gson.toJson(vmMo)));
+            s_logger.debug(LogUtils.logGsonWithoutException("Exporting volume to export path [%s], with VM config [%s].", exportPath, vmMo));
             vmMo.exportVm(exportPath, exportName, false, false);
 
             vmMo.exportVm(exportPath, exportName, false, false);
             return new Pair<>(diskDevice, disks);
         } finally {
             if (clonedVm != null) {
-                s_logger.debug(String.format("Destroying cloned VM [%s].", _gson.toJson(clonedVm)));
+                s_logger.debug(String.format("Destroying cloned VM with name [%s].", clonedVm.getName()));
                 clonedVm.destroy();
             }
         }
@@ -1820,7 +1821,7 @@ public class VmwareStorageProcessor implements StorageProcessor {
 
     @Override
     public Answer backupSnapshot(CopyCommand cmd) {
-        s_logger.debug(String.format("Receive CopyCommand: [%s].", _gson.toJson(cmd)));
+        s_logger.debug(LogUtils.logGsonWithoutException("Receive CopyCommand: [%s].", cmd));
 
         SnapshotObjectTO srcSnapshot = (SnapshotObjectTO)cmd.getSrcTO();
         DataStoreTO primaryStore = srcSnapshot.getDataStore();
@@ -1974,7 +1975,7 @@ public class VmwareStorageProcessor implements StorageProcessor {
 
                 try {
                     if (workerVm != null) {
-                        s_logger.debug(String.format("Detaching disks and destroying worker VM: [%S].", _gson.toJson(workerVm)));
+                        s_logger.debug(String.format("Detaching disks and destroying worker VM with name [%s].", workerVm.getName()));
                         // detach volume and destroy worker vm
                         workerVm.detachAllDisks();
                         workerVm.destroy();
