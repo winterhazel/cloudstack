@@ -274,6 +274,11 @@ public class MockUsageEventDao implements UsageEventDao{
     }
 
     @Override
+    public Pair<List<UsageEventVO>, Integer> searchAndCount(SearchCriteria<UsageEventVO> sc, Filter filter, boolean includeRemoved) {
+        return null;
+    }
+
+    @Override
     public Pair<List<UsageEventVO>, Integer> searchAndDistinctCount(SearchCriteria<UsageEventVO> sc, Filter filter) {
         return null;
     }
