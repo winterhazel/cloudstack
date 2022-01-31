@@ -148,14 +148,12 @@
 import { api } from '@/api'
 import ResourceIcon from '@/components/view/ResourceIcon'
 import TooltipLabel from '@/components/widgets/TooltipLabel'
-import DedicateDomain from '@/components/view/DedicateDomain'
 
 export default {
   name: 'UploadVolume',
   components: {
     ResourceIcon,
-    TooltipLabel,
-    DedicateDomain
+    TooltipLabel
   },
   data () {
     return {
@@ -192,8 +190,8 @@ export default {
       }).finally(() => {
         this.loading = false
       })
-      if ('listAccounts' in this.$store.getters.apis) {
-        this.fetchAccounts()
+      if ('listDomains' in this.$store.getters.apis) {
+        this.fetchDomains()
       }
     },
     fetchDiskOfferings (zoneId) {

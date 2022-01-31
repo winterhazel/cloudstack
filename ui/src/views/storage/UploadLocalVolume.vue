@@ -155,14 +155,12 @@ import { api } from '@/api'
 import { axios } from '../../utils/request'
 import ResourceIcon from '@/components/view/ResourceIcon'
 import TooltipLabel from '@/components/widgets/TooltipLabel'
-import DedicateDomain from '@/components/view/DedicateDomain'
 
 export default {
   name: 'UploadLocalVolume',
   components: {
     ResourceIcon,
-    TooltipLabel,
-    DedicateDomain
+    TooltipLabel
   },
   data () {
     return {
