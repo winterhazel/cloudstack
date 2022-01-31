@@ -53,6 +53,9 @@ public class ReflectionToStringBuilderUtilsTest extends TestCase {
     private String classToReflectRemovedField;
     private String[] classToReflectFieldsNamesArray;
 
+    private static final ToStringStyle DEFAULT_STYLE = ToStringStyle.JSON_STYLE;
+    private static final String DEFAULT_MULTIPLE_VALUES_SEPARATOR = ",";
+
     @Before
     public void setup(){
         classToReflect = String.class;
@@ -328,5 +331,18 @@ public class ReflectionToStringBuilderUtilsTest extends TestCase {
 
         String result = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new Object());
         Assert.assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void reflectCollectionTestCallBaseReflectCollectionMethodWithDefaultParameters() {
+        PowerMockito.spy(ReflectionToStringBuilderUtils.class);
+        PowerMockito.when(ReflectionToStringBuilderUtils.reflectCollection(Mockito.any(), Mockito.any(), Mockito.anyString(), Mockito.any())).thenReturn(null);
+
+        Object object = Mockito.mock(Object.class);
+        ReflectionToStringBuilderUtils.reflectCollection(object);
+
+        PowerMockito.verifyStatic(ReflectionToStringBuilderUtils.class);
+        String[] excludeFields = null;
+        ReflectionToStringBuilderUtils.reflectCollection(object, DEFAULT_STYLE, DEFAULT_MULTIPLE_VALUES_SEPARATOR, excludeFields);
     }
 }
