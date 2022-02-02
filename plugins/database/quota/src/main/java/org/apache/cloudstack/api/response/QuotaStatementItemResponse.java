@@ -18,9 +18,11 @@ package org.apache.cloudstack.api.response;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseResponse;
 
 import com.cloud.serializer.Param;
@@ -54,6 +56,10 @@ public class QuotaStatementItemResponse extends BaseResponse {
     @SerializedName("quota")
     @Param(description = "quota consumed")
     private BigDecimal quotaUsed;
+
+    @SerializedName(ApiConstants.DETAILS)
+    @Param(description = "Item's detail.")
+    private List<QuotaStatementItemDetailResponse> details;
 
     public QuotaStatementItemResponse(final int usageType) {
         this.usageType = usageType;
@@ -115,4 +121,11 @@ public class QuotaStatementItemResponse extends BaseResponse {
         this.quotaUsed = quotaUsed.setScale(2, RoundingMode.HALF_EVEN);
     }
 
+    public List<QuotaStatementItemDetailResponse> getDetails() {
+        return details;
+    }
+
+    public void setDetails(List<QuotaStatementItemDetailResponse> details) {
+        this.details = details;
+    }
 }

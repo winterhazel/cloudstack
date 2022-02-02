@@ -42,26 +42,32 @@ public class QuotaStatementCmd extends BaseCmd {
 
     private static final String s_name = "quotastatementresponse";
 
-    @Parameter(name = ApiConstants.ACCOUNT, type = CommandType.STRING, required = true, description = "Optional, Account Id for which statement needs to be generated")
+    @Parameter(name = ApiConstants.ACCOUNT, type = CommandType.STRING, required = true, description = "Account name for which statement needs to be generated.")
     private String accountName;
 
-    @Parameter(name = ApiConstants.DOMAIN_ID, type = CommandType.UUID, required = true, entityType = DomainResponse.class, description = "Optional, If domain Id is given and the caller is domain admin then the statement is generated for domain.")
+    @Parameter(name = ApiConstants.DOMAIN_ID, type = CommandType.UUID, required = true, entityType = DomainResponse.class, description = "If domain Id is given and the caller is"
+            + " domain admin then the statement is generated for domain.")
     private Long domainId;
 
-    @Parameter(name = ApiConstants.END_DATE, type = CommandType.DATE, required = true, description = "End date range for quota query. Use yyyy-MM-dd as the date format, e.g. startDate=2009-06-03.")
+    @Parameter(name = ApiConstants.END_DATE, type = CommandType.DATE, required = true, description = "End date range for quota query. Use yyyy-MM-dd as the date format, e.g."
+            + " startDate=2009-06-03.")
     private Date endDate;
 
-    @Parameter(name = ApiConstants.START_DATE, type = CommandType.DATE, required = true, description = "Start date range quota query. Use yyyy-MM-dd as the date format, e.g. startDate=2009-06-01.")
+    @Parameter(name = ApiConstants.START_DATE, type = CommandType.DATE, required = true, description = "Start date range quota query. Use yyyy-MM-dd as the date format, e.g."
+            + " startDate=2009-06-01.")
     private Date startDate;
 
-    @Parameter(name = ApiConstants.TYPE, type = CommandType.INTEGER, description = "List quota usage records for the specified usage type")
+    @Parameter(name = ApiConstants.TYPE, type = CommandType.INTEGER, description = "List quota usage records for the specified usage type.")
     private Integer usageType;
 
     @Parameter(name = ApiConstants.ACCOUNT_ID, type = CommandType.UUID, entityType = AccountResponse.class, description = "List usage records for the specified account")
     private Long accountId;
 
+    @Parameter(name = ApiConstants.SHOW_DETAILS, type = CommandType.BOOLEAN, description = "List the details of the quota usage for the usage type.")
+    private boolean showDetails;
+
     @Inject
-    private QuotaResponseBuilder _responseBuilder;
+    protected QuotaResponseBuilder _responseBuilder;
 
     public Long getAccountId() {
         return accountId;
@@ -111,6 +117,14 @@ public class QuotaStatementCmd extends BaseCmd {
         this.startDate = startDate == null ? null : new Date(startDate.getTime());
     }
 
+    public boolean isShowDetails() {
+        return showDetails;
+    }
+
+    public void setShowDetails(boolean showDetails) {
+        this.showDetails = showDetails;
+    }
+
     @Override
     public String getCommandName() {
         return s_name;
@@ -129,7 +143,7 @@ public class QuotaStatementCmd extends BaseCmd {
     public void execute() {
         List<QuotaUsageVO> quotaUsage = _responseBuilder.getQuotaUsage(this);
 
-        QuotaStatementResponse response = _responseBuilder.createQuotaStatementResponse(quotaUsage);
+        QuotaStatementResponse response = _responseBuilder.createQuotaStatementResponse(quotaUsage, this);
         response.setStartDate(startDate == null ? null : new Date(startDate.getTime()));
         response.setEndDate(endDate == null ? null : new Date(endDate.getTime()));
 

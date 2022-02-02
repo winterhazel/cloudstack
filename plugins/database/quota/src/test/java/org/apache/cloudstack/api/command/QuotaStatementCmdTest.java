@@ -16,7 +16,6 @@
 // under the License.
 package org.apache.cloudstack.api.command;
 
-import junit.framework.TestCase;
 import org.apache.cloudstack.api.response.QuotaResponseBuilder;
 import org.apache.cloudstack.api.response.QuotaStatementResponse;
 import org.apache.cloudstack.quota.vo.QuotaUsageVO;
@@ -24,30 +23,30 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QuotaStatementCmdTest extends TestCase {
+public class QuotaStatementCmdTest {
+
     @Mock
-    QuotaResponseBuilder responseBuilder;
+    QuotaResponseBuilder responseBuilderMock;
 
     @Test
-    public void testQuotaStatementCmd() throws NoSuchFieldException, IllegalAccessException {
+    public void executeTestVerifyCalls() throws NoSuchFieldException, IllegalAccessException {
         QuotaStatementCmd cmd = new QuotaStatementCmd();
         cmd.setAccountName("admin");
-
-        Field rbField = QuotaStatementCmd.class.getDeclaredField("_responseBuilder");
-        rbField.setAccessible(true);
-        rbField.set(cmd, responseBuilder);
+        cmd._responseBuilder = responseBuilderMock;
 
         List<QuotaUsageVO> quotaUsageVOList = new ArrayList<QuotaUsageVO>();
-        Mockito.when(responseBuilder.getQuotaUsage(Mockito.eq(cmd))).thenReturn(quotaUsageVOList);
-        Mockito.when(responseBuilder.createQuotaStatementResponse(Mockito.eq(quotaUsageVOList))).thenReturn(new QuotaStatementResponse());
+        Mockito.doReturn(quotaUsageVOList).when(responseBuilderMock).getQuotaUsage(Mockito.any());
+        Mockito.doReturn(new QuotaStatementResponse()).when(responseBuilderMock).createQuotaStatementResponse(Mockito.any(), Mockito.any());
+
         cmd.execute();
-        Mockito.verify(responseBuilder, Mockito.times(1)).getQuotaUsage(Mockito.eq(cmd));
+
+        Mockito.verify(responseBuilderMock).getQuotaUsage(cmd);
+        Mockito.verify(responseBuilderMock).createQuotaStatementResponse(quotaUsageVOList, cmd);
     }
 }
