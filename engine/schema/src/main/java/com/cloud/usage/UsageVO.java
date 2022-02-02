@@ -402,4 +402,13 @@ public class UsageVO implements Usage, InternalIdentity {
     public String toString() {
         return ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "id", "usageId", "usageType", "startDate", "endDate");
     }
+
+    public void setUsageId(Long usageId) {
+        this.usageId = usageId;
+    }
+
+    public void setOfferingId(Long offeringId) {
+        this.offeringId = offeringId;
+    }
+
 }

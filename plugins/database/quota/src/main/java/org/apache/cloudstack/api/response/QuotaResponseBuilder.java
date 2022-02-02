@@ -42,7 +42,7 @@ public interface QuotaResponseBuilder {
 
     QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO configuration);
 
-    QuotaStatementResponse createQuotaStatementResponse(List<QuotaUsageVO> quotaUsage);
+    QuotaStatementResponse createQuotaStatementResponse(List<QuotaUsageVO> quotaUsage, QuotaStatementCmd cmd);
 
     QuotaBalanceResponse createQuotaBalanceResponse(List<QuotaBalanceVO> quotaUsage, Date startDate, Date endDate);
 

@@ -555,4 +555,14 @@ public class UsageDaoImpl extends GenericDaoBase<UsageVO, Long> implements Usage
             return new ArrayList<>();
         }
     }
+
+    @Override
+    public UsageVO findUsageById(Long id) {
+        return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<UsageVO>() {
+            @Override
+            public UsageVO doInTransaction(final TransactionStatus status) {
+                return findById(id);
+            }
+        });
+    }
 }
