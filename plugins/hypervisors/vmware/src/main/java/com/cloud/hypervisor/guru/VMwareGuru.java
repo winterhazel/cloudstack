@@ -72,8 +72,11 @@ import com.cloud.agent.api.to.VolumeTO;
 import com.cloud.cluster.ClusterManager;
 import com.cloud.configuration.Resource;
 import com.cloud.dc.ClusterDetailsDao;
+import com.cloud.event.Event;
 import com.cloud.event.EventTypes;
+import com.cloud.event.EventVO;
 import com.cloud.event.UsageEventUtils;
+import com.cloud.event.dao.EventDao;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.host.Host;
 import com.cloud.host.HostVO;
@@ -125,6 +128,7 @@ import com.cloud.storage.dao.VMTemplatePoolDao;
 import com.cloud.storage.dao.VolumeDao;
 import com.cloud.storage.secondary.SecondaryStorageVmManager;
 import com.cloud.user.ResourceLimitService;
+import com.cloud.utils.LogUtils;
 import com.cloud.utils.Pair;
 import com.cloud.utils.UuidUtils;
 import com.cloud.utils.db.DB;
@@ -160,7 +164,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
 
 
     @Inject VmwareVmImplementer vmwareVmImplementer;
-
+    @Inject EventDao eventDao;
     @Inject NetworkDao _networkDao;
     @Inject GuestOSDao _guestOsDao;
     @Inject HostDao _hostDao;
@@ -784,7 +788,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
                 volume = createVolume(disk, vmToImport, domainId, zoneId, accountId, instanceId, poolId, templateId, backup, true);
                 operation = "created";
             }
-            s_logger.debug(String.format("VM [id: %s, instanceName: %s] backup restore operation %s volume [id: %s].", instanceId, vmInstanceVO.getInstanceName(),
+            s_logger.debug(String.format("Sync volumes to VM [id: %s, instanceName: %s] in backup restore operation: %s volume [id: %s].", instanceId, vmInstanceVO.getInstanceName(),
                     operation, volume.getUuid()));
         }
     }
@@ -882,9 +886,13 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         String tag = parts[parts.length - 1];
         String[] tagSplit = tag.split("-");
         tag = tagSplit[tagSplit.length - 1];
+
+        s_logger.debug(String.format("Trying to find network with vlan: [%s].", vlan));
         NetworkVO networkVO = _networkDao.findByVlan(vlan);
         if (networkVO == null) {
             networkVO = createNetworkRecord(zoneId, tag, vlan, accountId, domainId);
+            s_logger.debug(String.format("Created new network record [id: %s] with details [zoneId: %s, tag: %s, vlan: %s, accountId: %s and domainId: %s].",
+                    networkVO.getUuid(), zoneId, tag, vlan, accountId, domainId));
         }
         return networkVO;
     }
@@ -896,6 +904,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         Map<String, NetworkVO> mapping = new HashMap<>();
         for (String networkName : vmNetworkNames) {
             NetworkVO networkVO = getGuestNetworkFromNetworkMorName(networkName, accountId, zoneId, domainId);
+            s_logger.debug(String.format("Mapping network name [%s] to networkVO [id: %s].", networkName, networkVO.getUuid()));
             mapping.put(networkName, networkVO);
         }
         return mapping;
@@ -923,8 +932,12 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
     }
 
     private void syncVMNics(VirtualDevice[] nicDevices, DatacenterMO dcMo, Map<String, NetworkVO> networksMapping, VMInstanceVO vm) throws Exception {
+        s_logger.debug(String.format("Trying to sync NICs of backup restored VM [id: %s, name: %s].", vm.getUuid(), vm.getInstanceName()));
         VmwareContext context = dcMo.getContext();
         List<NicVO> allNics = _nicDao.listByVmId(vm.getId());
+
+        LogUtils.logGsonWithoutException("Need to sync NICs in DB [%s] with NICs devices from restore [%s] to VM [id: %s, name: %s].",
+                allNics, nicDevices, vm.getUuid(), vm.getInstanceName());
         for (VirtualDevice nicDevice : nicDevices) {
             Pair<String, String> pair = getNicMacAddressAndNetworkName(nicDevice, context);
             String macAddress = pair.first();
@@ -932,10 +945,15 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
             NetworkVO networkVO = networksMapping.get(networkName);
             NicVO nicVO = _nicDao.findByNetworkIdAndMacAddress(networkVO.getId(), macAddress);
             if (nicVO != null) {
+                s_logger.warn(String.format("Can't find NIC in DB with networkId [%s] and MAC Address [%s], so this NIC will be removed from VM [id: %s, name: %s].",
+                        networkVO.getId(), macAddress, vm.getUuid(), vm.getInstanceName()));
                 allNics.remove(nicVO);
             }
         }
+
         for (final NicVO unMappedNic : allNics) {
+            s_logger.trace(String.format("Removing NIC [id: %s, MAC: %s] from backup restored VM [id: %s, name: %s].",
+                    unMappedNic.getUuid(), unMappedNic.getMacAddress(), vm.getUuid(), vm.getInstanceName()));
             vmManager.removeNicFromVm(vm, unMappedNic);
         }
     }
@@ -1045,6 +1063,10 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         }
         VirtualMachineConfigSummary configSummary = vmToImport.getConfigSummary();
         VirtualMachineRuntimeInfo runtimeInfo = vmToImport.getRuntimeInfo();
+
+        String msg = "Trying to import VM [%s] with config summary [%s] and runtime info [%s].";
+        LogUtils.logGsonWithoutException(msg , vmToImport, configSummary, runtimeInfo);
+
         List<VirtualDisk> virtualDisks = vmToImport.getVirtualDisks();
         String[] vmNetworkNames = vmToImport.getNetworks();
         VirtualDevice[] nicDevices = vmToImport.getNicDevices();
@@ -1060,7 +1082,27 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         syncVMVolumes(vm, virtualDisks, disksMapping, vmToImport, backup);
         syncVMNics(nicDevices, dcMo, networksMapping, vm);
 
+        createEventWhenRestoredVmHasNoNics(domainId, accountId, userId, vm);
         return vm;
+    }
+
+    private void createEventWhenRestoredVmHasNoNics(long domainId, long accountId, long userId, VMInstanceVO vm) {
+        if (CollectionUtils.isNotEmpty(_nicDao.listByVmId(vm.getId()))) {
+            return;
+        }
+
+        String msg = String.format("After sync of NICs, in restored from backup VM [id: %s, name: %s], the VM has no NIC!", vm.getUuid(), vm.getInstanceName());
+        s_logger.warn(msg);
+        EventVO event = new EventVO();
+        event.setUserId(userId);
+        event.setAccountId(accountId);
+        event.setType(EventTypes.EVENT_VM_BACKUP_RESTORE);
+        event.setState(Event.State.Completed);
+        event.setDescription(msg);
+        event.setDisplay(true);
+        event.setDomainId(domainId);
+        event.setLevel(EventVO.LEVEL_WARN);
+        eventDao.persist(event);
     }
 
     @Override
