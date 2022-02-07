@@ -91,13 +91,13 @@ public class VmMetricsResponse extends UserVmResponse {
 
     public void setDiskRead(final Long diskReadKbs) {
         if (diskReadKbs != null) {
-            this.networkRead = String.format("%.2f MB", diskReadKbs / 1024.0);
+            this.diskRead = String.format("%.2f MB", diskReadKbs / 1024.0);
         }
     }
 
     public void setDiskWrite(final Long diskWriteKbs) {
         if (diskWriteKbs != null) {
-            this.networkWrite = String.format("%.2f MB", diskWriteKbs / 1024.0);
+            this.diskWrite = String.format("%.2f MB", diskWriteKbs / 1024.0);
         }
     }
 
