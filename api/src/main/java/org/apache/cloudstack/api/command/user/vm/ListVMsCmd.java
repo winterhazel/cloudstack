@@ -34,6 +34,7 @@ import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiCommandJobType;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.ApiConstants.VMDetails;
+import org.apache.cloudstack.api.BaseCmd.CommandType;
 import org.apache.cloudstack.api.BaseListTaggedResourcesCmd;
 import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.ResponseObject.ResponseView;
@@ -151,6 +152,11 @@ public class ListVMsCmd extends BaseListTaggedResourcesCmd implements UserCmd {
     @Parameter(name = ApiConstants.SHOW_RESOURCE_ICON, type = CommandType.BOOLEAN,
             description = "flag to display the resource icon for VMs", since = "4.16.0.0")
     private Boolean showIcon;
+
+    @Parameter(name = ApiConstants.ACCUMULATE, type = CommandType.BOOLEAN,
+            description = "Accumulates the VM metrics data instead of returning only the most recent data collected. The default behavior is set by the global configuration vm.stats.increment.metrics.",
+            since = "4.16.0.4")
+    private Boolean accumulate;
 
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
@@ -270,6 +276,10 @@ public class ListVMsCmd extends BaseListTaggedResourcesCmd implements UserCmd {
 
     public Boolean getShowIcon() {
         return showIcon != null ? showIcon : false;
+    }
+
+    public Boolean getAccumulate() {
+        return accumulate;
     }
 
     /////////////////////////////////////////////////////
