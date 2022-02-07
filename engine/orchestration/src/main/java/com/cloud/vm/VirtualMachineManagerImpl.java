@@ -1904,7 +1904,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         advanceStop(vm, cleanUpEvenIfUnableToStop);
     }
 
-    private void updatePersistenceMap(Map<String, Boolean> vlanToPersistenceMap, NetworkVO networkVO) {
+    protected void updatePersistenceMap(Map<String, Boolean> vlanToPersistenceMap, NetworkVO networkVO) {
         NetworkOfferingVO offeringVO = networkOfferingDao.findById(networkVO.getNetworkOfferingId());
         if (offeringVO != null) {
             Pair<String, Boolean> data = getVMNetworkDetails(networkVO, offeringVO.isPersistent());
@@ -1921,17 +1921,25 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         if (userVmJoinVOs != null && !userVmJoinVOs.isEmpty()) {
             for (UserVmJoinVO userVmJoinVO : userVmJoinVOs) {
                 NetworkVO networkVO = _networkDao.findById(userVmJoinVO.getNetworkId());
-                updatePersistenceMap(vlanToPersistenceMap, networkVO);
+                verifyAndUpdatePersistenceMap("User", vmId, vlanToPersistenceMap, networkVO);
             }
         } else {
             VMInstanceVO vmInstanceVO = _vmDao.findById(vmId);
             if (vmInstanceVO != null && vmInstanceVO.getType() == VirtualMachine.Type.DomainRouter) {
                 DomainRouterJoinVO routerVO = domainRouterJoinDao.findById(vmId);
                 NetworkVO networkVO = _networkDao.findById(routerVO.getNetworkId());
-                updatePersistenceMap(vlanToPersistenceMap, networkVO);
+                verifyAndUpdatePersistenceMap("Router", routerVO.getId(), vlanToPersistenceMap, networkVO);
             }
         }
         return vlanToPersistenceMap;
+    }
+
+    protected void verifyAndUpdatePersistenceMap(String vmType, long vmId, Map<String, Boolean> vlanToPersistenceMap, NetworkVO networkVO) {
+        if (networkVO != null) {
+            updatePersistenceMap(vlanToPersistenceMap, networkVO);
+        } else {
+            s_logger.debug(String.format("%s VM with ID [%s] have a null network. Skipping this network and not updating persistence Map.", vmType, vmId)) ;
+        }
     }
 
     /**

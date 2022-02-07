@@ -35,6 +35,7 @@ import com.cloud.exception.InvalidParameterValueException;
 import org.apache.cloudstack.engine.subsystem.api.storage.StoragePoolAllocator;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
+import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +46,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.powermock.reflect.Whitebox;
 
 import com.cloud.agent.AgentManager;
 import com.cloud.agent.api.Command;
@@ -56,6 +58,7 @@ import com.cloud.deploy.DeploymentPlanner;
 import com.cloud.deploy.DeploymentPlanner.ExcludeList;
 import com.cloud.host.HostVO;
 import com.cloud.hypervisor.Hypervisor.HypervisorType;
+import com.cloud.network.dao.NetworkVO;
 import com.cloud.hypervisor.HypervisorGuru;
 import com.cloud.service.ServiceOfferingVO;
 import com.cloud.service.dao.ServiceOfferingDao;
@@ -94,6 +97,9 @@ public class VirtualMachineManagerImplTest {
 
     @Mock
     private ServiceOfferingVO serviceOfferingMock;
+
+    @Mock
+    Logger loggerMock;
 
     private long hostMockId = 1L;
     @Mock
@@ -673,6 +679,28 @@ public class VirtualMachineManagerImplTest {
     @Test (expected = InvalidParameterValueException.class)
     public void checkIfNewOfferingStorageScopeMatchesStoragePoolTestSharedLocal() {
         prepareAndRunCheckIfNewOfferingStorageScopeMatchesStoragePool(false, true);
+    }
+
+    @Test
+    public void verifyAndUpdatePersistenceMapTestLogNullNetwork() {
+        Map<String, Boolean> vlanToPersistenceMap = new HashMap<>();
+        Whitebox.setInternalState(virtualMachineManagerImpl.getClass(), "s_logger", loggerMock);
+
+        virtualMachineManagerImpl.verifyAndUpdatePersistenceMap("Test", vmInstanceVoMockId, vlanToPersistenceMap, null);
+        Mockito.verify(loggerMock, Mockito.times(1)).debug(Mockito.eq("Test VM with ID [1] have a null network. Skipping this network and not updating persistence Map."));
+    }
+
+    @Test
+    public void verifyAndUpdatePersistenceMapTestUpdateMap() {
+        Mockito.doNothing().when(virtualMachineManagerImpl).updatePersistenceMap(Mockito.any(), Mockito.any());
+        Whitebox.setInternalState(virtualMachineManagerImpl.getClass(), "s_logger", loggerMock);
+
+        Map<String, Boolean> vlanToPersistenceMap = new HashMap<>();
+        NetworkVO networkVO = new NetworkVO();
+
+        virtualMachineManagerImpl.verifyAndUpdatePersistenceMap("Test", vmInstanceVoMockId, vlanToPersistenceMap, networkVO);
+        Mockito.verify(virtualMachineManagerImpl, Mockito.times(1)).updatePersistenceMap(Mockito.eq(vlanToPersistenceMap), Mockito.eq(networkVO));
+        Mockito.verify(loggerMock, Mockito.times(0)).debug(Mockito.any());
     }
 
     private void prepareAndRunCheckIfNewOfferingStorageScopeMatchesStoragePool(boolean isRootOnLocal, boolean isOfferingUsingLocal) {
