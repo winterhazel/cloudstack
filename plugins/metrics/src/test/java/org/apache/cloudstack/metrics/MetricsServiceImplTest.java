@@ -1,6 +1,5 @@
 package org.apache.cloudstack.metrics;
 
-import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,11 +78,6 @@ public class MetricsServiceImplTest {
     @Mock
     VmStatsVO vmStatsVOMock;
 
-    private void prepareSearchCriteriaMock() {
-        Mockito.doNothing().when(scMock).addOr(Mockito.anyString(), Mockito.any(), Mockito.anyString());
-        Mockito.doNothing().when(scMock).addAnd(Mockito.anyString(), Mockito.any(), Mockito.any());
-    }
-
     private void prepareSearchCriteriaWhenUseSetParameters() {
         Mockito.doNothing().when(scMock).setParameters(Mockito.anyString(), Mockito.any());
     }
@@ -115,9 +109,9 @@ public class MetricsServiceImplTest {
         Pair<List<UserVmVO>, Integer> result = spy.searchForUserVmsInternal(listVMsUsageHistoryCmdMock);
 
         Mockito.verify(scMock).setParameters(stringCaptor1.capture(), objectArrayCaptor.capture());
-        assertEquals("idIN", stringCaptor1.getValue());
-        assertEquals(Arrays.asList(fakeVmId1), objectArrayCaptor.getAllValues());
-        assertEquals(expectedVmListAndCounter, result);
+        Assert.assertEquals("idIN", stringCaptor1.getValue());
+        Assert.assertEquals(Arrays.asList(fakeVmId1), objectArrayCaptor.getAllValues());
+        Assert.assertEquals(expectedVmListAndCounter, result);
     }
 
     @Test
@@ -133,9 +127,9 @@ public class MetricsServiceImplTest {
         Pair<List<UserVmVO>, Integer> result = spy.searchForUserVmsInternal(listVMsUsageHistoryCmdMock);
 
         Mockito.verify(scMock).setParameters(stringCaptor1.capture(), objectArrayCaptor.capture());
-        assertEquals("idIN", stringCaptor1.getValue());
-        assertEquals(expected, objectArrayCaptor.getAllValues());
-        assertEquals(expectedVmListAndCounter, result);
+        Assert.assertEquals("idIN", stringCaptor1.getValue());
+        Assert.assertEquals(expected, objectArrayCaptor.getAllValues());
+        Assert.assertEquals(expectedVmListAndCounter, result);
     }
 
     @Test
@@ -150,9 +144,9 @@ public class MetricsServiceImplTest {
         Pair<List<UserVmVO>, Integer> result = spy.searchForUserVmsInternal(listVMsUsageHistoryCmdMock);
 
         Mockito.verify(scMock).setParameters(stringCaptor1.capture(), objectArrayCaptor.capture());
-        assertEquals("displayName", stringCaptor1.getValue());
-        assertEquals("%fakeName%", objectArrayCaptor.getValue());
-        assertEquals(expectedVmListAndCounter, result);
+        Assert.assertEquals("displayName", stringCaptor1.getValue());
+        Assert.assertEquals("%fakeName%", objectArrayCaptor.getValue());
+        Assert.assertEquals(expectedVmListAndCounter, result);
     }
 
     @Test
@@ -170,11 +164,11 @@ public class MetricsServiceImplTest {
         Mockito.verify(scMock, Mockito.times(2)).addOr(stringCaptor1.capture(), opCaptor.capture(), objectArrayCaptor.capture());
         List<String> conditions = stringCaptor1.getAllValues();
         List<Object[]> params = objectArrayCaptor.getAllValues();
-        assertEquals("displayName", conditions.get(0));
-        assertEquals("state", conditions.get(1));
-        assertEquals("%fakeKeyword%", params.get(0));
-        assertEquals("fakeKeyword", params.get(1));
-        assertEquals(expectedVmListAndCounter, result);
+        Assert.assertEquals("displayName", conditions.get(0));
+        Assert.assertEquals("state", conditions.get(1));
+        Assert.assertEquals("%fakeKeyword%", params.get(0));
+        Assert.assertEquals("fakeKeyword", params.get(1));
+        Assert.assertEquals(expectedVmListAndCounter, result);
     }
 
     @Test
