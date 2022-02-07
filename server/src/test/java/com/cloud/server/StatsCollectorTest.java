@@ -19,7 +19,6 @@
 package com.cloud.server;
 
 
-import static org.junit.Assert.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -296,9 +295,9 @@ public class StatsCollectorTest {
 
         Mockito.verify(vmStatsDaoMock).persist(vmStatsVOCaptor.capture());
         VmStatsVO actual = vmStatsVOCaptor.getAllValues().get(0);
-        assertEquals(Long.valueOf(2L), actual.getVmId());
-        assertEquals(Long.valueOf(1L), actual.getMgmtServerId());
-        assertEquals(timestamp, actual.getTimestamp());
+        Assert.assertEquals(Long.valueOf(2L), actual.getVmId());
+        Assert.assertEquals(Long.valueOf(1L), actual.getMgmtServerId());
+        Assert.assertEquals(timestamp, actual.getTimestamp());
     }
 
     @Test
@@ -307,7 +306,7 @@ public class StatsCollectorTest {
 
         VmStats result = statsCollector.getVmStats(1L, accumulateMock);
 
-        assertEquals(null, result);
+        Assert.assertEquals(null, result);
     }
 
     @Test
@@ -320,8 +319,8 @@ public class StatsCollectorTest {
 
         Mockito.verify(statsCollector).getLatestOrAccumulatedVmMetricsStats(Mockito.anyList(), booleanCaptor.capture());
         boolean actualArg = booleanCaptor.getValue().booleanValue();
-        assertEquals(false, actualArg);
-        assertEquals(vmStatsEntryMock, result);
+        Assert.assertEquals(false, actualArg);
+        Assert.assertEquals(vmStatsEntryMock, result);
     }
 
     @Test
@@ -334,8 +333,8 @@ public class StatsCollectorTest {
 
         Mockito.verify(statsCollector).getLatestOrAccumulatedVmMetricsStats(Mockito.anyList(), booleanCaptor.capture());
         boolean actualArg = booleanCaptor.getValue().booleanValue();
-        assertEquals(true, actualArg);
-        assertEquals(vmStatsEntryMock, result);
+        Assert.assertEquals(true, actualArg);
+        Assert.assertEquals(vmStatsEntryMock, result);
     }
 
     @Test
@@ -370,18 +369,18 @@ public class StatsCollectorTest {
         VmStatsEntry result = statsCollector.accumulateVmMetricsStats(new ArrayList<VmStatsVO>(
                 Arrays.asList(vmStatsVoMock1, vmStatsVoMock2)));
 
-        assertEquals("vm", result.getEntityType());
-        assertEquals(1, result.getVmId());
-        assertEquals(1.0, result.getCPUUtilization(), 0);
-        assertEquals(1, result.getNumCPUs());
-        assertEquals(1.0, result.getMemoryKBs(), 0);
-        assertEquals(1.0, result.getIntFreeMemoryKBs(), 0);
-        assertEquals(1.0, result.getTargetMemoryKBs(), 0);
-        assertEquals(2.0, result.getNetworkReadKBs(), 0);
-        assertEquals(2.2, result.getNetworkWriteKBs(), 0);
-        assertEquals(4.0, result.getDiskReadKBs(), 0);
-        assertEquals(4.2, result.getDiskWriteKBs(), 0);
-        assertEquals(6.0, result.getDiskReadIOs(), 0);
-        assertEquals(6.2, result.getDiskWriteIOs(), 0);
+        Assert.assertEquals("vm", result.getEntityType());
+        Assert.assertEquals(1, result.getVmId());
+        Assert.assertEquals(1.0, result.getCPUUtilization(), 0);
+        Assert.assertEquals(1, result.getNumCPUs());
+        Assert.assertEquals(1.0, result.getMemoryKBs(), 0);
+        Assert.assertEquals(1.0, result.getIntFreeMemoryKBs(), 0);
+        Assert.assertEquals(1.0, result.getTargetMemoryKBs(), 0);
+        Assert.assertEquals(2.0, result.getNetworkReadKBs(), 0);
+        Assert.assertEquals(2.2, result.getNetworkWriteKBs(), 0);
+        Assert.assertEquals(4.0, result.getDiskReadKBs(), 0);
+        Assert.assertEquals(4.2, result.getDiskWriteKBs(), 0);
+        Assert.assertEquals(6.0, result.getDiskReadIOs(), 0);
+        Assert.assertEquals(6.2, result.getDiskWriteIOs(), 0);
     }
 }

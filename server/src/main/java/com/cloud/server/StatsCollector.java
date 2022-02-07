@@ -308,8 +308,8 @@ public class StatsCollector extends ManagerBase implements ComponentMethodInterc
     private ConcurrentHashMap<Long, StorageStats> _storageStats = new ConcurrentHashMap<Long, StorageStats>();
     private ConcurrentHashMap<Long, StorageStats> _storagePoolStats = new ConcurrentHashMap<Long, StorageStats>();
 
-    private final long DEFAULT_INITIAL_DELAY = 15000L;
-    
+    private static final long DEFAULT_INITIAL_DELAY = 15000L;
+
     private long hostStatsInterval = -1L;
     private long vmStatsInterval = -1L;
     private long storageStatsInterval = -1L;
