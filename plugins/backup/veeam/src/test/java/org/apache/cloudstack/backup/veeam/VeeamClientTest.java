@@ -52,7 +52,7 @@ public class VeeamClientTest {
                         .withStatus(201)
                         .withHeader("X-RestSvcSessionId", "some-session-auth-id")
                         .withBody("")));
-        client = new VeeamClient("http://localhost:9399/api/", adminUsername, adminPassword, true, 60);
+        client = new VeeamClient("http://localhost:9399/api/", adminUsername, adminPassword, true, 60, 600);
     }
 
     @Test

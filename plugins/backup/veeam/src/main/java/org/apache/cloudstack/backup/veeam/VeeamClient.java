@@ -95,10 +95,13 @@ public class VeeamClient {
     private String veeamServerUsername;
     private String veeamServerPassword;
     private String veeamSessionId = null;
+    private int restoreTimeout;
     private final int veeamServerPort = 22;
 
-    public VeeamClient(final String url, final String username, final String password, final boolean validateCertificate, final int timeout) throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
+    public VeeamClient(final String url, final String username, final String password, final boolean validateCertificate, final int timeout,
+            final int restoreTimeout) throws URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
         this.apiURI = new URI(url);
+        this.restoreTimeout = restoreTimeout;
 
         final RequestConfig config = RequestConfig.custom()
                 .setConnectTimeout(timeout * 1000)
@@ -298,14 +301,15 @@ public class VeeamClient {
                         String type = pair.second();
                         String path = url.replace(apiURI.toString(), "");
                         if (type.equals("RestoreSession")) {
-                            for (int j = 0; j < 120; j++) {
+                            for (int j = 0; j < restoreTimeout; j++) {
                                 HttpResponse relatedResponse = get(path);
                                 RestoreSession session = parseRestoreSessionResponse(relatedResponse);
                                 if (session.getResult().equals("Success")) {
                                     return true;
                                 }
+                                LOG.trace(String.format("Waiting %s seconds, out of a total of %s seconds, for the backup process to finish.", j, restoreTimeout));
                                 try {
-                                    Thread.sleep(5000);
+                                    Thread.sleep(1000);
                                 } catch (InterruptedException ignored) {
                                 }
                             }
