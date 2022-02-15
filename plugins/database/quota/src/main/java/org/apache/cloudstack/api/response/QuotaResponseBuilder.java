@@ -20,6 +20,7 @@ import org.apache.cloudstack.api.command.QuotaBalanceCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaStatementCmd;
+import org.apache.cloudstack.api.command.QuotaSummaryCmd;
 import org.apache.cloudstack.api.command.QuotaTariffCreateCmd;
 import org.apache.cloudstack.api.command.QuotaTariffListCmd;
 import org.apache.cloudstack.api.command.QuotaTariffUpdateCmd;
@@ -44,15 +45,9 @@ public interface QuotaResponseBuilder {
 
     QuotaStatementResponse createQuotaStatementResponse(List<QuotaUsageVO> quotaUsage, QuotaStatementCmd cmd);
 
-    QuotaBalanceResponse createQuotaBalanceResponse(List<QuotaBalanceVO> quotaUsage, Date startDate, Date endDate);
+    QuotaBalanceResponse createQuotaBalanceResponse(QuotaBalanceCmd cmd);
 
-    Pair<List<QuotaSummaryResponse>, Integer> createQuotaSummaryResponse(Boolean listAll);
-
-    Pair<List<QuotaSummaryResponse>, Integer> createQuotaSummaryResponse(Boolean listAll, String keyword, Long startIndex, Long pageSize);
-
-    Pair<List<QuotaSummaryResponse>, Integer> createQuotaSummaryResponse(String accountName, Long domainId);
-
-    QuotaBalanceResponse createQuotaLastBalanceResponse(List<QuotaBalanceVO> quotaBalance, Date startDate);
+    Pair<List<QuotaSummaryResponse>, Integer> createQuotaSummaryResponse(QuotaSummaryCmd cmd);
 
     List<QuotaUsageVO> getQuotaUsage(QuotaStatementCmd cmd);
 

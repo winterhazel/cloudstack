@@ -18,7 +18,6 @@ package org.apache.cloudstack.api.response;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -42,8 +41,8 @@ public class QuotaSummaryResponse extends BaseResponse {
     private String domainId;
 
     @SerializedName("domain")
-    @Param(description = "domain name")
-    private String domainName;
+    @Param(description = "domain path")
+    private String domainPath;
 
     @SerializedName("balance")
     @Param(description = "account balance")
@@ -52,18 +51,6 @@ public class QuotaSummaryResponse extends BaseResponse {
     @SerializedName("state")
     @Param(description = "account state")
     private State state;
-
-    @SerializedName("quota")
-    @Param(description = "quota usage of this period")
-    private BigDecimal quotaUsage;
-
-    @SerializedName("startdate")
-    @Param(description = "start date")
-    private Date startDate = null;
-
-    @SerializedName("enddate")
-    @Param(description = "end date")
-    private Date endDate = null;
 
     @SerializedName("currency")
     @Param(description = "currency")
@@ -97,16 +84,12 @@ public class QuotaSummaryResponse extends BaseResponse {
         this.domainId = domainId;
     }
 
-    public String getDomainName() {
-        return domainName;
+    public String getDomainPath() {
+        return domainPath;
     }
 
-    public void setDomainName(String domainName) {
-        this.domainName = domainName;
-    }
-
-    public BigDecimal getQuotaUsage() {
-        return quotaUsage;
+    public void setDomainPath(String domainPath) {
+        this.domainPath = domainPath;
     }
 
     public State getState() {
@@ -117,32 +100,12 @@ public class QuotaSummaryResponse extends BaseResponse {
         this.state = state;
     }
 
-    public void setQuotaUsage(BigDecimal startQuota) {
-        this.quotaUsage = startQuota.setScale(2, RoundingMode.HALF_EVEN);
-    }
-
     public BigDecimal getBalance() {
         return balance;
     }
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance.setScale(2, RoundingMode.HALF_EVEN);
-    }
-
-    public Date getStartDate() {
-        return startDate == null ?  null : new Date(startDate.getTime());
-    }
-
-    public void setStartDate(Date startDate) {
-        this.startDate =  startDate == null ?  null : new Date(startDate.getTime());
-    }
-
-    public Date getEndDate() {
-        return  endDate == null ?  null : new Date(endDate.getTime());
-    }
-
-    public void setEndDate(Date endDate) {
-        this.endDate = endDate == null ?  null : new Date(endDate.getTime());
     }
 
     public String getCurrency() {

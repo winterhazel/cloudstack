@@ -16,7 +16,9 @@
 //under the License.
 package org.apache.cloudstack.api.response;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Date;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -24,30 +26,38 @@ import org.apache.cloudstack.api.BaseResponse;
 
 import com.cloud.serializer.Param;
 
-public class QuotaBalanceResponse extends BaseResponse {
+public class QuotaDailyBalanceResponse extends BaseResponse {
 
-    @SerializedName("currency")
-    @Param(description = "Balances' currency.")
-    private String currency;
+    @SerializedName("date")
+    @Param(description = "Balance's date.")
+    private Date date = null;
 
-    @SerializedName("dailybalances")
-    @Param(description = "Daily balances.")
-    private List<QuotaDailyBalanceResponse> dailyBalances;
+    @SerializedName("balance")
+    @Param(description = "Balance's value.")
+    private BigDecimal balance = null;
 
-    public String getCurrency() {
-        return currency;
+    public Date getDate() {
+        return date;
     }
 
-    public void setCurrency(String currency) {
-        this.currency = currency;
+    public void setDate(Date date) {
+        this.date = date;
     }
 
-    public List<QuotaDailyBalanceResponse> getDailyBalances() {
-        return dailyBalances;
+    public BigDecimal getBalance() {
+        return balance;
     }
 
-    public void setDailyBalances(List<QuotaDailyBalanceResponse> dailyBalances) {
-        this.dailyBalances = dailyBalances;
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance.setScale(2, RoundingMode.HALF_EVEN);
+    }
+
+    public QuotaDailyBalanceResponse() {
+    }
+
+    public QuotaDailyBalanceResponse(Date date, BigDecimal balance) {
+        setDate(date);
+        setBalance(balance);
     }
 
 }

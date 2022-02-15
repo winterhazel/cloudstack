@@ -194,7 +194,7 @@ public class QuotaManagerImpl extends ManagerBase implements QuotaManager {
             startDate = quotaUsageStartDate;
             endDate = quotaUsageEndDate;
 
-            QuotaBalanceVO lastRealBalanceEntry = _quotaBalanceDao.findLastBalanceEntry(accountId, domainId, endDate);
+            QuotaBalanceVO lastRealBalanceEntry = _quotaBalanceDao.getLastQuotaBalanceEntry(accountId, domainId, endDate);
             Date lastBalanceDate = new Date(0);
 
             if (lastRealBalanceEntry != null) {
@@ -221,7 +221,7 @@ public class QuotaManagerImpl extends ManagerBase implements QuotaManager {
             s_logger.debug(String.format("Persisting the first quota balance [%s] for account [%s].", firstBalance, accountToString));
             _quotaBalanceDao.saveQuotaBalance(firstBalance);
         } else {
-            QuotaBalanceVO lastRealBalance = _quotaBalanceDao.findLastBalanceEntry(accountId, domainId, endDate);
+            QuotaBalanceVO lastRealBalance = _quotaBalanceDao.getLastQuotaBalanceEntry(accountId, domainId, endDate);
 
             if (lastRealBalance != null) {
                 aggregatedUsage = aggregatedUsage.add(lastRealBalance.getCreditBalance());
@@ -252,7 +252,7 @@ public class QuotaManagerImpl extends ManagerBase implements QuotaManager {
     }
 
     protected BigDecimal aggregateCreditBetweenDates(Long accountId, Long domainId, Date startDate, Date endDate, String accountToString) {
-        List<QuotaBalanceVO> creditsReceived = _quotaBalanceDao.findCreditBalance(accountId, domainId, startDate, endDate);
+        List<QuotaBalanceVO> creditsReceived = _quotaBalanceDao.findCreditBalances(accountId, domainId, startDate, endDate);
         s_logger.debug(String.format("Account [%s] has [%s] credit entries before [%s].", accountToString, creditsReceived.size(), endDate));
 
         BigDecimal aggregatedUsage = BigDecimal.ZERO;

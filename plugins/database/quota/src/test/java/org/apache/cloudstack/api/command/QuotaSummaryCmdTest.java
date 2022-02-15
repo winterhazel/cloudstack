@@ -17,33 +17,33 @@
 
 package org.apache.cloudstack.api.command;
 
-import org.apache.cloudstack.api.response.QuotaBalanceResponse;
-import org.apache.cloudstack.api.response.QuotaResponseBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QuotaBalanceCmdTest {
+public class QuotaSummaryCmdTest {
 
-    @Mock
-    QuotaResponseBuilder quotaResponseBuilderMock;
-
-    @InjectMocks
-    QuotaBalanceCmd quotaBalanceCmdSpy = Mockito.spy(QuotaBalanceCmd.class);
+    QuotaSummaryCmd quotaSummaryCmdSpy = Mockito.spy(QuotaSummaryCmd.class);
 
     @Test
-    public void executeTestSetResponseObject() {
-        QuotaBalanceResponse expected = new QuotaBalanceResponse();
-
-        Mockito.doReturn(expected).when(quotaResponseBuilderMock).createQuotaBalanceResponse(Mockito.eq(quotaBalanceCmdSpy));
-
-        quotaBalanceCmdSpy.execute();
-
-        Assert.assertEquals(expected, quotaBalanceCmdSpy.getResponseObject());
+    public void isListAllTestNullReturnsFalse() {
+        quotaSummaryCmdSpy.setListAll(null);
+        Assert.assertFalse(quotaSummaryCmdSpy.isListAll());
     }
+
+    @Test
+    public void isListAllTestFalseReturnsFalse() {
+        quotaSummaryCmdSpy.setListAll(false);
+        Assert.assertFalse(quotaSummaryCmdSpy.isListAll());
+    }
+
+    @Test
+    public void isListAllTestTrueReturnsTrue() {
+        quotaSummaryCmdSpy.setListAll(true);
+        Assert.assertTrue(quotaSummaryCmdSpy.isListAll());
+    }
+
 }
