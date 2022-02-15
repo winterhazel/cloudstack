@@ -15,35 +15,27 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package org.apache.cloudstack.api.command;
+package org.apache.cloudstack.api.response;
 
-import org.apache.cloudstack.api.response.QuotaBalanceResponse;
-import org.apache.cloudstack.api.response.QuotaResponseBuilder;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class QuotaBalanceCmdTest {
-
-    @Mock
-    QuotaResponseBuilder quotaResponseBuilderMock;
-
-    @InjectMocks
-    QuotaBalanceCmd quotaBalanceCmdSpy = Mockito.spy(QuotaBalanceCmd.class);
+public class QuotaDailyBalanceResponseTest {
 
     @Test
-    public void executeTestSetResponseObject() {
-        QuotaBalanceResponse expected = new QuotaBalanceResponse();
+    public void setBalanceTestRoundValue() {
+        BigDecimal value = new BigDecimal(1234.560789);
+        BigDecimal expected = value.setScale(2, RoundingMode.HALF_EVEN);
 
-        Mockito.doReturn(expected).when(quotaResponseBuilderMock).createQuotaBalanceResponse(Mockito.eq(quotaBalanceCmdSpy));
+        QuotaDailyBalanceResponse response = new QuotaDailyBalanceResponse();
+        response.setBalance(value);
 
-        quotaBalanceCmdSpy.execute();
-
-        Assert.assertEquals(expected, quotaBalanceCmdSpy.getResponseObject());
+        Assert.assertEquals(expected, response.getBalance());
     }
 }

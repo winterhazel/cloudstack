@@ -50,7 +50,7 @@ public class QuotaStatementCmd extends BaseCmd {
     private Long domainId;
 
     @Parameter(name = ApiConstants.END_DATE, type = CommandType.DATE, required = true, description = "End date range for quota query. Use yyyy-MM-dd as the date format, e.g."
-            + " startDate=2009-06-03.")
+            + " endDate=2009-06-03.")
     private Date endDate;
 
     @Parameter(name = ApiConstants.START_DATE, type = CommandType.DATE, required = true, description = "Start date range quota query. Use yyyy-MM-dd as the date format, e.g."
