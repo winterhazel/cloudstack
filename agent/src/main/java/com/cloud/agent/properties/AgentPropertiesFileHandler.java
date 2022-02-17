@@ -14,14 +14,20 @@
  */
 package com.cloud.agent.properties;
 
+import com.cloud.agent.properties.AgentProperties.Property;
 import com.cloud.utils.PropertiesUtil;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
+
 import org.apache.cloudstack.utils.security.KeyStoreUtils;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.beanutils.converters.IntegerConverter;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.reflections.ReflectionUtils;
+import org.reflections.Reflections;
 
 /**
  * This class provides a facility to read the agent's properties file and get
@@ -53,7 +59,7 @@ public class AgentPropertiesFileHandler {
                         ConvertUtils.register(new IntegerConverter(defaultValue), Integer.class);
                     }
 
-                    return (T)ConvertUtils.convert(configValue, defaultValue.getClass());
+                    return (T)ConvertUtils.convert(configValue, property.getTypeClass());
                 } else {
                     logger.debug(String.format("Property [%s] has empty or null value. Using default value [%s].", name, defaultValue));
                 }

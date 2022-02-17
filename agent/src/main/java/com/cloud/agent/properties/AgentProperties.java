@@ -23,7 +23,7 @@ package com.cloud.agent.properties;
  *
  * @param <T> type of the default value.
  */
-public class AgentProperties{
+public class AgentProperties {
 
     /**
      * Heartbeat update timeout. <br>
@@ -44,8 +44,8 @@ public class AgentProperties{
      * Data type: boolean.<br>
      * Default value: true.
      */
-    public static final Property<Boolean> REBOOT_HOST_AND_ALERT_MANAGEMENT_ON_HEARTBEAT_TIMEOUT
-        = new Property<Boolean>("reboot.host.and.alert.management.on.heartbeat.timeout", true);
+    public static final Property<Boolean> REBOOT_HOST_AND_ALERT_MANAGEMENT_ON_HEARTBEAT_TIMEOUT = new Property<Boolean>("reboot.host.and.alert.management.on.heartbeat.timeout",
+            true);
 
     /**
      * Enable manually setting CPU's topology on KVM's VM. <br>
@@ -54,13 +54,33 @@ public class AgentProperties{
      */
     public static final Property<Boolean> ENABLE_MANUALLY_SETTING_CPU_TOPOLOGY_ON_KVM_VM = new Property<Boolean>("enable.manually.setting.cpu.topology.on.kvm.vm", true);
 
-    public static class Property <T>{
-        private final String name;
-        private final T defaultValue;
+    public static class Property<T> {
+        private String name;
+        private T defaultValue;
+        private Class<T> typeClass;
 
-        private Property(String name, T value) {
+        Property(String name, T value) {
+            init(name, value);
+
+        }
+
+        Property(String name, T defaultValue, Class<T> typeClass) {
+            this.typeClass = typeClass;
+            init(name, defaultValue);
+
+        }
+
+        private void init(String name, T defaultValue) {
             this.name = name;
-            this.defaultValue = value;
+            this.defaultValue = defaultValue;
+
+            if (defaultValue != null) {
+                this.typeClass = (Class<T>)defaultValue.getClass();
+            }
+
+            if (this.typeClass == null) {
+                throw new RuntimeException("Could not \"discover\" the type class. If you are using \"Null\" as the default value, you must enter the Type class.");
+            }
         }
 
         public String getName() {
@@ -69,6 +89,10 @@ public class AgentProperties{
 
         public T getDefaultValue() {
             return defaultValue;
+        }
+
+        public Class<T> getTypeClass() {
+            return typeClass;
         }
     }
 }
