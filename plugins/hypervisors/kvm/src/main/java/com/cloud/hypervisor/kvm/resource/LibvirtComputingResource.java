@@ -77,6 +77,9 @@ import org.libvirt.DomainSnapshot;
 import org.libvirt.LibvirtException;
 import org.libvirt.MemoryStatistic;
 import org.libvirt.Network;
+import org.libvirt.SchedParameter;
+import org.libvirt.SchedUlongParameter;
+import org.libvirt.VcpuInfo;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -187,7 +190,6 @@ import com.cloud.vm.VirtualMachine.PowerState;
 import com.cloud.vm.VmDetailConstants;
 import com.google.common.base.Strings;
 import org.apache.cloudstack.utils.bytescale.ByteScaleUtils;
-import org.libvirt.VcpuInfo;
 
 /**
  * LibvirtComputingResource execute requests on the computing/routing host using
@@ -4626,5 +4628,38 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     public static long countDomainRunningVcpus(Domain dm) throws LibvirtException {
         VcpuInfo vcpus[] = dm.getVcpusInfo();
         return Arrays.stream(vcpus).filter(vcpu -> vcpu.state.equals(VcpuInfo.VcpuState.VIR_VCPU_RUNNING)).count();
+    }
+
+    /**
+     * Retrieves the cpu_shares (priority) of the running VM <br/>
+     * @param dm domain of the VM.
+     * @return the value of cpu_shares of the running VM.
+     * @throws org.libvirt.LibvirtException
+     **/
+    public static Integer getCpuShares(Domain dm) throws LibvirtException {
+        int cpu_shares = 0;
+        for (SchedParameter c : dm.getSchedulerParameters()) {
+            if (c.field.equals("cpu_shares")) {
+                cpu_shares = Integer.parseInt(c.getValueAsString());
+                return cpu_shares;
+            }
+        }
+        s_logger.warn(String.format("Could not get cpu_shares of domain: [%s]. Returning default value of 0. ", dm.getName()));
+        return cpu_shares;
+    }
+
+    /**
+     * Set the cpu_shares (priority) of the running VM <br/>
+     * @param dm domain of the VM.
+     * @param cpuShares new priority of the running VM.
+     * @throws org.libvirt.LibvirtException
+     **/
+    public static void setCpuShares(Domain dm, Integer cpuShares) throws LibvirtException {
+        SchedUlongParameter[] params = new SchedUlongParameter[1];
+        params[0] = new SchedUlongParameter();
+        params[0].field = "cpu_shares";
+        params[0].value = cpuShares;
+
+        dm.setSchedulerParameters(params);
     }
 }
