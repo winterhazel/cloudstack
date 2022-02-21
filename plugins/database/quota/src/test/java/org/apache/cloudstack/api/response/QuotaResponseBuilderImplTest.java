@@ -27,18 +27,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.InternalServerErrorException;
+
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
+import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaSummaryCmd;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.quota.QuotaService;
+import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.dao.QuotaBalanceDao;
 import org.apache.cloudstack.quota.dao.QuotaCreditsDao;
@@ -131,6 +137,15 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     @Mock
     Pair<List<QuotaSummaryResponse>, Integer> quotaSummaryResponseMock1, quotaSummaryResponseMock2;
 
+    @Mock
+    Map<Long, AccountVO> mapAccountMock;
+
+    @Mock
+    QuotaCreditsVO quotaCreditsVoMock;
+
+    @Mock
+    AccountVO accountVoMock;
+
     Date date = new Date();
     Set<Short> accountTypes = Sets.newHashSet(Account.ACCOUNT_TYPE_NORMAL, Account.ACCOUNT_TYPE_ADMIN, Account.ACCOUNT_TYPE_DOMAIN_ADMIN,
             Account.ACCOUNT_TYPE_RESOURCE_DOMAIN_ADMIN, Account.ACCOUNT_TYPE_READ_ONLY_ADMIN, Account.ACCOUNT_TYPE_PROJECT);
@@ -173,7 +188,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.when(accountDaoMock.findById(Mockito.anyLong())).thenReturn(account);
 
         QuotaCreditsResponse resp = quotaResponseBuilderImplSpy.addQuotaCredits(accountId, domainId, amount, updatedBy, true);
-        assertTrue(resp.getCredits().compareTo(credit.getCredit()) == 0);
+        assertTrue(resp.getCredit().compareTo(credit.getCredit()) == 0);
     }
 
     @Test
@@ -673,6 +688,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Assert.assertEquals(expected, result);
     }
 
+    @Test
     public void getQuotaSummaryResponseWithListAllTestAccountNameIsNotNullAndDomainIdIsNullGetsDomainIdFromCaller() {
         Long expectedDomainId = 78l;
 
@@ -692,6 +708,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.verify(quotaResponseBuilderImplSpy).getQuotaSummaryResponse(Mockito.any(), Mockito.eq(expectedDomainId), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
+    @Test
     public void getQuotaSummaryResponseWithListAllTestAccountNameAndDomainIdAreNullPassDomainIdAsNull() {
         Long expectedDomainId = null;
 
@@ -710,6 +727,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.verify(quotaResponseBuilderImplSpy).getQuotaSummaryResponse(Mockito.any(), Mockito.eq(expectedDomainId), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
+    @Test
     public void getQuotaSummaryResponseWithListAllTestAccountNameIsNullAndDomainIdIsNotNullPassDomainId() {
         Long expectedDomainId = 26l;
 
@@ -728,6 +746,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.verify(quotaResponseBuilderImplSpy).getQuotaSummaryResponse(Mockito.any(), Mockito.eq(expectedDomainId), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 
+    @Test
     public void getQuotaSummaryResponseWithListAllTestAccountNameAndDomainIdAreNotNullPassDomainId() {
         Long expectedDomainId = 9837l;
 
@@ -744,5 +763,108 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
         Assert.assertEquals(quotaSummaryResponseMock1, result);
         Mockito.verify(quotaResponseBuilderImplSpy).getQuotaSummaryResponse(Mockito.any(), Mockito.eq(expectedDomainId), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void getAccountByIdTestMapHasAccountReturnIt() {
+        Mockito.doReturn(1l).when(quotaCreditsVoMock).getUpdatedBy();
+        Mockito.doReturn(accountVoMock).when(mapAccountMock).get(Mockito.any());
+        AccountVO result = quotaResponseBuilderImplSpy.getAccountById(quotaCreditsVoMock, mapAccountMock);
+
+        Assert.assertEquals(accountVoMock, result);
+    }
+
+    @Test(expected = InternalServerErrorException.class)
+    public void getAccountByIdTestFindByIdInlcudingRemovedReturnsNullThrowInternalServerErrorException() {
+        Mockito.doReturn(1l).when(quotaCreditsVoMock).getUpdatedBy();
+        Mockito.doReturn(null).when(mapAccountMock).get(Mockito.any());
+        Mockito.doReturn(null).when(accountDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
+        quotaResponseBuilderImplSpy.getAccountById(quotaCreditsVoMock, mapAccountMock);
+    }
+
+    @Test
+    public void getAccountByIdTestFindByIdInlcudingRemovedReturnsAccountAddToMapAndReturnIt() {
+        Map<Long, AccountVO> mapAccount = new HashMap<>();
+
+        long updatedBy = 1l;
+        Mockito.doReturn(updatedBy).when(quotaCreditsVoMock).getUpdatedBy();
+        Mockito.doReturn(null).when(mapAccountMock).get(Mockito.any());
+        Mockito.doReturn(accountVoMock).when(accountDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
+        AccountVO result = quotaResponseBuilderImplSpy.getAccountById(quotaCreditsVoMock, mapAccount);
+
+        Assert.assertEquals(accountVoMock, result);
+        Assert.assertEquals(accountVoMock, mapAccount.get(updatedBy));
+    }
+
+    @Test
+    public void getQuotaCreditsResponseTestReturnsObject() {
+        QuotaCreditsResponse expected = new QuotaCreditsResponse();
+
+        expected.setAccountCreditorId("test_uuid");
+        expected.setAccountCreditorName("test_name");
+        expected.setCredit(new BigDecimal(41.5));
+        expected.setCreditedOn(new Date());
+        expected.setCurrency(QuotaConfig.QuotaCurrencySymbol.value());
+        expected.setObjectName("credit");
+
+        Mockito.doReturn(accountVoMock).when(quotaResponseBuilderImplSpy).getAccountById(Mockito.any(), Mockito.any());
+        Mockito.doReturn(expected.getAccountCreditorId()).when(accountVoMock).getUuid();
+        Mockito.doReturn(expected.getAccountCreditorName()).when(accountVoMock).getAccountName();
+        Mockito.doReturn(expected.getCredit()).when(quotaCreditsVoMock).getCredit();
+        Mockito.doReturn(expected.getCreditedOn()).when(quotaCreditsVoMock).getUpdatedOn();
+
+        QuotaCreditsResponse result = quotaResponseBuilderImplSpy.getQuotaCreditsResponse(mapAccountMock, quotaCreditsVoMock);
+
+        Assert.assertEquals(expected.getAccountCreditorId(), result.getAccountCreditorId());
+        Assert.assertEquals(expected.getAccountCreditorName(), result.getAccountCreditorName());
+        Assert.assertEquals(expected.getCredit(), result.getCredit());
+        Assert.assertEquals(expected.getCreditedOn(), result.getCreditedOn());
+        Assert.assertEquals(expected.getCurrency(), result.getCurrency());
+        Assert.assertEquals(expected.getObjectName(), result.getObjectName());
+    }
+
+    @Test(expected = InvalidParameterValueException.class)
+    public void getCreditsForQuotaCreditsListTestStartDateIsAfterEndDateThrowsInvalidParameterValueException() {
+        QuotaCreditsListCmd cmd = getQuotaCreditsListCmdForTests();
+        cmd.setStartDate(new Date());
+        cmd.setEndDate(DateUtils.addDays(new Date(), -1));
+
+        quotaResponseBuilderImplSpy.getCreditsForQuotaCreditsList(cmd);
+    }
+
+    @Test
+    public void getCreditsForQuotaCreditsListTestFindCreditsReturnsData() {
+        List<QuotaCreditsVO> expected = new ArrayList<>();
+        expected.add(new QuotaCreditsVO());
+
+        QuotaCreditsListCmd cmd = getQuotaCreditsListCmdForTests();
+
+        Mockito.doReturn(expected).when(quotaCreditsDaoMock).findCredits(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
+        List<QuotaCreditsVO> result = quotaResponseBuilderImplSpy.getCreditsForQuotaCreditsList(cmd);
+
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test(expected = InvalidParameterValueException.class)
+    public void getCreditsForQuotaCreditsListTestFindCreditsReturnsEmptyThrowsInvalidParameterValueException() {
+        QuotaCreditsListCmd cmd = getQuotaCreditsListCmdForTests();
+
+        Mockito.doReturn(new ArrayList<>()).when(quotaCreditsDaoMock).findCredits(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
+        quotaResponseBuilderImplSpy.getCreditsForQuotaCreditsList(cmd);
+    }
+
+    @Test(expected = InvalidParameterValueException.class)
+    public void getCreditsForQuotaCreditsListTestFindCreditsReturnsNullThrowsInvalidParameterValueException() {
+        QuotaCreditsListCmd cmd = getQuotaCreditsListCmdForTests();
+
+        Mockito.doReturn(null).when(quotaCreditsDaoMock).findCredits(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
+        quotaResponseBuilderImplSpy.getCreditsForQuotaCreditsList(cmd);
+    }
+
+    protected QuotaCreditsListCmd getQuotaCreditsListCmdForTests() {
+        QuotaCreditsListCmd cmd = new QuotaCreditsListCmd();
+        cmd.setAccountId(1l);
+        cmd.setDomainId(2l);
+        return cmd;
     }
 }
