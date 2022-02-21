@@ -54,3 +54,9 @@ CREATE VIEW `cloud_usage`.`quota_summary_view` AS
     FROM    cloud_usage.quota_account quota_account
     INNER   JOIN cloud.account account ON (account.id = quota_account.account_id)
     INNER   JOIN cloud.domain domain on (domain.id = account.domain_id);
+
+
+-- Disable VM resources tariffs (CPU_CLOCK_RATE = 15, CPU_NUMBER = 16, MEMORY = 17) as they can be charged through RUNNING_VM tariff.
+UPDATE  cloud_usage.quota_tariff
+SET     removed = now()
+WHERE   usage_type in (15, 16, 17);
