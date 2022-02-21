@@ -24,10 +24,6 @@ import org.apache.cloudstack.usage.UsageTypes;
 import org.apache.cloudstack.usage.UsageUnitTypes;
 
 public class QuotaTypes extends UsageTypes {
-    public static final int CPU_CLOCK_RATE = 15;
-    public static final int CPU_NUMBER = 16;
-    public static final int MEMORY = 17;
-
     private final Integer quotaType;
     private final String quotaName;
     private final String quotaUnit;
@@ -59,9 +55,6 @@ public class QuotaTypes extends UsageTypes {
         quotaTypeList.put(VOLUME_SECONDARY, new QuotaTypes(VOLUME_SECONDARY, "VOLUME_SECONDARY", UsageUnitTypes.GbMonth.toString(), "Volume secondary storage usage"));
         quotaTypeList.put(VM_SNAPSHOT_ON_PRIMARY, new QuotaTypes(VM_SNAPSHOT_ON_PRIMARY, "VM_SNAPSHOT_ON_PRIMARY", UsageUnitTypes.GbMonth.toString(), "VM Snapshot primary storage usage"));
         quotaTypeList.put(BACKUP, new QuotaTypes(BACKUP, "BACKUP", UsageUnitTypes.GbMonth.toString(), "Backup storage usage"));
-        quotaTypeList.put(CPU_CLOCK_RATE, new QuotaTypes(CPU_CLOCK_RATE, "CPU_CLOCK_RATE", UsageUnitTypes.ComputeMonth.toString(), "Quota tariff for using 1 CPU of clock rate 100MHz"));
-        quotaTypeList.put(CPU_NUMBER, new QuotaTypes(CPU_NUMBER, "CPU_NUMBER", UsageUnitTypes.ComputeMonth.toString(), "Quota tariff for running VM that has 1vCPU"));
-        quotaTypeList.put(MEMORY, new QuotaTypes(MEMORY, "MEMORY", UsageUnitTypes.ComputeMonth.toString(), "Quota tariff for using 1MB of RAM"));
         quotaTypeMap = Collections.unmodifiableMap(quotaTypeList);
     }
 

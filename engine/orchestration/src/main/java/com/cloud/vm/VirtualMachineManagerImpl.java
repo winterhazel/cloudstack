@@ -635,8 +635,6 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
         final VirtualMachineGuru guru = getVmGuru(vm);
         guru.finalizeExpunge(vm);
-        //remove the overcommit details from the uservm details
-        userVmDetailsDao.removeDetails(vm.getId());
 
         // Remove deploy as-is (if any)
         userVmDeployAsIsDetailsDao.removeDetails(vm.getId());
