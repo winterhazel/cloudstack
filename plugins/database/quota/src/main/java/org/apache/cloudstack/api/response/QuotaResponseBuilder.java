@@ -17,6 +17,7 @@
 package org.apache.cloudstack.api.response;
 
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
+import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaStatementCmd;
@@ -64,4 +65,6 @@ public interface QuotaResponseBuilder {
     Date startOfNextDay();
 
     boolean deleteQuotaTariff(String quotaTariffUuid);
+
+    Pair<List<QuotaCreditsResponse>, Integer> createQuotaCreditsListResponse(QuotaCreditsListCmd cmd);
 }

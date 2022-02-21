@@ -20,7 +20,6 @@ import com.cloud.serializer.Param;
 import com.google.gson.annotations.SerializedName;
 
 import org.apache.cloudstack.api.BaseResponse;
-import org.apache.cloudstack.quota.vo.QuotaCreditsVO;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,57 +27,56 @@ import java.util.Date;
 
 public class QuotaCreditsResponse extends BaseResponse {
 
-    @SerializedName("credits")
-    @Param(description = "the credit deposited")
-    private BigDecimal credits;
+    @SerializedName("credit")
+    @Param(description = "The credit deposited.")
+    private BigDecimal credit;
 
-    @SerializedName("updated_by")
-    @Param(description = "the user name of the admin who updated the credits")
-    private String updatedBy;
+    @SerializedName("creditorid")
+    @Param(description = "Account creditor's id.")
+    private String accountCreditorId;
 
-    @SerializedName("updated_on")
-    @Param(description = "the account name of the admin who updated the credits")
-    private Date updatedOn;
+    @SerializedName("creditorname")
+    @Param(description = "Account creditor's name.")
+    private String accountCreditorName;
+
+    @SerializedName("creditedon")
+    @Param(description = "When the credit was added.")
+    private Date creditedOn;
 
     @SerializedName("currency")
-    @Param(description = "currency")
+    @Param(description = "Credit's currency.")
     private String currency;
 
-    public QuotaCreditsResponse() {
-        super();
+    public BigDecimal getCredit() {
+        return credit;
     }
 
-    public QuotaCreditsResponse(QuotaCreditsVO result, String updatedBy) {
-        super();
-        if (result != null) {
-            setCredits(result.getCredit());
-            setUpdatedBy(updatedBy);
-            setUpdatedOn(new Date());
-        }
+    public void setCredit(BigDecimal credit) {
+        this.credit = credit.setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    public BigDecimal getCredits() {
-        return credits;
+    public String getAccountCreditorId() {
+        return accountCreditorId;
     }
 
-    public void setCredits(BigDecimal credits) {
-        this.credits = credits.setScale(2, RoundingMode.HALF_EVEN);
+    public void setAccountCreditorId(String accountCreditorId) {
+        this.accountCreditorId = accountCreditorId;
     }
 
-    public String getUpdatedBy() {
-        return updatedBy;
+    public String getAccountCreditorName() {
+        return accountCreditorName;
     }
 
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
+    public void setAccountCreditorName(String accountCreditorName) {
+        this.accountCreditorName = accountCreditorName;
     }
 
-    public Date getUpdatedOn() {
-        return updatedOn;
+    public Date getCreditedOn() {
+        return creditedOn;
     }
 
-    public void setUpdatedOn(Date updatedOn) {
-        this.updatedOn = updatedOn;
+    public void setCreditedOn(Date creditedOn) {
+        this.creditedOn = creditedOn;
     }
 
     public String getCurrency() {
