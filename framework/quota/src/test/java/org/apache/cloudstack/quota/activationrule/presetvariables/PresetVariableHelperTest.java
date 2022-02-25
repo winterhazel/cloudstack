@@ -339,11 +339,12 @@ public class PresetVariableHelperTest {
         AccountVO accountVoMock = Mockito.mock(AccountVO.class);
         Mockito.doReturn(accountVoMock).when(accountDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
         mockMethodValidateIfObjectIsNull();
-        Mockito.doNothing().when(presetVariableHelperSpy).setPresetVariableRoleInAccountIfAccountIsNotAProject(Mockito.anyShort(), Mockito.anyLong(), Mockito.any(Account.class));
+        Mockito.doNothing().when(presetVariableHelperSpy).setPresetVariableRoleInAccountIfAccountIsNotAProject(Mockito.any(com.cloud.user.Account.Type.class), Mockito.anyLong(), Mockito.any(Account.class));
 
         Account account = getAccountForTests();
         Mockito.doReturn(account.getId()).when(accountVoMock).getUuid();
         Mockito.doReturn(account.getName()).when(accountVoMock).getName();
+        Mockito.doReturn(com.cloud.user.Account.Type.NORMAL).when(accountVoMock).getType();
 
         Account result = presetVariableHelperSpy.getPresetVariableAccount(1l);
 
@@ -355,15 +356,11 @@ public class PresetVariableHelperTest {
     public void setPresetVariableRoleInAccountIfAccountIsNotAProjectTestAllCases() {
         Mockito.doReturn(new Role()).when(presetVariableHelperSpy).getPresetVariableRole(Mockito.anyLong());
 
-        List<Short> accountTypes = new LinkedList<>(Arrays.asList(com.cloud.user.Account.ACCOUNT_TYPE_NORMAL, com.cloud.user.Account.ACCOUNT_TYPE_ADMIN,
-              com.cloud.user.Account.ACCOUNT_TYPE_DOMAIN_ADMIN, com.cloud.user.Account.ACCOUNT_TYPE_RESOURCE_DOMAIN_ADMIN, com.cloud.user.Account.ACCOUNT_TYPE_READ_ONLY_ADMIN,
-              com.cloud.user.Account.ACCOUNT_TYPE_PROJECT));
-
-        accountTypes.forEach(type -> {
+        Arrays.asList(com.cloud.user.Account.Type.values()).forEach(type -> {
             Account account = new Account();
             presetVariableHelperSpy.setPresetVariableRoleInAccountIfAccountIsNotAProject(type, 1l, account);
 
-            if (com.cloud.user.Account.ACCOUNT_TYPE_PROJECT == type) {
+            if (com.cloud.user.Account.Type.PROJECT == type) {
                 Assert.assertNull(account.getRole());
             } else {
                 Assert.assertNotNull(account.getRole());

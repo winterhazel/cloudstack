@@ -2715,7 +2715,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 .map(item -> (item).trim())
                 .collect(Collectors.toList());
         if (cleanupDetails){
-            if (caller != null && caller.getType() == Account.ACCOUNT_TYPE_ADMIN) {
+            if (caller != null && caller.getType() == Account.Type.ADMIN) {
                 userVmDetailsDao.removeDetails(id);
             } else {
                 for (final UserVmDetailVO detail : userVmDetailsDao.listDetails(id)) {
@@ -2731,7 +2731,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     throw new InvalidParameterValueException("'extraconfig' should not be included in details as key");
                 }
 
-                if (caller != null && caller.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+                if (caller != null && caller.getType() != Account.Type.ADMIN) {
                     // Ensure denied or read-only detail is not passed by non-root-admin user
                     for (final String detailName : details.keySet()) {
                         if (userDenyListedSettings.contains(detailName)) {
@@ -3779,7 +3779,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         _accountMgr.checkAccess(caller, null, true, owner);
 
-        if (owner.getState() == Account.State.disabled) {
+        if (owner.getState() == Account.State.DISABLED) {
             throw new PermissionDeniedException("The owner of vm to deploy is disabled: " + owner);
         }
         VMTemplateVO template = _templateDao.findById(tmplt.getId());
@@ -4002,7 +4002,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             }
 
             //relax the check if the caller is admin account
-            if (caller.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+            if (caller.getType() != Account.Type.ADMIN) {
                 if (!(network.getGuestType() == Network.GuestType.Shared && network.getAclType() == ACLType.Domain)
                         && !(network.getAclType() == ACLType.Account && network.getAccountId() == accountId)) {
                     throw new InvalidParameterValueException("only shared network or isolated network with the same account_id can be added to vm");
@@ -5118,7 +5118,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new InvalidParameterValueException("The owner of " + vm + " does not exist: " + vm.getAccountId());
         }
 
-        if (owner.getState() == Account.State.disabled) {
+        if (owner.getState() == Account.State.DISABLED) {
             throw new PermissionDeniedException("The owner of " + vm + " is disabled: " + vm.getAccountId());
         }
         if (VirtualMachineManager.ResourceCountRunningVMsonly.value()) {
@@ -6770,7 +6770,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new InvalidParameterValueException("Invalid accountid=" + cmd.getAccountName() + " in domain " + cmd.getDomainId());
         }
 
-        if (newAccount.getState() == Account.State.disabled) {
+        if (newAccount.getState() == Account.State.DISABLED) {
             throw new InvalidParameterValueException("The new account owner " + cmd.getAccountName() + " is disabled.");
         }
 
@@ -7341,7 +7341,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new InvalidParameterValueException("The owner of " + vm + " does not exist: " + vm.getAccountId());
         }
 
-        if (owner.getState() == Account.State.disabled) {
+        if (owner.getState() == Account.State.DISABLED) {
             throw new PermissionDeniedException("The owner of " + vm + " is disabled: " + vm.getAccountId());
         }
 
