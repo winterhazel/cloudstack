@@ -2730,7 +2730,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("Unable to find active user by id " + userId);
         }
         final Account account = _accountDao.findById(user.getAccountId());
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             if (filteredDomainIds.isEmpty()) {
                 throw new InvalidParameterValueException(String.format("Unable to create public service offering by admin: %s because it is domain-admin", user.getUuid()));
             }
@@ -2742,7 +2742,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                     throw new InvalidParameterValueException(String.format("Unable to create service offering by another domain-admin: %s for domain: %s", user.getUuid(), _entityMgr.findById(Domain.class, domainId).getUuid()));
                 }
             }
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to create service offering by user: %s because it is not root-admin or domain-admin", user.getUuid()));
         }
 
@@ -2982,7 +2982,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         }
         Collections.sort(filteredZoneIds);
 
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             if (!filteredZoneIds.equals(existingZoneIds)) { // Domain-admins cannot update zone(s) for offerings
                 throw new InvalidParameterValueException(String.format("Unable to update zone(s) for service offering: %s by admin: %s as it is domain-admin", offeringHandle.getUuid(), user.getUuid()));
             }
@@ -3009,7 +3009,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                 }
             }
             filteredDomainIds.addAll(nonChildDomains); // Final list must include domains which were not child domain for domain-admin but specified for this offering prior to update
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to update service offering: %s by id user: %s because it is not root-admin or domain-admin", offeringHandle.getUuid(), user.getUuid()));
         }
 
@@ -3146,7 +3146,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("Unable to find active user by id " + userId);
         }
         final Account account = _accountDao.findById(user.getAccountId());
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             if (filteredDomainIds.isEmpty()) {
                 throw new InvalidParameterValueException(String.format("Unable to create public disk offering by admin: %s because it is domain-admin", user.getUuid()));
             }
@@ -3158,7 +3158,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                     throw new InvalidParameterValueException(String.format("Unable to create disk offering by another domain-admin: %s for domain: %s", user.getUuid(), _entityMgr.findById(Domain.class, domainId).getUuid()));
                 }
             }
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to create disk offering by user: %s because it is not root-admin or domain-admin", user.getUuid()));
         }
 
@@ -3432,7 +3432,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         }
         Collections.sort(filteredZoneIds);
 
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             if (!filteredZoneIds.equals(existingZoneIds)) { // Domain-admins cannot update zone(s) for offerings
                 throw new InvalidParameterValueException(String.format("Unable to update zone(s) for disk offering: %s by admin: %s as it is domain-admin", diskOfferingHandle.getUuid(), user.getUuid()));
             }
@@ -3459,7 +3459,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                 }
             }
             filteredDomainIds.addAll(nonChildDomains); // Final list must include domains which were not child domain for domain-admin but specified for this offering prior to update
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to update disk offering: %s by id user: %s because it is not root-admin or domain-admin", diskOfferingHandle.getUuid(), user.getUuid()));
         }
 
@@ -3636,7 +3636,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("Unable to find active user by id " + userId);
         }
         final Account account = _accountDao.findById(user.getAccountId());
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             List<Long> existingDomainIds = diskOfferingDetailsDao.findDomainIds(diskOfferingId);
             if (existingDomainIds.isEmpty()) {
                 throw new InvalidParameterValueException(String.format("Unable to delete public disk offering: %s by admin: %s because it is domain-admin", offering.getUuid(), user.getUuid()));
@@ -3646,7 +3646,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                     throw new InvalidParameterValueException(String.format("Unable to delete disk offering: %s as it has linked domain(s) which are not child domain for domain-admin: %s", offering.getUuid(), user.getUuid()));
                 }
             }
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to delete disk offering: %s by user: %s because it is not root-admin or domain-admin", offering.getUuid(), user.getUuid()));
         }
 
@@ -3704,7 +3704,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("Unable to find active user by id " + userId);
         }
         final Account account = _accountDao.findById(user.getAccountId());
-        if (account.getType() == Account.ACCOUNT_TYPE_DOMAIN_ADMIN) {
+        if (account.getType() == Account.Type.DOMAIN_ADMIN) {
             List<Long> existingDomainIds = _serviceOfferingDetailsDao.findDomainIds(offeringId);
             if (existingDomainIds.isEmpty()) {
                 throw new InvalidParameterValueException(String.format("Unable to delete public service offering: %s by admin: %s because it is domain-admin", offering.getUuid(), user.getUuid()));
@@ -3714,7 +3714,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                     throw new InvalidParameterValueException(String.format("Unable to delete service offering: %s as it has linked domain(s) which are not child domain for domain-admin: %s", offering.getUuid(), user.getUuid()));
                 }
             }
-        } else if (account.getType() != Account.ACCOUNT_TYPE_ADMIN) {
+        } else if (account.getType() != Account.Type.ADMIN) {
             throw new InvalidParameterValueException(String.format("Unable to delete service offering: %s by user: %s because it is not root-admin or domain-admin", offering.getUuid(), user.getUuid()));
         }
 
@@ -6218,7 +6218,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
 
         final List<NetworkOfferingJoinVO> offerings = networkOfferingJoinDao.search(sc, searchFilter);
         // Remove offerings that are not associated with caller's domain or domainId passed
-        if ((caller.getType() != Account.ACCOUNT_TYPE_ADMIN || domainId != null) && CollectionUtils.isNotEmpty(offerings)) {
+        if ((caller.getType() != Account.Type.ADMIN || domainId != null) && CollectionUtils.isNotEmpty(offerings)) {
             ListIterator<NetworkOfferingJoinVO> it = offerings.listIterator();
             while (it.hasNext()) {
                 NetworkOfferingJoinVO offering = it.next();
@@ -6227,7 +6227,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                     String[] domainIdsArray = offering.getDomainId().split(",");
                     for (String domainIdString : domainIdsArray) {
                         Long dId = Long.valueOf(domainIdString.trim());
-                        if (caller.getType() != Account.ACCOUNT_TYPE_ADMIN &&
+                        if (caller.getType() != Account.Type.ADMIN &&
                                 !_domainDao.isChildDomain(dId, caller.getDomainId())) {
                             toRemove = true;
                             break;

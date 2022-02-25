@@ -147,8 +147,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     AccountVO accountVoMock;
 
     Date date = new Date();
-    Set<Short> accountTypes = Sets.newHashSet(Account.ACCOUNT_TYPE_NORMAL, Account.ACCOUNT_TYPE_ADMIN, Account.ACCOUNT_TYPE_DOMAIN_ADMIN,
-            Account.ACCOUNT_TYPE_RESOURCE_DOMAIN_ADMIN, Account.ACCOUNT_TYPE_READ_ONLY_ADMIN, Account.ACCOUNT_TYPE_PROJECT);
+    Set<Account.Type> accountTypes = Sets.newHashSet(Account.Type.values());
 
     private QuotaTariffVO makeTariffTestData() {
         QuotaTariffVO tariffVO = new QuotaTariffVO();
@@ -184,7 +183,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.when(quotaServiceMock.computeAdjustedTime(Mockito.any(Date.class))).thenReturn(new Date());
 
         AccountVO account = new AccountVO();
-        account.setState(Account.State.locked);
+        account.setState(Account.State.LOCKED);
         Mockito.when(accountDaoMock.findById(Mockito.anyLong())).thenReturn(account);
 
         QuotaCreditsResponse resp = quotaResponseBuilderImplSpy.addQuotaCredits(accountId, domainId, amount, updatedBy, true);
@@ -604,7 +603,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
                 Mockito.any(), Mockito.any());
         Mockito.doReturn(quotaSummaryResponseMock2).when(quotaResponseBuilderImplSpy).getQuotaSummaryResponseWithListAll(Mockito.any(), Mockito.any());
 
-        Set<Short> accountTypesThatCanListAllQuotaSummaries = Sets.newHashSet(Account.ACCOUNT_TYPE_ADMIN, Account.ACCOUNT_TYPE_DOMAIN_ADMIN);
+        Set<Account.Type> accountTypesThatCanListAllQuotaSummaries = Sets.newHashSet(Account.Type.ADMIN, Account.Type.DOMAIN_ADMIN);
 
         accountTypes.forEach(type -> {
             Mockito.doReturn(type).when(accountMock).getType();
@@ -626,7 +625,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
     @Test
     public void getDomainPathByDomainIdForDomainAdminTestAccountNotDomainAdminReturnsNull() {
-        Collection<Short> accountTypesWithoutDomainAdmin = CollectionUtils.removeAll(accountTypes, Arrays.asList(Account.ACCOUNT_TYPE_DOMAIN_ADMIN));
+        Collection<Account.Type> accountTypesWithoutDomainAdmin = CollectionUtils.removeAll(accountTypes, Arrays.asList(Account.Type.DOMAIN_ADMIN));
 
         accountTypesWithoutDomainAdmin.forEach(type -> {
             Mockito.doReturn(type).when(accountMock).getType();
@@ -636,7 +635,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
     @Test(expected = InvalidParameterValueException.class)
     public void getDomainPathByDomainIdForDomainAdminTestDomainFromCallerIsNullThrowsInvalidParameterValueException() {
-        Mockito.doReturn(Account.ACCOUNT_TYPE_DOMAIN_ADMIN).when(accountMock).getType();
+        Mockito.doReturn(Account.Type.DOMAIN_ADMIN).when(accountMock).getType();
         Mockito.doReturn(null).when(domainDaoMock).findById(Mockito.anyLong());
         Mockito.doNothing().when(accountManagerMock).checkAccess(Mockito.any(Account.class), Mockito.any(Domain.class));
 
@@ -647,7 +646,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     public void getDomainPathByDomainIdForDomainAdminTestDomainFromCallerIsNotNullReturnsPath() {
         String expected = "/test/";
 
-        Mockito.doReturn(Account.ACCOUNT_TYPE_DOMAIN_ADMIN).when(accountMock).getType();
+        Mockito.doReturn(Account.Type.DOMAIN_ADMIN).when(accountMock).getType();
         Mockito.doReturn(domainVoMock).when(domainDaoMock).findById(Mockito.anyLong());
         Mockito.doNothing().when(accountManagerMock).checkAccess(Mockito.any(Account.class), Mockito.any(Domain.class));
         Mockito.doReturn(expected).when(domainVoMock).getPath();

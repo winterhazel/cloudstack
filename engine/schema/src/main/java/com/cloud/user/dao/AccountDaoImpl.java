@@ -118,7 +118,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     public List<AccountVO> findCleanupsForDisabledAccounts() {
         SearchCriteria<AccountVO> sc = CleanupForDisabledAccountsSearch.create();
         sc.setParameters("cleanup", true);
-        sc.setParameters("state", State.disabled);
+        sc.setParameters("state", State.DISABLED);
 
         return listBy(sc);
     }
@@ -143,7 +143,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
 
                 AccountVO a = new AccountVO(rs.getLong(6));
                 a.setAccountName(rs.getString(7));
-                a.setType(rs.getShort(8));
+                a.setType(Account.Type.getFromValue(rs.getInt(8)));
                 a.setRoleId(rs.getLong(9));
                 a.setDomainId(rs.getLong(10));
                 a.setState(State.valueOf(rs.getString(11)));
@@ -174,7 +174,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     public Account findEnabledAccount(String accountName, Long domainId) {
         SearchCriteria<AccountVO> sc = AllFieldsSearch.create("accountName", accountName);
         sc.setParameters("domainId", domainId);
-        sc.setParameters("state", State.enabled);
+        sc.setParameters("state", State.ENABLED);
         return findOneBy(sc);
     }
 
@@ -182,8 +182,8 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     public Account findEnabledNonProjectAccount(String accountName, Long domainId) {
         SearchCriteria<AccountVO> sc = NonProjectAccountSearch.create("accountName", accountName);
         sc.setParameters("domainId", domainId);
-        sc.setParameters("state", State.enabled);
-        sc.setParameters("type", Account.ACCOUNT_TYPE_PROJECT);
+        sc.setParameters("state", State.ENABLED);
+        sc.setParameters("type", Account.Type.PROJECT);
         return findOneBy(sc);
     }
 
@@ -205,7 +205,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     public Account findActiveNonProjectAccount(String accountName, Long domainId) {
         SearchCriteria<AccountVO> sc = NonProjectAccountSearch.create("accountName", accountName);
         sc.setParameters("domainId", domainId);
-        sc.setParameters("type", Account.ACCOUNT_TYPE_PROJECT);
+        sc.setParameters("type", Account.Type.PROJECT);
         return findOneBy(sc);
     }
 
@@ -220,7 +220,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     public Account findNonProjectAccountIncludingRemoved(String accountName, Long domainId) {
         SearchCriteria<AccountVO> sc = NonProjectAccountSearch.create("accountName", accountName);
         sc.setParameters("domainId", domainId);
-        sc.setParameters("type", Account.ACCOUNT_TYPE_PROJECT);
+        sc.setParameters("type", Account.Type.PROJECT);
         return findOneIncludingRemovedBy(sc);
     }
 
