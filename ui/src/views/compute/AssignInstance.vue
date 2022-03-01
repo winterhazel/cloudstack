@@ -64,7 +64,7 @@
         </a-select>
       </div>
 
-      <template v-if="selectedAccountType === 'Account'">
+      <template v-if="selectedAccountType === $t('label.account')">
         <div class="form__item">
           <p class="form__label"><span class="required">*</span>{{ $t('label.account') }}</p>
           <a-select
@@ -165,7 +165,7 @@ export default {
       accounts: [],
       projects: [],
       networks: [],
-      selectedAccountType: 'Account',
+      selectedAccountType: this.$t('label.account'),
       selectedDomain: null,
       selectedAccount: null,
       selectedProject: null,
@@ -270,14 +270,14 @@ export default {
       let variableKey = ''
       let variableValue = ''
 
-      if (this.selectedAccountType === 'Account') {
+      if (this.selectedAccountType === this.$t('label.account')) {
         if (!this.selectedAccount) {
           this.accountError = true
           return
         }
         variableKey = 'account'
         variableValue = this.selectedAccount
-      } else if (this.selectedAccountType === 'Project') {
+      } else if (this.selectedAccountType === this.$t('label.project')) {
         if (!this.selectedProject) {
           this.projectError = true
           return
