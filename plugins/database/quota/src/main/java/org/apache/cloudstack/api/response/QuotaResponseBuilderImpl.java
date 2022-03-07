@@ -46,6 +46,8 @@ import org.apache.cloudstack.api.command.QuotaTariffUpdateCmd;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.quota.QuotaManager;
 import org.apache.cloudstack.quota.QuotaService;
+import org.apache.cloudstack.quota.activationrule.presetvariables.GenericPresetVariable;
+import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariableHelper;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.dao.QuotaBalanceDao;
@@ -70,6 +72,8 @@ import org.springframework.stereotype.Component;
 import com.cloud.domain.Domain;
 import com.cloud.domain.dao.DomainDao;
 import com.cloud.exception.InvalidParameterValueException;
+import com.cloud.network.dao.IPAddressDao;
+import com.cloud.network.dao.IPAddressVO;
 import com.cloud.usage.UsageVO;
 import com.cloud.usage.dao.UsageDao;
 import com.cloud.user.Account;
@@ -78,7 +82,6 @@ import com.cloud.user.AccountVO;
 import com.cloud.user.User;
 import com.cloud.user.dao.AccountDao;
 import com.cloud.user.dao.UserDao;
-import com.cloud.utils.DateUtil;
 import com.cloud.utils.Pair;
 
 @Component
@@ -116,6 +119,12 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
 
     @Inject
     private QuotaSummaryDao quotaSummaryDao;
+
+    @Inject
+    private PresetVariableHelper presetVariableHelper;
+
+    @Inject
+    private IPAddressDao ipAddressDao;
 
     private Set<Account.Type> accountTypesThatCanListAllQuotaSummaries = Sets.newHashSet(Account.Type.ADMIN, Account.Type.DOMAIN_ADMIN);
 
@@ -249,8 +258,8 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     @Override
     public QuotaStatementResponse createQuotaStatementResponse(final List<QuotaUsageVO> quotaUsages, QuotaStatementCmd cmd) {
         if (CollectionUtils.isEmpty(quotaUsages)) {
-            throw new InvalidParameterValueException(String.format("There is no usage data found between [%s] and [%s].", DateUtil.getOutputString(cmd.getStartDate()),
-                    DateUtil.getOutputString(cmd.getEndDate())));
+            throw new InvalidParameterValueException(String.format("There is no usage data for parameters [%s].", ReflectionToStringBuilderUtils.reflectOnlySelectedFields(cmd,
+                    "accountName", "accountId", "domainId", "startDate", "endDate", "type", "showDetails")));
         }
 
         s_logger.debug(String.format("Creating quota statement from [%s] usage records for parameters [%s].", quotaUsages.size(),
@@ -297,8 +306,7 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             detail.setStartDate(quotaUsage.getStartDate());
             detail.setEndDate(quotaUsage.getEndDate());
             detail.setResponseName("quotausagedetail");
-
-            addResourceIdToItemDetail(quotaUsage.getUsageItemId(), detail);
+            detail.setResource(getQuotaStatementItemDetailResourceResponse(quotaUsage.getUsageItemId()));
 
             itemDetails.add(detail);
         }
@@ -306,9 +314,24 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         statementItem.setDetails(itemDetails);
     }
 
-    protected void addResourceIdToItemDetail(Long usageItemId, QuotaStatementItemDetailResponse detail) {
+    protected QuotaStatementItemDetailResourceResponse getQuotaStatementItemDetailResourceResponse(Long usageItemId) {
         UsageVO usageVo = usageDao.findUsageById(usageItemId);
-        detail.setResourceId(usageVo.getUsageType() == QuotaTypes.NETWORK_OFFERING ? usageVo.getOfferingId() : usageVo.getUsageId());
+
+        if (QuotaTypes.IP_ADDRESS == usageVo.getUsageType()) {
+            IPAddressVO ipAddressVo = ipAddressDao.findByIdIncludingRemoved(usageVo.getUsageId());
+
+            return new QuotaStatementItemDetailResourceResponse(ipAddressVo.getUuid(), ipAddressVo.getAddress().addr(),
+                    ipAddressVo.getRemoved() != null);
+        }
+
+        GenericPresetVariable resource = presetVariableHelper.getResourceToAddToQuotaStatementResponse(usageVo);
+
+        if (resource.getId() != null) {
+            return new QuotaStatementItemDetailResourceResponse(resource.getId(), resource.getName(), resource.isRemoved());
+        }
+
+        s_logger.debug(String.format("There is no data to load for quota type [%s] - usage record [%s].", usageVo.getUsageType(), usageVo.toString()));
+        return null;
     }
 
     protected QuotaStatementItemResponse createStatementItem(List<QuotaUsageVO> usageRecords, boolean showDetails) {

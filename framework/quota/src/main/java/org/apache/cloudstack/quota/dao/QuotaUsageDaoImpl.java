@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.cloudstack.quota.vo.QuotaUsageVO;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -53,36 +54,26 @@ public class QuotaUsageDaoImpl extends GenericDaoBase<QuotaUsageVO, Long> implem
         return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<List<QuotaUsageVO>>() {
             @Override
             public List<QuotaUsageVO> doInTransaction(final TransactionStatus status) {
-                List<QuotaUsageVO> quv;
-                if ((startDate != null) && (endDate != null) && startDate.before(endDate)) {
-                    QueryBuilder<QuotaUsageVO> qb = QueryBuilder.create(QuotaUsageVO.class);
-                    if (accountId != null) {
-                        qb.and(qb.entity().getAccountId(), SearchCriteria.Op.EQ, accountId);
-                    }
-                    if (domainId != null) {
-                        qb.and(qb.entity().getDomainId(), SearchCriteria.Op.EQ, domainId);
-                    }
-                    if (usageType != null) {
-                        qb.and(qb.entity().getUsageType(), SearchCriteria.Op.EQ, usageType);
-                    }
-                    qb.and(qb.entity().getStartDate(), SearchCriteria.Op.BETWEEN, startDate, endDate);
-                    qb.and(qb.entity().getEndDate(), SearchCriteria.Op.BETWEEN, startDate, endDate);
-                    quv = listBy(qb.create());
-                } else {
-                    quv = new ArrayList<QuotaUsageVO>();
+                if (ObjectUtils.anyNull(startDate, endDate) || startDate.after(endDate)) {
+                    return new ArrayList<>();
                 }
-                if (quv.isEmpty()){
-                    //add a dummy entry
-                    QuotaUsageVO qu = new  QuotaUsageVO();
-                    qu.setAccountId(accountId);
-                    qu.setDomainId(domainId);
-                    qu.setStartDate(startDate);
-                    qu.setEndDate(endDate);
-                    qu.setQuotaUsed(new BigDecimal(0));
-                    qu.setUsageType(-1);
-                    quv.add(qu);
+
+                QueryBuilder<QuotaUsageVO> qb = QueryBuilder.create(QuotaUsageVO.class);
+                if (accountId != null) {
+                    qb.and(qb.entity().getAccountId(), SearchCriteria.Op.EQ, accountId);
                 }
-                return quv;
+
+                if (domainId != null) {
+                    qb.and(qb.entity().getDomainId(), SearchCriteria.Op.EQ, domainId);
+                }
+
+                if (usageType != null) {
+                    qb.and(qb.entity().getUsageType(), SearchCriteria.Op.EQ, usageType);
+                }
+
+                qb.and(qb.entity().getStartDate(), SearchCriteria.Op.BETWEEN, startDate, endDate);
+                qb.and(qb.entity().getEndDate(), SearchCriteria.Op.BETWEEN, startDate, endDate);
+                return listBy(qb.create());
             }
         });
     }
