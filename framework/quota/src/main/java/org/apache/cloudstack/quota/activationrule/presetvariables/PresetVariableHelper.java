@@ -166,6 +166,23 @@ public class PresetVariableHelper {
     private List<Integer> runningAndAllocatedVmQuotaTypes = Arrays.asList(QuotaTypes.RUNNING_VM, QuotaTypes.ALLOCATED_VM);
     private List<Integer> templateAndIsoQuotaTypes = Arrays.asList(QuotaTypes.TEMPLATE, QuotaTypes.ISO);
     private String usageRecordToString = null;
+    protected boolean isLoadOnlyValuesToReturnInQuotaStatementResponse = false;
+
+    public GenericPresetVariable getResourceToAddToQuotaStatementResponse(UsageVO usageRecord) {
+        this.usageRecordToString = usageRecord.toString();
+        this.isLoadOnlyValuesToReturnInQuotaStatementResponse = true;
+
+        Value value = new Value();
+
+        loadPresetVariableValueForRunningAndAllocatedVm(usageRecord, value);
+        loadPresetVariableValueForVolume(usageRecord, value);
+        loadPresetVariableValueForTemplateAndIso(usageRecord, value);
+        loadPresetVariableValueForSnapshot(usageRecord, value);
+        loadPresetVariableValueForNetworkOffering(usageRecord, value);
+        loadPresetVariableValueForVmSnapshot(usageRecord, value);
+
+        return value;
+    }
 
     public PresetVariables getPresetVariables(UsageVO usageRecord) {
         this.usageRecordToString = usageRecord.toString();
@@ -262,6 +279,7 @@ public class PresetVariableHelper {
         loadPresetVariableValueForTemplateAndIso(usageRecord, value);
         loadPresetVariableValueForSnapshot(usageRecord, value);
         loadPresetVariableValueForNetworkOffering(usageRecord, value);
+        loadPresetVariableValueForVmSnapshot(usageRecord, value);
 
         return value;
     }
@@ -301,10 +319,15 @@ public class PresetVariableHelper {
         VMInstanceVO vmVo = vmInstanceDao.findByIdIncludingRemoved(vmId);
         validateIfObjectIsNull(vmVo, vmId, "VM");
 
-        setPresetVariableHostInValueIfUsageTypeIsRunningVm(value, usageType, vmVo);
-
         value.setId(vmVo.getUuid());
         value.setName(vmVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(vmVo.isRemoved());
+            return;
+        }
+
+        setPresetVariableHostInValueIfUsageTypeIsRunningVm(value, usageType, vmVo);
         value.setOsName(getPresetVariableValueOsName(vmVo.getGuestOSId()));
 
         setPresetVariableValueServiceOfferingAndComputingResources(value, usageType, vmVo);
@@ -448,9 +471,15 @@ public class PresetVariableHelper {
         VolumeVO volumeVo = volumeDao.findByIdIncludingRemoved(volumeId);
         validateIfObjectIsNull(volumeVo, volumeId, "volume");
 
-        value.setDiskOffering(getPresetVariableValueDiskOffering(volumeVo.getDiskOfferingId()));
         value.setId(volumeVo.getUuid());
         value.setName(volumeVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(volumeVo.getRemoved() != null);
+            return;
+        }
+
+        value.setDiskOffering(getPresetVariableValueDiskOffering(volumeVo.getDiskOfferingId()));
         value.setProvisioningType(volumeVo.getProvisioningType());
 
         Long poolId = volumeVo.getPoolId();
@@ -527,6 +556,12 @@ public class PresetVariableHelper {
 
         value.setId(vmTemplateVo.getUuid());
         value.setName(vmTemplateVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(vmTemplateVo.getRemoved() != null);
+            return;
+        }
+
         value.setOsName(getPresetVariableValueOsName(vmTemplateVo.getGuestOSId()));
         value.setTags(getPresetVariableValueResourceTags(templateOrIsoId, usageType == QuotaTypes.ISO ? ResourceObjectType.ISO : ResourceObjectType.Template));
         value.setSize(ByteScaleUtils.bytesToMib(vmTemplateVo.getSize()));
@@ -547,6 +582,12 @@ public class PresetVariableHelper {
 
         value.setId(snapshotVo.getUuid());
         value.setName(snapshotVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(snapshotVo.getRemoved() != null);
+            return;
+        }
+
         value.setSize(ByteScaleUtils.bytesToMib(snapshotVo.getSize()));
         value.setSnapshotType(Snapshot.Type.values()[snapshotVo.getSnapshotType()]);
         value.setStorage(getPresetVariableValueStorage(getSnapshotDataStoreId(snapshotId), usageType));
@@ -584,6 +625,12 @@ public class PresetVariableHelper {
 
         value.setId(networkOfferingVo.getUuid());
         value.setName(networkOfferingVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(networkOfferingVo.getRemoved() != null);
+            return;
+        }
+
         value.setTag(networkOfferingVo.getTags());
     }
 
@@ -601,6 +648,12 @@ public class PresetVariableHelper {
 
         value.setId(vmSnapshotVo.getUuid());
         value.setName(vmSnapshotVo.getName());
+
+        if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
+            value.setRemoved(vmSnapshotVo.getRemoved() != null);
+            return;
+        }
+
         value.setTags(getPresetVariableValueResourceTags(vmSnapshotId, ResourceObjectType.VMSnapshot));
         value.setVmSnapshotType(vmSnapshotVo.getType());
     }

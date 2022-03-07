@@ -25,6 +25,7 @@ import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToSt
 public class GenericPresetVariable {
     private String id;
     private String name;
+    private transient boolean isRemoved;
     protected transient Set<String> fieldNamesToIncludeInToString = new HashSet<>();
 
     public GenericPresetVariable() {
@@ -47,6 +48,14 @@ public class GenericPresetVariable {
     public void setName(String name) {
         this.name = name;
         fieldNamesToIncludeInToString.add("name");
+    }
+
+    public boolean isRemoved() {
+        return isRemoved;
+    }
+
+    public void setRemoved(boolean isRemoved) {
+        this.isRemoved = isRemoved;
     }
 
     @Override

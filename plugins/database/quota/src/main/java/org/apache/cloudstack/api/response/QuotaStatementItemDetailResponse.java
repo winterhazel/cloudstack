@@ -49,9 +49,9 @@ public class QuotaStatementItemDetailResponse extends BaseResponse {
     @Param(description = "Item's end date.")
     private Date endDate;
 
-    @SerializedName(ApiConstants.RESOURCE_ID)
-    @Param(description = "Resource's id.")
-    private Long resourceId;
+    @SerializedName(ApiConstants.RESOURCE)
+    @Param(description = "Resource's info.")
+    private QuotaStatementItemDetailResourceResponse resource;
 
     public void setQuotaUsed(BigDecimal quotaUsed) {
         this.quotaUsed = quotaUsed.setScale(2, RoundingMode.HALF_EVEN);
@@ -93,12 +93,12 @@ public class QuotaStatementItemDetailResponse extends BaseResponse {
         return quotaUsed;
     }
 
-    public Long getResourceId() {
-        return resourceId;
+    public QuotaStatementItemDetailResourceResponse getResource() {
+        return resource;
     }
 
-    public void setResourceId(Long resourceId) {
-        this.resourceId = resourceId;
+    public void setResource(QuotaStatementItemDetailResourceResponse resource) {
+        this.resource = resource;
     }
 
 }

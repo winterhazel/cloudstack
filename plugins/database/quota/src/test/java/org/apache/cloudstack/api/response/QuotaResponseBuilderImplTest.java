@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,8 @@ import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaSummaryCmd;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.quota.QuotaService;
+import org.apache.cloudstack.quota.activationrule.presetvariables.GenericPresetVariable;
+import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariableHelper;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.dao.QuotaBalanceDao;
@@ -72,6 +75,8 @@ import com.cloud.domain.Domain;
 import com.cloud.domain.DomainVO;
 import com.cloud.domain.dao.DomainDao;
 import com.cloud.exception.InvalidParameterValueException;
+import com.cloud.network.dao.IPAddressDao;
+import com.cloud.network.dao.IPAddressVO;
 import com.cloud.usage.UsageVO;
 import com.cloud.usage.dao.UsageDao;
 import com.cloud.user.Account;
@@ -80,6 +85,7 @@ import com.cloud.user.AccountVO;
 import com.cloud.user.dao.AccountDao;
 import com.cloud.user.dao.UserDao;
 import com.cloud.utils.Pair;
+import com.cloud.utils.net.Ip;
 
 import junit.framework.TestCase;
 
@@ -145,6 +151,21 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
     @Mock
     AccountVO accountVoMock;
+
+    @Mock
+    QuotaStatementItemDetailResourceResponse quotaStatementItemDetailResourceResponseMock;
+
+    @Mock
+    IPAddressDao ipAddressDaoMock;
+
+    @Mock
+    UsageVO usageVoMock;
+
+    @Mock
+    IPAddressVO ipAddressVoMock;
+
+    @Mock
+    PresetVariableHelper presetVariableHelperMock;
 
     Date date = new Date();
     Set<Account.Type> accountTypes = Sets.newHashSet(Account.Type.values());
@@ -469,7 +490,7 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         QuotaStatementItemResponse item = new QuotaStatementItemResponse(1);
         List<QuotaUsageVO> expecteds = getQuotaUsagesForTest();
 
-        Mockito.doNothing().when(quotaResponseBuilderImplSpy).addResourceIdToItemDetail(Mockito.any(), Mockito.any());
+        Mockito.doReturn(quotaStatementItemDetailResourceResponseMock).when(quotaResponseBuilderImplSpy).getQuotaStatementItemDetailResourceResponse(Mockito.any());
 
         quotaResponseBuilderImplSpy.setStatementItemDetails(item, expecteds, true);
 
@@ -483,31 +504,8 @@ public class QuotaResponseBuilderImplTest extends TestCase {
             Assert.assertEquals(expected.getQuotaUsed(), result.getQuotaUsed());
             Assert.assertEquals(expected.getStartDate(), result.getStartDate());
             Assert.assertEquals(expected.getEndDate(), result.getEndDate());
+            Assert.assertEquals(quotaStatementItemDetailResourceResponseMock, result.getResource());
         }
-    }
-
-    @Test
-    public void addResourceIdToItemDetailTestQuotaTypeIsNetworkOfferingAddOfferingId() {
-        UsageVO expected = new UsageVO();
-        expected.setUsageId(1l);
-        expected.setOfferingId(2l);
-
-        Mockito.doReturn(expected).when(usageDaoMock).findUsageById(Mockito.anyLong());
-
-        QuotaStatementItemDetailResponse detail = new QuotaStatementItemDetailResponse();
-
-        QuotaTypes.listQuotaTypes().entrySet().forEach(entry -> {
-            expected.setUsageType(entry.getKey());
-
-            quotaResponseBuilderImplSpy.addResourceIdToItemDetail(1l, detail);
-
-            if (entry.getKey() == QuotaTypes.NETWORK_OFFERING) {
-                Assert.assertEquals(expected.getOfferingId(), detail.getResourceId());
-            } else {
-                Assert.assertEquals(expected.getUsageId(), detail.getResourceId());
-            }
-        });
-
     }
 
     @Test (expected = InvalidParameterValueException.class)
@@ -865,5 +863,68 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         cmd.setAccountId(1l);
         cmd.setDomainId(2l);
         return cmd;
+    }
+
+    @Test
+    public void getQuotaStatementItemDetailResourceResponseTestTypeIpAddressSearchOnDatabase() {
+        QuotaStatementItemDetailResourceResponse expected = new QuotaStatementItemDetailResourceResponse("test_id", "test_name", false);
+
+        Mockito.doReturn(usageVoMock).when(usageDaoMock).findUsageById(Mockito.anyLong());
+        Mockito.doReturn(QuotaTypes.IP_ADDRESS).when(usageVoMock).getUsageType();
+        Mockito.doReturn(1l).when(usageVoMock).getUsageId();
+        Mockito.doReturn(ipAddressVoMock).when(ipAddressDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
+        Mockito.doReturn(expected.getId()).when(ipAddressVoMock).getUuid();
+        Mockito.doReturn(null).when(ipAddressVoMock).getRemoved();
+
+        Ip ipMock = Mockito.mock(Ip.class);
+        Mockito.doReturn(ipMock).when(ipAddressVoMock).getAddress();
+        Mockito.doReturn(expected.getDisplayName()).when(ipMock).addr();
+
+        QuotaStatementItemDetailResourceResponse result = quotaResponseBuilderImplSpy.getQuotaStatementItemDetailResourceResponse(2l);
+
+        Assert.assertEquals(expected.getId(), result.getId());
+        Assert.assertEquals(expected.getDisplayName(), result.getDisplayName());
+        Assert.assertEquals(expected.isRemoved(), result.isRemoved());
+        Mockito.verify(presetVariableHelperMock, Mockito.never()).getResourceToAddToQuotaStatementResponse(Mockito.any());
+    }
+
+    @Test
+    public void getQuotaStatementItemDetailResourceResponseTestTypeAlreadyLoadedByPresetVariableHelper() {
+        QuotaStatementItemDetailResourceResponse expected = new QuotaStatementItemDetailResourceResponse("test_id2", "test_name3", true);
+
+        Mockito.doReturn(usageVoMock).when(usageDaoMock).findUsageById(Mockito.anyLong());
+
+        GenericPresetVariable genericPresetVariableMock = Mockito.mock(GenericPresetVariable.class);
+        Mockito.doReturn(genericPresetVariableMock).when(presetVariableHelperMock).getResourceToAddToQuotaStatementResponse(Mockito.any());
+        Mockito.doReturn(expected.getDisplayName()).when(genericPresetVariableMock).getName();
+        Mockito.doReturn(expected.isRemoved()).when(genericPresetVariableMock).isRemoved();
+
+        Mockito.doReturn(genericPresetVariableMock).when(presetVariableHelperMock).getResourceToAddToQuotaStatementResponse(Mockito.any());
+
+        Set<Integer> quotaTypes = new HashSet<>(QuotaTypes.getQuotaTypeMap().keySet());
+        quotaTypes.remove(QuotaTypes.IP_ADDRESS);
+
+        Set<Integer> quotaTypesLoadedInPresetVariableHelper = Sets.newHashSet(QuotaTypes.RUNNING_VM, QuotaTypes.ALLOCATED_VM, QuotaTypes.VOLUME, QuotaTypes.NETWORK_OFFERING,
+                QuotaTypes.SNAPSHOT, QuotaTypes.TEMPLATE, QuotaTypes.ISO, QuotaTypes.VM_SNAPSHOT);
+
+        quotaTypes.forEach(type -> {
+            Mockito.doReturn(type).when(usageVoMock).getUsageType();
+
+            if (!quotaTypesLoadedInPresetVariableHelper.contains(type)) {
+                Mockito.doReturn(null).when(genericPresetVariableMock).getId();
+                QuotaStatementItemDetailResourceResponse result = quotaResponseBuilderImplSpy.getQuotaStatementItemDetailResourceResponse(4l);
+                Assert.assertNull(result);
+                return;
+            }
+
+            Mockito.doReturn(expected.getId()).when(genericPresetVariableMock).getId();
+            QuotaStatementItemDetailResourceResponse result = quotaResponseBuilderImplSpy.getQuotaStatementItemDetailResourceResponse(2l);
+
+            Assert.assertEquals(expected.getId(), result.getId());
+            Assert.assertEquals(expected.getDisplayName(), result.getDisplayName());
+            Assert.assertEquals(expected.isRemoved(), result.isRemoved());
+        });
+
+        Mockito.verify(presetVariableHelperMock, Mockito.times(quotaTypes.size())).getResourceToAddToQuotaStatementResponse(Mockito.any());
     }
 }
