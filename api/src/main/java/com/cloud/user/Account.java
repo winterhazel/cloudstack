@@ -22,6 +22,7 @@ import org.apache.cloudstack.api.InternalIdentity;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 public interface Account extends ControlledEntity, InternalIdentity, Identity {
 
@@ -39,20 +40,29 @@ public interface Account extends ControlledEntity, InternalIdentity, Identity {
         public String toString(){
             return super.toString().toLowerCase();
         }
+
+        /**
+         * This method was created to maintain backwards compatibility to the DB schema. Unfortunately we can't override the valueOf method.
+         * */
+        public static State getValueOf(String name){
+            return State.valueOf(name.toUpperCase());
+        }
+
     }
 
     /**
      * Account types.
      * */
     enum Type {
-        NORMAL, ADMIN, DOMAIN_ADMIN, RESOURCE_DOMAIN_ADMIN, READ_ONLY_ADMIN, PROJECT;
+        NORMAL, ADMIN, DOMAIN_ADMIN, RESOURCE_DOMAIN_ADMIN, READ_ONLY_ADMIN, PROJECT, UNKNOWN;
 
-        private static HashMap<Integer,Type> ACCOUNT_TYPE_MAP = new HashMap<>();
+        private static Map<Integer,Type> ACCOUNT_TYPE_MAP = new HashMap<>();
 
         static {
             for (Type t: Type.values()) {
                 ACCOUNT_TYPE_MAP.put(t.ordinal(),t);
             }
+            ACCOUNT_TYPE_MAP.remove(6);
         }
 
         public static Type getFromValue(Integer type){
