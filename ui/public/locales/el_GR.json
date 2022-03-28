@@ -2110,7 +2110,7 @@
 "label.templates" : "Πρότυπα",
 "label.templatesubject" : "Θέμα",
 "label.templatetotal" : "Πρότυπο",
-"label.templatetype" : "Τύπος προτύπου",
+"label.emailtemplate" : "Τύπος προτύπου",
 "label.tftp.dir" : "Κατάλογος TFTP",
 "label.tftpdir" : "Ριζικός κατάλογος Tftp",
 "label.theme.default" : "Προεπιλεγμένο θέμα",

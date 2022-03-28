@@ -1669,7 +1669,7 @@
 "label.templates": "Mod\u00e8les",
 "label.templatesubject": "Sujet",
 "label.templatetotal": "Mod\u00e8le",
-"label.templatetype": "Mod\u00e8le d'email",
+"label.emailtemplate": "Mod\u00e8le d'email",
 "label.tftp.dir": "R\u00e9pertoire TFTP",
 "label.tftpdir": "R\u00e9pertoire racine TFTP",
 "label.theme.default": "Th\u00e8me par d\u00e9faut",

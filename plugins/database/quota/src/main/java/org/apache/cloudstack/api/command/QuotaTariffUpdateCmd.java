@@ -58,10 +58,11 @@ public class QuotaTariffUpdateCmd extends BaseCmd {
     @Parameter(name = ApiConstants.NAME, type = CommandType.STRING, required = true, description = "Quota tariff's name")
     private String name;
 
-    @Parameter(name = ApiConstants.DESCRIPTION, type = CommandType.STRING, description = "Quota tariff's description. Inform empty to remove the description.")
+    @Parameter(name = ApiConstants.DESCRIPTION, type = CommandType.STRING, description = "Quota tariff's description. Inform empty to remove the description.", length = 65535)
     private String description;
 
-    @Parameter(name = ApiConstants.ACTIVATION_RULE, type = CommandType.STRING, description = "Quota tariff's activation rule. Inform empty to remove the activation rule.")
+    @Parameter(name = ApiConstants.ACTIVATION_RULE, type = CommandType.STRING, description = "Quota tariff's activation rule. Use empty to remove the activation rule.",
+            length = 65535)
     private String activationRule;
 
     public Integer getUsageType() {

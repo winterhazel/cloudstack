@@ -26,7 +26,6 @@
 
 <script>
 import { api } from '@/api'
-import moment from 'moment'
 
 import ResourceView from '@/components/view/ResourceView'
 
@@ -59,30 +58,27 @@ export default {
   },
   watch: {
     resource () {
-      if (Object.keys(this.resource).length === 0) {
-        this.fetchData()
-      }
+      this.fetchData()
     }
   },
-  inject: ['parentChangeResource'],
   methods: {
     fetchData () {
       const params = {}
       if (Object.keys(this.$route.query).length > 0) {
         Object.assign(params, this.$route.query)
       }
+
+      params.listAll = true
       this.loading = true
 
-      api('quotaBalance', params).then(json => {
-        const quotaBalance = json.quotabalanceresponse.balance || {}
-        if (Object.keys(quotaBalance).length > 0) {
-          quotaBalance.currency = `${quotaBalance.currency} ${quotaBalance.startquota}`
-          quotaBalance.startdate = moment(quotaBalance.startdate).format(this.pattern)
-          quotaBalance.account = this.$route.params.id ? this.$route.params.id : null
-          quotaBalance.domainid = this.$route.query.domainid ? this.$route.query.domainid : null
+      api('quotaSummary', params).then(json => {
+        const quotaSummary = json.quotasummaryresponse.summary[0] || {}
+        if (Object.keys(quotaSummary).length > 0) {
+          quotaSummary.currentbalance = quotaSummary.balance
+          quotaSummary.account = this.$route.params.id ? this.$route.params.id : null
+          quotaSummary.domainid = this.$route.query.domainid ? this.$route.query.domainid : null
         }
-        this.quotaResource = Object.assign({}, this.quotaResource, quotaBalance)
-        this.parentChangeResource(this.quotaResource)
+        this.quotaResource = Object.assign({}, this.quotaResource, quotaSummary)
       }).finally(() => {
         this.loading = false
       })

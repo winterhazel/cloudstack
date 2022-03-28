@@ -20,7 +20,9 @@ import com.cloud.user.Account;
 import com.cloud.utils.Pair;
 
 import org.apache.cloudstack.api.APICommand;
+import org.apache.cloudstack.api.ApiArgValidator;
 import org.apache.cloudstack.api.ApiConstants;
+import org.apache.cloudstack.api.BaseCmd;
 import org.apache.cloudstack.api.BaseListCmd;
 import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.response.ListResponse;
@@ -61,6 +63,14 @@ public class QuotaTariffListCmd extends BaseListCmd {
     @Parameter(name = ApiConstants.LIST_ALL, type = CommandType.BOOLEAN, required = false, description = "False will list only not removed quota tariffs. If set to True, we will "
             + "list all, including the removed ones. The default is false.")
     private boolean listAll = false;
+
+    @Parameter(name = ApiConstants.LIST_ONLY_REMOVED, type = CommandType.BOOLEAN, required = false, description = "If set to True, we will list only the removed tariffs."
+            + " The default is false.")
+    private boolean listOnlyRemoved = false;
+
+    @Parameter(name = ApiConstants.UUID, type = BaseCmd.CommandType.STRING, required = false, entityType = QuotaTariffResponse.class,
+            description = "The quota tariff's uuid.", validations = {ApiArgValidator.UuidString})
+    private String uuid;
 
     public QuotaTariffListCmd() {
         super();
@@ -115,6 +125,22 @@ public class QuotaTariffListCmd extends BaseListCmd {
 
     public boolean isListAll() {
         return listAll;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public boolean isListOnlyRemoved() {
+        return listOnlyRemoved;
+    }
+
+    public void setListOnlyRemoved(boolean listOnlyRemoved) {
+        this.listOnlyRemoved = listOnlyRemoved;
     }
 
 }

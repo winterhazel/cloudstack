@@ -159,8 +159,15 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
     }
 
     @Override
-    public Pair<List<QuotaTariffVO>, Integer> listQuotaTariffs(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listAll, Long startIndex, Long pageSize) {
-        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchCriteria(startDate, endDate, usageType, name, uuid);
+    public Pair<List<QuotaTariffVO>, Integer> listQuotaTariffs(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listAll, Long startIndex,
+            Long pageSize) {
+        return listQuotaTariffs(startDate, endDate, usageType, name, uuid, listAll, false, startIndex, pageSize);
+    }
+
+    @Override
+    public Pair<List<QuotaTariffVO>, Integer> listQuotaTariffs(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listAll, boolean listOnlyRemoved,
+            Long startIndex, Long pageSize) {
+        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchCriteria(startDate, endDate, usageType, name, uuid, listOnlyRemoved);
         Filter sorter = new Filter(QuotaTariffVO.class, "usageType", false, startIndex, pageSize);
         sorter.addOrderBy(QuotaTariffVO.class, "effectiveOn", false);
         sorter.addOrderBy(QuotaTariffVO.class, "updatedOn", false);
@@ -173,8 +180,8 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
         });
     }
 
-    protected SearchCriteria<QuotaTariffVO> createListQuotaTariffsSearchCriteria(Date startDate, Date endDate, Integer usageType, String name, String uuid) {
-        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchBuilder(startDate, endDate, usageType, name, uuid).create();
+    protected SearchCriteria<QuotaTariffVO> createListQuotaTariffsSearchCriteria(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listOnlyRemoved) {
+        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchBuilder(startDate, endDate, usageType, name, uuid, listOnlyRemoved).create();
 
         searchCriteria.setParametersIfNotNull("start_date", startDate);
         searchCriteria.setParametersIfNotNull("end_date", endDate);
@@ -185,7 +192,7 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
         return searchCriteria;
     }
 
-    protected SearchBuilder<QuotaTariffVO> createListQuotaTariffsSearchBuilder(Date startDate, Date endDate, Integer usageType, String name, String uuid) {
+    protected SearchBuilder<QuotaTariffVO> createListQuotaTariffsSearchBuilder(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listOnlyRemoved) {
         SearchBuilder<QuotaTariffVO> searchBuilder = createSearchBuilder();
 
         if (startDate != null) {
@@ -206,6 +213,10 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
 
         if (uuid != null) {
             searchBuilder.and("uuid", searchBuilder.entity().getUuid(), SearchCriteria.Op.EQ);
+        }
+
+        if (listOnlyRemoved) {
+            searchBuilder.and("removed", searchBuilder.entity().getRemoved(), SearchCriteria.Op.NNULL);
         }
 
         return searchBuilder;

@@ -20,13 +20,11 @@
     <filter-quota-data-by-period-view
       :start-date="startDate"
       :end-date="endDate"
-      :preset-ranges="presetRanges"
-      :date-limit="dateLimit"
       @fetchData="fetchData"/>
     <a-button v-if="dataSource.length > 0" type="dashed" @click="exportDataToCsv" class="w-100" icon="download">
       {{ $t('label.export.data.csv') }}
     </a-button>
-    <line-chart v-if="dataSource.length > 0" :datasets="getChartDatasets()" :options="getChartOptions()" class="chart-margin" />
+    <bar-chart v-if="dataSource.length > 0" :datasets="getChartDatasets()" :options="getChartOptions()" class="chart-margin"/>
     <a-table
       size="small"
       :loading="loading"
@@ -46,22 +44,22 @@
 <script>
 import { api } from '@/api'
 import moment from 'moment'
-import LineChart from '@/components/view/chart/LineChart.js'
+import BarChart from '@/components/view/chart/BarChart.js'
 import * as dateUtils from '@/utils/date'
 import * as exportUtils from '@/utils/export'
 import FilterQuotaDataByPeriodView from './FilterQuotaDataByPeriodView.vue'
 import * as chartUtils from '@/utils/chart'
 
 export default {
-  name: 'QuotaBalance',
+  name: 'QuotaCredits',
   components: {
     FilterQuotaDataByPeriodView,
-    LineChart
+    BarChart
   },
   props: {
     resource: {
       type: Object,
-      required: true
+      default: () => {}
     },
     tab: {
       type: String,
@@ -75,12 +73,7 @@ export default {
       currency: '',
       dataSource: [],
       startDate: moment().startOf('month'),
-      endDate: moment().subtract(1, 'days'),
-      presetRanges: {
-        [this.$t('label.quota.filter.preset.thismonth')]: [moment().startOf('month'), moment().subtract(1, 'days')],
-        [this.$t('label.quota.filter.preset.thisyear')]: [moment().startOf('year'), moment().subtract(1, 'days')]
-      },
-      dateLimit: moment().subtract(1, 'days').toDate()
+      endDate: moment()
     }
   },
   computed: {
@@ -91,16 +84,16 @@ export default {
           dataIndex: 'date',
           width: 'calc(100% / 2)',
           scopedSlots: { customRender: 'date' },
-          customRender: (text) => dateUtils.formatDateToExtended(moment(text)),
+          customRender: (text) => dateUtils.formatDatetimeToExtended(text),
           sorter: (a, b) => a.date - b.date,
           defaultSortOrder: 'descend'
         },
         {
-          title: this.$t('label.balance'),
-          dataIndex: 'balance',
+          title: this.$t('label.credit'),
+          dataIndex: 'credit',
           width: 'calc(100% / 2)',
-          scopedSlots: { customRender: 'balance' },
-          sorter: (a, b) => a.balance - b.balance
+          scopedSlots: { customRender: 'credit' },
+          sorter: (a, b) => a.credit - b.credit
         }
       ]
     }
@@ -119,7 +112,7 @@ export default {
   },
   methods: {
     fetchDataIfInTab () {
-      if (this.tab === 'quota.statement.balance') {
+      if (this.tab === 'quota.credits') {
         this.fetchData(this.startDate, this.endDate)
       }
     },
@@ -132,47 +125,60 @@ export default {
       this.loading = true
 
       try {
-        const data = await this.getQuotaBalance(startDate, endDate)
-        this.currency = data.currency
-        this.dataSource = data.dailybalances.map(balance => ({
-          ...balance,
-          date: moment.utc(balance.date)
+        const data = await this.getQuotaCreditsList(startDate, endDate)
+        this.currency = data[0]?.currency
+        this.dataSource = data.map(row => ({
+          ...row,
+          date: moment.utc(row.creditedon)
         }))
       } finally {
         this.loading = false
       }
     },
-    async getQuotaBalance (startDate, endDate) {
+    async getQuotaCreditsList (startDate, endDate) {
       const params = {
         domainid: this.$route.query?.domainid,
-        account: this.$route.query?.account,
+        accountid: this.$route.query?.accountid,
         startDate: startDate.format(this.pattern),
         endDate: endDate.format(this.pattern)
       }
 
-      return await api('quotaBalance', params)
-        .then(json => json.quotabalanceresponse.balance || {})
+      return await api('quotaCreditsList', params)
+        .then(json => json.quotacreditslistresponse.credit || {})
         .catch(error => { error && this.$notifyInfo({ message: this.$t('message.request.no.data') }) })
     },
     exportDataToCsv () {
       exportUtils.exportDataToCsv({
         data: this.dataSource,
-        keys: ['date', 'balance'],
-        fileName: `daily-quota-balance-of-user-${this.$route.params.id}-between-${this.startDate.format(this.pattern)}-and-${this.endDate.format(this.pattern)}`,
-        dateFormat: this.pattern
+        keys: ['creditorname', 'date', 'credit'],
+        fileName: `credits-of-user-${this.$route.params.id}-between-${this.startDate.format(this.pattern)}-and-${this.endDate.format(this.pattern)}`,
+        dateFormat: dateUtils.formats.ISO_DATETIME
       })
     },
     getChartDatasets () {
       const datasets = []
 
+      const data = []
+      const res = {}
+      this.dataSource.map(value => {
+        const date = value.date.format(this.pattern)
+        if (!res[date]) {
+          res[date] = { date, credit: 0 }
+          data.push(res[date])
+        }
+
+        res[date].credit += value.credit
+        return res
+      })
+
       datasets.push({
-        label: this.$t('label.balance'),
-        data: this.dataSource.map(row => row.balance),
+        label: this.$t('label.credit'),
+        data: data.map(row => row.credit),
         ...chartUtils.getChartColorObject()
       })
 
       return {
-        labels: this.dataSource.map(row => row.date.format(this.pattern)),
+        labels: data.map(row => row.date),
         datasets
       }
     },
@@ -183,7 +189,8 @@ export default {
             type: 'time',
             time: {
               unit: chartUtils.getUnitToTimeCartesianAxis('day', this.dataSource.length)
-            }
+            },
+            offset: true
           }]
         }
       }

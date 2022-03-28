@@ -15,6 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { i18n } from '@/locales'
+import { formats, moment } from '@/utils/date'
+
 export default {
   name: 'quota',
   title: 'label.quota',
@@ -27,8 +30,9 @@ export default {
       title: 'label.summary',
       icon: 'bars',
       permission: ['quotaSummary'],
-      columns: ['account', 'domain', 'state', 'currency', 'balance', 'quota'],
-      details: ['account', 'domain', 'state', 'currency', 'balance', 'quota', 'startdate', 'enddate'],
+      columns: ['account', 'domain', 'state', 'currency', 'balance'],
+      columnNames: ['account', 'domain', 'state', 'currency', 'currentbalance'],
+      details: ['currency', 'currentbalance'],
       component: () => import('@/views/plugins/quota/QuotaSummary.vue'),
       tabs: [
         {
@@ -42,6 +46,10 @@ export default {
         {
           name: 'quota.statement.balance',
           component: () => import('@/views/plugins/quota/QuotaBalance.vue')
+        },
+        {
+          name: 'quota.credits',
+          component: () => import('@/views/plugins/quota/QuotaCredits.vue')
         }
       ],
       actions: [
@@ -50,16 +58,9 @@ export default {
           icon: 'plus',
           docHelp: 'plugins/quota.html#quota-credits',
           label: 'label.quota.add.credits',
-          dataView: true,
-          args: ['value', 'min_balance', 'quota_enforce'],
-          mapping: {
-            account: {
-              value: (record) => { return record.account }
-            },
-            domainid: {
-              value: (record) => { return record.domainid }
-            }
-          }
+          listView: true,
+          popup: true,
+          component: () => import('@/views/plugins/quota/AddCredit.vue')
         }
       ]
     },
@@ -69,13 +70,56 @@ export default {
       icon: 'credit-card',
       docHelp: 'plugins/quota.html#quota-tariff',
       permission: ['quotaTariffList'],
-      columns: ['usageName', 'description', 'usageUnit', 'tariffValue', 'tariffActions'],
-      details: ['usageName', 'description', 'usageUnit', 'tariffValue'],
-      component: () => import('@/views/plugins/quota/QuotaTariff.vue')
+      columns: ['name', 'usageName', 'usageUnit', 'tariffValue',
+        {
+          hasActivationRule: (record) => record.activationRule ? i18n.t('label.yes') : i18n.t('label.no')
+        },
+        {
+          effectiveDate: (record) => moment.utc(record.effectiveDate).format(formats.ISO_DATE_ONLY)
+        },
+        {
+          endDate: (record) => record.endDate ? moment.utc(record.endDate).format(formats.ISO_DATE_ONLY) : undefined
+        },
+        {
+          removed: (record) => record.removed ? moment.utc(record.removed).format(formats.ISO_DATETIME) : undefined
+        }],
+      columnNames: ['name', 'usageName', 'usageUnit', 'quota.tariff.value', 'quota.tariff.hasactivationrule', 'quota.startdate', 'quota.enddate', 'removed'],
+      details: ['uuid', 'name', 'description', 'usageName', 'usageUnit', 'tariffValue', 'effectiveDate', 'endDate', 'removed', 'activationRule'],
+      detailLabels: { tariffValue: 'quota.tariff.value', effectiveDate: 'quota.startdate', endDate: 'quota.enddate', activationRule: 'quota.tariff.activationrule' },
+      filters: ['all', 'active', 'removed'],
+      searchFilters: ['name'],
+      actions: [
+        {
+          api: 'quotaTariffCreate',
+          icon: 'plus',
+          label: 'label.action.quota.tariff.create',
+          listView: true,
+          popup: true,
+          component: () => import('@/views/plugins/quota/CreateQuotaTariff.vue')
+        },
+        {
+          api: 'quotaTariffUpdate',
+          icon: 'edit',
+          label: 'label.quota.tariff.edit',
+          dataView: true,
+          popup: true,
+          show: (record) => !record.removed,
+          component: () => import('@/views/plugins/quota/EditQuotaTariff.vue')
+        },
+        {
+          api: 'quotaTariffDelete',
+          icon: 'delete',
+          label: 'label.action.quota.tariff.remove',
+          message: 'message.action.quota.tariff.remove',
+          params: (record) => ({ uuid: record.uuid }),
+          dataView: true,
+          show: (record) => !record.removed
+        }
+      ]
     },
     {
       name: 'quotaemailtemplate',
-      title: 'label.templatetype',
+      title: 'label.emailtemplate',
       icon: 'mail',
       permission: ['quotaEmailTemplateList'],
       columns: ['templatetype', 'templatesubject', 'templatebody'],
@@ -84,6 +128,14 @@ export default {
         name: 'details',
         component: () => import('@/views/plugins/quota/EmailTemplateDetails.vue')
       }]
+    },
+    {
+      name: 'quotausage',
+      title: 'quota.usage',
+      icon: 'bars',
+      permission: ['quotaStatement'],
+      hidden: true,
+      columns: ['usageName']
     }
   ]
 }

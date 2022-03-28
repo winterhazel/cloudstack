@@ -209,6 +209,18 @@ export const notifierPlugin = {
         duration: 0
       })
     }
+    Vue.prototype.$notifyInfo = function (info) {
+      var msg = i18n.t('message.request.info')
+      var desc = ''
+      if (info && info.message) {
+        desc = info.message
+      }
+      notification.info({
+        message: msg,
+        description: desc,
+        duration: 5
+      })
+    }
   }
 }
 

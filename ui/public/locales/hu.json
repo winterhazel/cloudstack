@@ -1667,7 +1667,7 @@
 "label.templates": "Sablonok",
 "label.templatesubject": "Subject",
 "label.templatetotal": "Sablon",
-"label.templatetype": "Email Template",
+"label.emailtemplate": "Email Template",
 "label.tftp.dir": "TFTP k\u00f6nyvt\u00e1r",
 "label.tftpdir": "Tftp root directory",
 "label.theme.default": "Alap\u00e9rtelmezett t\u00e9ma",

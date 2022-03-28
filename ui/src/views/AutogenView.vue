@@ -48,7 +48,7 @@
                     :placeholder="$t('label.filterby')"
                     :value="$route.query.filter || (projectView && $route.name === 'vm' ||
                       ['Admin', 'DomainAdmin'].includes($store.getters.userInfo.roletype) && ['vm', 'iso', 'template'].includes($route.name)
-                      ? 'all' : ['guestnetwork'].includes($route.name) ? 'all' : 'self')"
+                      ? 'all' : ['guestnetwork'].includes($route.name) ? 'all' : ['quotatariff'].includes($route.name) ? 'active' : 'self')"
                     style="min-width: 100px; margin-left: 10px"
                     @change="changeFilter"
                     showSearch
@@ -82,7 +82,7 @@
               :selectedItems="selectedItems"
               :dataView="dataView"
               :resource="resource"
-              @exec-action="(action) => execAction(action, action.groupAction && !dataView)"/>
+              @exec-action="(action) => action.simpleAction ? action.simpleAction({ searchParams, queryParams: $route.query }) : execAction(action, action.groupAction && !dataView)"/>
             <search-view
               v-if="!dataView"
               :searchFilters="searchFilters"
@@ -407,8 +407,7 @@
         :actions="actions"
         ref="listview"
         @selection-change="onRowSelectionChange"
-        @refresh="this.fetchData"
-        @edit-tariff-action="(showAction, record) => $emit('edit-tariff-action', showAction, record)"/>
+        @refresh="this.fetchData" />
       <a-pagination
         class="row-element"
         style="margin-top: 10px"
@@ -700,6 +699,7 @@ export default {
       this.apiName = ''
       this.actions = []
       this.columns = []
+      this.columnNames = []
       this.columnKeys = []
       const refreshed = ('irefresh' in params)
 
@@ -759,6 +759,7 @@ export default {
         this.apiName = this.$route.meta.permission[0]
         if (this.$route.meta.columns) {
           const columns = this.$route.meta.columns
+          this.columnNames = this.$route.meta.columnNames || {}
           if (columns && typeof columns === 'function') {
             this.columnKeys = columns(this.$store.getters)
           } else {
@@ -770,6 +771,8 @@ export default {
           this.actions = this.$route.meta.actions
         }
       }
+
+      this.columnNames = this.columnNames.length > 0 ? this.columnNames : this.columnKeys
 
       if (this.apiName === '' || this.apiName === undefined) {
         return
@@ -789,9 +792,12 @@ export default {
       }
 
       const customRender = {}
-      for (var columnKey of this.columnKeys) {
+
+      for (let index = 0; index < this.columnKeys.length; index++) {
+        const columnKey = this.columnKeys[index]
         let key = columnKey
-        let title = columnKey
+        let title = this.columnNames[index]
+
         if (typeof columnKey === 'object') {
           if ('customTitle' in columnKey && 'field' in columnKey) {
             key = columnKey.field
@@ -799,7 +805,7 @@ export default {
             customRender[key] = columnKey[key]
           } else {
             key = Object.keys(columnKey)[0]
-            title = Object.keys(columnKey)[0]
+            title = (typeof title === 'object') ? Object.keys(columnKey)[0] : title
             customRender[key] = columnKey[key]
           }
         }
@@ -837,6 +843,21 @@ export default {
       if (this.$showIcon()) {
         params.showIcon = true
       }
+
+      if (this.apiName === 'quotaTariffList') {
+        params.uuid = params.id
+        delete params.id
+
+        params.listall = false
+        if (['all', 'removed'].includes(this.$route.query.filter) || params.uuid) {
+          params.listall = true
+        }
+
+        if (['removed'].includes(this.$route.query.filter)) {
+          params.listonlyremoved = true
+        }
+      }
+
       api(this.apiName, params).then(json => {
         var responseName
         var objectName
@@ -862,6 +883,10 @@ export default {
 
         if (['listTemplates', 'listIsos'].includes(this.apiName) && this.items.length > 1) {
           this.items = [...new Map(this.items.map(x => [x.id, x])).values()]
+        }
+
+        if (this.apiName === 'quotaTariffList' && this.$route.query.filter === 'removed') {
+          this.items = this.items.filter(item => item.removed)
         }
 
         if (this.apiName === 'listProjects' && this.items.length > 0) {
@@ -1304,6 +1329,11 @@ export default {
         if ('id' in this.resource && action.params.map(i => { return i.name }).includes('id')) {
           params.id = this.resource.id
         }
+
+        if (['quotaTariffDelete'].includes(action.api)) {
+          params.uuid = this.resource.uuid
+        }
+
         for (const key in values) {
           const input = values[key]
           for (const param of action.params) {
@@ -1360,6 +1390,7 @@ export default {
         var hasJobId = false
         this.actionLoading = true
         let args = null
+
         if (action.post) {
           args = [action.api, {}, 'POST', params]
         } else {

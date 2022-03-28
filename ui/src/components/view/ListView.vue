@@ -101,6 +101,7 @@
         </span>
         <span v-else>
           <router-link :to="{ path: $route.path + '/' + record.id }" v-if="record.id">{{ text }}</router-link>
+          <router-link :to="{ path: $route.path + '/' + record.uuid }" v-else-if="$route.path.startsWith('/quotatariff') && record.uuid">{{ text }}</router-link>
           <router-link :to="{ path: $route.path + '/' + record.name }" v-else>{{ text }}</router-link>
         </span>
       </span>
@@ -240,13 +241,20 @@
           </span>
         </template>
       </template>
-      <template v-if="text && !text.startsWith('PrjAcct-')">
-        <router-link
-          v-if="'quota' in record && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
-          :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, quota: true } }">{{ text }}</router-link>
-        <router-link :to="{ path: '/account/' + record.accountid }" v-else-if="record.accountid">{{ text }}</router-link>
-        <router-link :to="{ path: '/account', query: { name: record.account, domainid: record.domainid, dataView: true } }" v-else-if="$store.getters.userInfo.roletype !== 'User'">{{ text }}</router-link>
-        <span v-else>{{ text }}</span>
+      <template v-if="text">
+        <template v-if="!text.startsWith('PrjAcct-')">
+          <router-link
+            v-if="'balance' in record && 'currency' in record && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
+            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, accountid: record.accountid, quota: true } }">{{ text }}</router-link>
+          <router-link :to="{ path: '/account/' + record.accountid }" v-else-if="record.accountid">{{ text }}</router-link>
+          <router-link :to="{ path: '/account', query: { name: record.account, domainid: record.domainid, dataView: true } }" v-else-if="$store.getters.userInfo.roletype !== 'User'">{{ text }}</router-link>
+        </template>
+        <span v-else>
+          <router-link
+            v-if="'balance' in record && 'currency' in record && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
+            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, quota: true } }">{{ text.replace('PrjAcct-', '').concat(' (').concat($t('label.project')).concat(')') }}</router-link>
+          <span v-else>{{ text.replace('PrjAcct-', '').concat(' (').concat($t('label.project')).concat(')') }}</span>
+        </span>
       </template>
     </span>
     <span slot="domain" slot-scope="text, record" href="javascript:;">
@@ -348,15 +356,6 @@
         v-if="editableValueKey === record.key"
         iconType="check-circle"
         iconTwoToneColor="#52c41a" />
-    </template>
-    <template slot="tariffActions" slot-scope="text, record">
-      <tooltip-button
-        :tooltip="$t('label.edit')"
-        v-if="editableValueKey !== record.key"
-        :disabled="!('quotaTariffUpdate' in $store.getters.apis)"
-        icon="edit"
-        @click="editTariffValue(record)" />
-      <slot></slot>
     </template>
   </a-table>
 </template>
@@ -464,7 +463,7 @@ export default {
         '/template', '/iso',
         '/project', '/account',
         '/zone', '/pod', '/cluster', '/host', '/storagepool', '/imagestore', '/systemvm', '/router', '/ilbvm', '/annotation',
-        '/computeoffering', '/systemoffering', '/diskoffering', '/backupoffering', '/networkoffering', '/vpcoffering'].join('|'))
+        '/computeoffering', '/systemoffering', '/diskoffering', '/backupoffering', '/networkoffering', '/vpcoffering', '/quotatariff'].join('|'))
         .test(this.$route.path)
     },
     enableGroupAction () {
@@ -617,9 +616,6 @@ export default {
       if (index === data.length - 1) return
       data.push(data.splice(index, 1)[0])
       this.updateOrder(data)
-    },
-    editTariffValue (record) {
-      this.$emit('edit-tariff-action', true, record)
     },
     ipV6Address (text, record) {
       if (!record || !record.nic || record.nic.length === 0) {

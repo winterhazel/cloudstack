@@ -1695,7 +1695,7 @@
 "label.templates": "Plantillas",
 "label.templatesubject": "Tema",
 "label.templatetotal": "Plantilla",
-"label.templatetype": "Plantilla de E-Mail",
+"label.emailtemplate": "Plantilla de E-Mail",
 "label.tftp.dir": "Directorio de TFTP",
 "label.tftpdir": "Directorio ra\u00edz de TFTP",
 "label.theme.default": "Tema Por Defecto",
