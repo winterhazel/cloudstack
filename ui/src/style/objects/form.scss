@@ -1,0 +1,11 @@
+.form {
+  width: 80vw;
+
+  @media (min-width: 500px) {
+    width: 400px;
+  }
+}
+
+.ant-input-number, .ant-calendar-picker {
+  width: 100%;
+}

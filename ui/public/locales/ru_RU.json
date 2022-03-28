@@ -1666,7 +1666,7 @@
 "label.templates": "\u0428\u0430\u0431\u043b\u043e\u043d\u044b",
 "label.templatesubject": "Subject",
 "label.templatetotal": "\u0428\u0430\u0431\u043b\u043e\u043d",
-"label.templatetype": "Email Template",
+"label.emailtemplate": "Email Template",
 "label.tftp.dir": "\u041a\u0430\u0442\u0430\u043b\u043e\u0433 TFTP",
 "label.tftpdir": "Tftp root directory",
 "label.theme.default": "\u0421\u0442\u0430\u043d\u0434\u0430\u0440\u0442\u043d\u0430\u044f \u0442\u0435\u043c\u0430",

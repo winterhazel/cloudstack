@@ -1668,7 +1668,7 @@
 "label.templates": "\u6a21\u677f",
 "label.templatesubject": "Subject",
 "label.templatetotal": "\u6a21\u677f",
-"label.templatetype": "Email Template",
+"label.emailtemplate": "Email Template",
 "label.tftp.dir": "TFTP \u76ee\u5f55",
 "label.tftpdir": "Tftp \u6839\u76ee\u5f55",
 "label.theme.default": "\u9ed8\u8ba4\u4e3b\u9898",

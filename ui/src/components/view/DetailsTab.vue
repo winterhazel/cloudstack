@@ -20,8 +20,8 @@
     size="small"
     :dataSource="fetchDetails()">
     <a-list-item slot="renderItem" slot-scope="item" v-if="item in resource">
-      <div>
-        <strong>{{ item === 'service' ? $t('label.supportedservices') : $t('label.' + String(item).toLowerCase()) }}</strong>
+      <div style="width: 100%">
+        <strong>{{ item === 'service' ? $t('label.supportedservices') : $t(getDetailLabel(item)) }}</strong>
         <br/>
         <div v-if="Array.isArray(resource[item]) && item === 'service'">
           <div v-for="(service, idx) in resource[item]" :key="idx">
@@ -42,10 +42,11 @@
           <span v-if="['USER.LOGIN', 'USER.LOGOUT', 'ROUTER.HEALTH.CHECKS', 'FIREWALL.CLOSE', 'ALERT.SERVICE.DOMAINROUTER'].includes(resource[item])">{{ $t(resource[item].toLowerCase()) }}</span>
           <span v-else>{{ resource[item] }}</span>
         </div>
-        <div v-else-if="['created', 'sent', 'lastannotated'].includes(item)">
+        <div v-else-if="['created', 'sent', 'lastannotated', 'endDate', 'removed', 'effectiveDate'].includes(item)">
           {{ $toLocaleDate(resource[item]) }}
         </div>
-        <div v-else>{{ resource[item] }}</div>
+        <vue-code-highlight language="javascript" v-else-if="['activationRule'].includes(item)">{{ resource[item] }}</vue-code-highlight>
+        <div v-else>{{ resource[item] }} </div>
       </div>
     </a-list-item>
     <a-list-item slot="renderItem" slot-scope="item" v-else-if="item === 'ip6address' && ipV6Address && ipV6Address.length > 0">
@@ -65,13 +66,16 @@
 import DedicateData from './DedicateData'
 import HostInfo from '@/views/infra/HostInfo'
 import VmwareData from './VmwareData'
+import { component as VueCodeHighlight } from 'vue-code-highlight'
+import 'vue-code-highlight/themes/prism-tomorrow.css'
 
 export default {
   name: 'DetailsTab',
   components: {
     DedicateData,
     HostInfo,
-    VmwareData
+    VmwareData,
+    VueCodeHighlight
   },
   props: {
     resource: {
@@ -137,6 +141,10 @@ export default {
       }
       details = this.projectname ? [...details.filter(x => x !== 'account'), 'projectname'] : details
       return details
+    },
+    getDetailLabel (detail) {
+      const { detailLabels } = this.$route.meta
+      return 'label.' + String((detailLabels && detailLabels[detail]) || detail).toLowerCase()
     }
   }
 }

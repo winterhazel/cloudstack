@@ -1669,7 +1669,7 @@
 "label.templates": "Templates",
 "label.templatesubject": "Subject",
 "label.templatetotal": "Template",
-"label.templatetype": "Email Template",
+"label.emailtemplate": "Email Template",
 "label.tftp.dir": "TFTP Directory",
 "label.tftpdir": "Tftp root directory",
 "label.theme.default": "Default Theme",

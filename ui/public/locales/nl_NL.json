@@ -1670,7 +1670,7 @@
 "label.templates": "Templates",
 "label.templatesubject": "onderwerp",
 "label.templatetotal": "Template",
-"label.templatetype": "e-mail sjabloon",
+"label.emailtemplate": "e-mail sjabloon",
 "label.tftp.dir": "TFTP Directory",
 "label.tftpdir": "TFTP root directory",
 "label.theme.default": "Standaard Thema",

@@ -35,11 +35,10 @@
         class="button-action-badge"
         :overflowCount="9"
         :count="actionBadge[action.api] ? actionBadge[action.api].badgeNum : 0"
-        v-if="action.api in $store.getters.apis &&
+        v-if="(action.api in $store.getters.apis &&
           action.showBadge && (
             (!dataView && ((action.listView && ('show' in action ? action.show(resource, $store.getters) : true)) || (action.groupAction && selectedRowKeys.length > 0 && ('groupShow' in action ? action.groupShow(selectedItems, $store.getters) : true)))) ||
-            (dataView && action.dataView && ('show' in action ? action.show(resource, $store.getters) : true))
-          )"
+            (dataView && action.dataView && ('show' in action ? action.show(resource, $store.getters) : true)))) || action.simpleAction"
         :disabled="'disabled' in action ? action.disabled(resource, $store.getters) : false" >
         <a-button
           :type="action.icon === 'delete' ? 'danger' : (action.icon === 'plus' ? 'primary' : 'default')"

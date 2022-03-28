@@ -374,13 +374,15 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         Integer usageType = cmd.getUsageType();
         String name = cmd.getName();
         boolean listAll = cmd.isListAll();
+        boolean listOnlyRemoved = cmd.isListOnlyRemoved();
         Long startIndex = cmd.getStartIndex();
         Long pageSize = cmd.getPageSizeVal();
+        String uuid = cmd.getUuid();
 
         s_logger.debug(String.format("Listing quota tariffs for parameters [%s].", ReflectionToStringBuilderUtils.reflectOnlySelectedFields(cmd, "effectiveDate",
-                "endDate", "listAll", "name", "page", "pageSize", "usageType")));
+                "endDate", "listAll", "name", "page", "pageSize", "usageType", "uuid", "listOnlyRemoved")));
 
-        return _quotaTariffDao.listQuotaTariffs(startDate, endDate, usageType, name, null, listAll, startIndex, pageSize);
+        return _quotaTariffDao.listQuotaTariffs(startDate, endDate, usageType, name, uuid, listAll, listOnlyRemoved, startIndex, pageSize);
     }
 
     @Override

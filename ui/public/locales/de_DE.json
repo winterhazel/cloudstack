@@ -2037,7 +2037,7 @@
 "label.templates": "Vorlagen",
 "label.templatesubject": "Thema",
 "label.templatetotal": "Vorlage",
-"label.templatetype": "Email Vorlage",
+"label.emailtemplate": "Email Vorlage",
 "label.tftp.dir": "TFTP-Verzeichnis",
 "label.tftpdir": "Tftp root-Verzeichnis",
 "label.theme.default": "Motiv-Standardeinstellung",

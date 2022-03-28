@@ -1669,7 +1669,7 @@
 "label.templates": "Maler",
 "label.templatesubject": "Emne",
 "label.templatetotal": "Mal",
-"label.templatetype": "Epostmal",
+"label.emailtemplate": "Epostmal",
 "label.tftp.dir": "TFTP-mappe",
 "label.tftpdir": "TFTP rot-mappe",
 "label.theme.default": "Standardtema",
