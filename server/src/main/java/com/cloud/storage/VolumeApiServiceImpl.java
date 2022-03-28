@@ -42,7 +42,6 @@ import org.apache.cloudstack.api.command.user.volume.MigrateVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.UploadVolumeCmd;
 import org.apache.cloudstack.api.response.GetUploadParamsResponse;
-import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.backup.BackupManager;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
@@ -1869,40 +1868,18 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                     vol = _volsDao.findById((Long)jobResult);
                 }
             }
-            if (vm.getBackupOfferingId() != null) {
-                vm.setBackupVolumes(createVolumeInfoFromVolumes(_volsDao.findByInstance(vm.getId())));
-                _vmInstanceDao.update(vm.getId(), vm);
-            }
             return vol;
         }
     }
 
     protected void validateIfVmHasBackups(UserVmVO vm, boolean attach) {
-        if ((vm.getBackupOfferingId() != null || CollectionUtils.isNotEmpty(vm.getBackupVolumeList())) &&
-                BooleanUtils.isFalse(BackupManager.BackupEnableAttachDetachVolumes.value())) {
+        if (vm.getBackupOfferingId() != null && BooleanUtils.isFalse(BackupManager.BackupEnableAttachDetachVolumes.value())) {
             String errorMsg = "Unable to detach volume, cannot detach volume from a VM that has backups. First remove the VM from the backup offering or "
                     + "set the global configuration 'backup.enable.attach.detach.of.volumes' to true.";
             if (attach)
                 errorMsg = "Unable to attach volume, please specify a VM that does not have any backups or set the global configuration "
                         + "'backup.enable.attach.detach.of.volumes' to true.";
             throw new InvalidParameterValueException(errorMsg);
-        }
-    }
-
-    protected String createVolumeInfoFromVolumes(List<VolumeVO> vmVolumes) {
-        try {
-            List<Backup.VolumeInfo> list = new ArrayList<>();
-            for (VolumeVO vol : vmVolumes) {
-                list.add(new Backup.VolumeInfo(vol.getUuid(), vol.getPath(), vol.getVolumeType(), vol.getSize()));
-            }
-            return new Gson().toJson(list.toArray(), Backup.VolumeInfo[].class);
-        } catch (Exception e) {
-            if (CollectionUtils.isEmpty(vmVolumes) || vmVolumes.get(0).getInstanceId() == null) {
-                s_logger.error(String.format("Failed to create VolumeInfo of VM [id: null] volumes due to: [%s].", e.getMessage()), e);
-            } else {
-                s_logger.error(String.format("Failed to create VolumeInfo of VM [id: %s] volumes due to: [%s].", vmVolumes.get(0).getInstanceId(), e.getMessage()), e);
-            }
-            throw e;
         }
     }
 
@@ -2127,10 +2104,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                 } else if (jobResult instanceof Long) {
                     vol = _volsDao.findById((Long)jobResult);
                 }
-            }
-            if (vm.getBackupOfferingId() != null) {
-                vm.setBackupVolumes(createVolumeInfoFromVolumes(_volsDao.findByInstance(vm.getId())));
-                _vmInstanceDao.update(vm.getId(), vm);
             }
             return vol;
         }

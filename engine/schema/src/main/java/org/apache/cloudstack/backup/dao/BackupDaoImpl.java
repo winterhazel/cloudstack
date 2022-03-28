@@ -148,7 +148,7 @@ public class BackupDaoImpl extends GenericDaoBase<BackupVO, Long> implements Bac
             AccountVO account = accountDao.findByIdIncludingRemoved(vm.getAccountId());
             DomainVO domain = domainDao.findByIdIncludingRemoved(vm.getDomainId());
             DataCenterVO zone = dataCenterDao.findByIdIncludingRemoved(vm.getDataCenterId());
-            BackupOffering offering = backupOfferingDao.findByIdIncludingRemoved(vm.getBackupOfferingId());
+            BackupOffering offering = backupOfferingDao.findByIdIncludingRemoved(backup.getBackupOfferingId());
 
             BackupResponse response = new BackupResponse();
             response.setId(backup.getUuid());
@@ -160,7 +160,7 @@ public class BackupDaoImpl extends GenericDaoBase<BackupVO, Long> implements Bac
             response.setSize(backup.getSize());
             response.setProtectedSize(backup.getProtectedSize());
             response.setStatus(backup.getStatus());
-            response.setVolumes(new Gson().toJson(vm.getBackupVolumeList().toArray(), Backup.VolumeInfo[].class));
+            response.setVolumes(new Gson().toJson(backup.getBackupVolumeList().toArray(), Backup.VolumeInfo[].class));
             response.setBackupOfferingId(offering.getUuid());
             response.setBackupOffering(offering.getName());
             response.setAccountId(account.getUuid());

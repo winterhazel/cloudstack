@@ -37,7 +37,6 @@ import com.cloud.configuration.Resource;
 import com.cloud.hypervisor.Hypervisor;
 import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.VMTemplateVO;
-import com.cloud.storage.Volume;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -47,6 +46,9 @@ import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
 import org.apache.cloudstack.api.command.user.vm.UpdateVMCmd;
 import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
 import org.apache.cloudstack.backup.Backup;
+import org.apache.cloudstack.backup.BackupManager;
+import org.apache.cloudstack.backup.BackupVO;
+import org.apache.cloudstack.backup.dao.BackupDao;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
 import org.junit.After;
@@ -81,7 +83,6 @@ import com.cloud.user.AccountManager;
 import com.cloud.user.AccountVO;
 import com.cloud.user.UserVO;
 import com.cloud.uservm.UserVm;
-import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.vm.dao.NicDao;
 import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
@@ -157,6 +158,12 @@ public class UserVmManagerImplTest {
 
     @Mock
     ResourceLimitService resourceLimitMgr;
+
+    @Mock
+    BackupManager backupManager;
+
+    @Mock
+    BackupDao backupDao;
 
     private long vmId = 1l;
 
@@ -555,28 +562,34 @@ public class UserVmManagerImplTest {
         prepareAndRunResizeVolumeTest(2L, 10L, 20L, largerDisdkOffering, smallerDisdkOffering);
     }
 
-    @Test (expected = CloudRuntimeException.class)
-    public void destroyVmWithBackupOfferingExternalId() {
-        Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(null);
-        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn("teste");
-        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
-    }
-
-    @Test (expected = CloudRuntimeException.class)
-    public void destroyVmWithBackupOfferingId() {
+    @Test
+    public void removeBackupOfferingBeforeDeleteVmIfNeededTestWhenVmHaveBackupOfferingAndBackups() {
         Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(1l);
-        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn(null);
-        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
+        Mockito.when(userVmVoMock.getDataCenterId()).thenReturn(2l);
+        Mockito.when(userVmVoMock.getId()).thenReturn(2l);
+
+        List<Backup> backupsForVm = new ArrayList<>();
+        backupsForVm.add(new BackupVO());
+        Mockito.when(backupDao.listByVmId(Mockito.eq(2l), Mockito.eq(2l))).thenReturn(backupsForVm);
+        userVmManagerImpl.removeBackupOfferingBeforeDeleteVmIfNeeded(userVmVoMock);
+        Mockito.verify(backupManager).removeVMFromBackupOffering(Mockito.eq(2l), Mockito.eq(false));
     }
 
-    @Test (expected = CloudRuntimeException.class)
-    public void destroyVmWithBackupVolumeList() {
+    @Test
+    public void removeBackupOfferingBeforeDeleteVmIfNeededTestRemoveAllIfVmHasNoBackups() {
+        Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(1l);
+        Mockito.when(userVmVoMock.getDataCenterId()).thenReturn(2l);
+        Mockito.when(userVmVoMock.getId()).thenReturn(2l);
+        Mockito.when(backupDao.listByVmId(Mockito.eq(2l), Mockito.eq(2l))).thenReturn(new ArrayList<>());
+        userVmManagerImpl.removeBackupOfferingBeforeDeleteVmIfNeeded(userVmVoMock);
+        Mockito.verify(backupManager).removeVMFromBackupOffering(Mockito.eq(2l), Mockito.eq(true));
+    }
+
+    @Test
+    public void removeBackupOfferingBeforeDeleteVmIfNeededTestDoNothingWhenVmHasNoBackupOffering() {
         Mockito.when(userVmVoMock.getBackupOfferingId()).thenReturn(null);
-        Mockito.when(userVmVoMock.getBackupExternalId()).thenReturn(null);
-        List<Backup.VolumeInfo> volumes = new ArrayList<>();
-        volumes.add(new Backup.VolumeInfo("123", "test", Volume.Type.ROOT, 10L));
-        Mockito.when(userVmVoMock.getBackupVolumeList()).thenReturn(volumes);
-        userVmManagerImpl.validateVmwareVmDetailsAndDetachVolumes(userVmVoMock);
+        userVmManagerImpl.removeBackupOfferingBeforeDeleteVmIfNeeded(userVmVoMock);
+        Mockito.verify(backupManager, Mockito.never()).removeVMFromBackupOffering(Mockito.anyLong(), Mockito.anyBoolean());
     }
 
     private void prepareAndRunResizeVolumeTest(Long expectedOfferingId, long expectedMinIops, long expectedMaxIops, DiskOfferingVO currentRootDiskOffering, DiskOfferingVO newRootDiskOffering) {
