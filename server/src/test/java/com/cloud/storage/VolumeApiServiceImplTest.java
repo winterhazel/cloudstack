@@ -16,7 +16,6 @@
 // under the License.
 package com.cloud.storage;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyObject;
@@ -31,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +82,6 @@ import com.cloud.hypervisor.Hypervisor.HypervisorType;
 import com.cloud.org.Grouping;
 import com.cloud.serializer.GsonHelper;
 import com.cloud.server.TaggedResourceService;
-import com.cloud.storage.Storage.ProvisioningType;
 import com.cloud.storage.Volume.Type;
 import com.cloud.storage.dao.StoragePoolTagsDao;
 import com.cloud.storage.dao.VolumeDao;
@@ -515,7 +512,6 @@ public class VolumeApiServiceImplTest {
         when(vm.getState()).thenReturn(State.Running);
         when(vm.getDataCenterId()).thenReturn(34L);
         when(vm.getBackupOfferingId()).thenReturn(null);
-        when(vm.getBackupVolumeList()).thenReturn(Collections.emptyList());
         when(volumeDaoMock.findByInstanceAndType(anyLong(), any(Volume.Type.class))).thenReturn(new ArrayList<>(10));
         when(volumeDataFactoryMock.getVolume(9L)).thenReturn(volumeToAttach);
         when(volumeToAttach.getState()).thenReturn(Volume.State.Uploaded);
@@ -1111,37 +1107,6 @@ public class VolumeApiServiceImplTest {
     public void validateIfVMHaveBackupsTestSucessWhenVMDontHaveBackupOffering() {
         UserVmVO vm = Mockito.mock(UserVmVO.class);
         when(vm.getBackupOfferingId()).thenReturn(null);
-        when(vm.getBackupVolumeList()).thenReturn(Collections.emptyList());
         volumeApiServiceImpl.validateIfVmHasBackups(vm, true);
-    }
-
-    @Test
-    public void createVolumeInfoFromVolumesTestEmptyVolumeListReturnEmptyArray() {
-        String volumeInfo = volumeApiServiceImpl.createVolumeInfoFromVolumes(new ArrayList<>());
-        assertEquals("[]", volumeInfo);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void createVolumeInfoFromVolumesTestNullVolume() {
-        volumeApiServiceImpl.createVolumeInfoFromVolumes(null);
-    }
-
-    @Test
-    public void createVolumeInfoFromVolumesTestCorrectlyConvertOfVolumes() {
-        List<VolumeVO> volumesToTest = new ArrayList<>();
-
-        VolumeVO root = new VolumeVO("test", 1l, 1l, 1l, 1l, 1l, "test", "/root/dir", ProvisioningType.THIN, 555l, Type.ROOT);
-        String rootUuid = root.getUuid();
-
-        VolumeVO data = new VolumeVO("test", 1l, 1l, 1l, 1l, 1l, "test", "/root/dir/data", ProvisioningType.THIN, 1111000l, Type.DATADISK);
-        String dataUuid = data.getUuid();
-
-        volumesToTest.add(root);
-        volumesToTest.add(data);
-
-        String result = volumeApiServiceImpl.createVolumeInfoFromVolumes(volumesToTest);
-        String expected = String.format("[{\"uuid\":\"%s\",\"type\":\"ROOT\",\"size\":555,\"path\":\"/root/dir\"},{\"uuid\":\"%s\",\"type\":\"DATADISK\",\"size\":1111000,\"path\":\"/root/dir/data\"}]", rootUuid, dataUuid);
-
-        assertEquals(expected, result);
     }
 }

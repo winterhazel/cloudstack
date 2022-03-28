@@ -482,6 +482,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
      */
     private boolean isRootDisk(VirtualDisk disk, Map<VirtualDisk, VolumeVO> disksMapping, Backup backup) {
         if (!disksMapping.containsKey(disk)) {
+            s_logger.debug(LogUtils.logGsonWithoutException("Can't find disk [%s] in disk mapping [%s],", disk, disksMapping));
             return false;
         }
         VolumeVO volumeVO = disksMapping.get(disk);
@@ -490,7 +491,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
             if (vm == null) {
                 throw new CloudRuntimeException("Failed to find the volumes details from the VM backup");
             }
-            List<Backup.VolumeInfo> backedUpVolumes = vm.getBackupVolumeList();
+            List<Backup.VolumeInfo> backedUpVolumes = backup.getBackupVolumeList();
             for (Backup.VolumeInfo backedUpVolume : backedUpVolumes) {
                 if (backedUpVolume.getSize().equals(disk.getCapacityInBytes())) {
                     return backedUpVolume.getType().equals(Volume.Type.ROOT);
@@ -537,22 +538,32 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         if (UuidUtils.isUuid(datastore)) {
             return getPoolIdFromDatastoreUuid(datastore);
         }
-        return getPoolIdFromDatastoreName(datastore);
+        return getPoolIdFromDatastoreNameOrUuid(datastore);
     }
 
-    private Long getPoolIdFromDatastoreName(String datastoreName) {
-        s_logger.debug(String.format("Trying to find pool id for datastore name: [%s].", datastoreName));
+    private Long getPoolIdFromDatastoreNameOrUuid(String datastore) {
+        s_logger.debug(String.format("Trying to find pool Id for datastore: [%s].", datastore));
 
-        String errorMessage = String.format("Couldn't find storage pool with name: [%s].", datastoreName);
-        List<StoragePoolVO> pool = _storagePoolDao.findPoolByName(datastoreName);
-        if (CollectionUtils.isEmpty(pool)) {
+        String errorMessage = String.format("Couldn't find storage pool with name or UUID: [%s].", datastore);
+        List<StoragePoolVO> pool = _storagePoolDao.findPoolByName(datastore);
+        if (CollectionUtils.isNotEmpty(pool)) {
+            Optional<StoragePoolVO> first = pool.stream().filter(f -> f.getRemoved() == null).findFirst();
+            if (!first.isPresent()) {
+                throw new CloudRuntimeException(errorMessage);
+            }
+            return first.get().getId();
+        }
+        s_logger.debug(String.format("Couldn't find storage pool with name: [%s]. Trying to search by UUID [%s].", datastore, datastore));
+
+        try {
+            StoragePoolVO poolVO = _storagePoolDao.findPoolByUUID(UuidUtils.normalize(datastore));
+            if (poolVO == null) {
+                throw new CloudRuntimeException(errorMessage);
+            }
+            return poolVO.getId();
+        } catch (Exception e) {
             throw new CloudRuntimeException(errorMessage);
         }
-        Optional<StoragePoolVO> first = pool.stream().filter(f -> f.getRemoved() == null).findFirst();
-        if (!first.isPresent()) {
-            throw new CloudRuntimeException(errorMessage);
-        }
-        return first.get().getId();
     }
 
     /**
@@ -645,6 +656,8 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
      * Get template ID for VM being imported. If it is not found, it is created
      */
     private Long getImportingVMTemplate(List<VirtualDisk> virtualDisks, DatacenterMO dcMo, String vmInternalName, Long guestOsId, long accountId, Map<VirtualDisk, VolumeVO> disksMapping, Backup backup) throws Exception {
+        s_logger.debug(LogUtils.logGsonWithoutException("Trying to get template of restored VM [vmInternalName: %s] from backup [%s] with disks [%s], using the disks mapping [%s].",
+                vmInternalName, backup, virtualDisks, disksMapping));
         for (VirtualDisk disk : virtualDisks) {
             if (isRootDisk(disk, disksMapping, backup)) {
                 VolumeVO volumeVO = disksMapping.get(disk);
@@ -804,7 +817,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         if (vm == null) {
             throw new CloudRuntimeException("Failed to find the backup volume information from the VM backup");
         }
-        List<Backup.VolumeInfo> backedUpVolumes = vm.getBackupVolumeList();
+        List<Backup.VolumeInfo> backedUpVolumes = backup.getBackupVolumeList();
         Volume.Type type = Volume.Type.DATADISK;
         Long size = disk.getCapacityInBytes();
         if (isImport) {
@@ -823,23 +836,6 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         Integer unitNumber = disk.getUnitNumber();
         VirtualMachineDiskInfo diskInfo = getDiskInfo(vmToImport, poolId, volumeName);
         return createVolumeRecord(type, volumeName, zoneId, domainId, accountId, diskOfferingId, provisioningType, size, instanceId, poolId, templateId, unitNumber, diskInfo);
-    }
-
-    protected String createVolumeInfoFromVolumes(List<VolumeVO> vmVolumes) {
-        try {
-            List<Backup.VolumeInfo> list = new ArrayList<>();
-            for (VolumeVO vol : vmVolumes) {
-                list.add(new Backup.VolumeInfo(vol.getUuid(), vol.getPath(), vol.getVolumeType(), vol.getSize()));
-            }
-            return GSON.toJson(list.toArray(), Backup.VolumeInfo[].class);
-        } catch (Exception e) {
-            if (CollectionUtils.isEmpty(vmVolumes) || vmVolumes.get(0).getInstanceId() == null) {
-                s_logger.error(String.format("Failed to create VolumeInfo of VM [id: null] volumes due to: [%s].", e.getMessage()), e);
-            } else {
-                s_logger.error(String.format("Failed to create VolumeInfo of VM [id: %s] volumes due to: [%s].", vmVolumes.get(0).getInstanceId(), e.getMessage()), e);
-            }
-            throw e;
-        }
     }
 
     /**
@@ -934,10 +930,10 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
     private void syncVMNics(VirtualDevice[] nicDevices, DatacenterMO dcMo, Map<String, NetworkVO> networksMapping, VMInstanceVO vm) throws Exception {
         s_logger.debug(String.format("Trying to sync NICs of backup restored VM [id: %s, name: %s].", vm.getUuid(), vm.getInstanceName()));
         VmwareContext context = dcMo.getContext();
-        List<NicVO> allNics = _nicDao.listByVmId(vm.getId());
+        List<NicVO> allNics = _nicDao.listByVmIdIncludingRemoved(vm.getId());
 
-        LogUtils.logGsonWithoutException("Need to sync NICs in DB [%s] with NICs devices from restore [%s] to VM [id: %s, name: %s].",
-                allNics, nicDevices, vm.getUuid(), vm.getInstanceName());
+        s_logger.debug(LogUtils.logGsonWithoutException("Need to sync NICs in DB [%s] with NICs devices from restore [%s] to VM [id: %s, name: %s].",
+                allNics, nicDevices, vm.getUuid(), vm.getInstanceName()));
         for (VirtualDevice nicDevice : nicDevices) {
             Pair<String, String> pair = getNicMacAddressAndNetworkName(nicDevice, context);
             String macAddress = pair.first();
@@ -964,7 +960,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
             throw new CloudRuntimeException("Failed to find the volumes details from the VM backup");
         }
 
-        List<Backup.VolumeInfo> backedUpVolumes = vm.getBackupVolumeList();
+        List<Backup.VolumeInfo> backedUpVolumes = backup.getBackupVolumeList();
         Map<String, Boolean> usedVols = new HashMap<>();
         Map<VirtualDisk, VolumeVO> map = new HashMap<>();
 
@@ -986,6 +982,7 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
                 if (!map.containsKey(disk) && backedUpVol.getSize().equals(disk.getCapacityInBytes()) && !usedVols.containsKey(backedUpVol.getUuid())) {
                     String volId = backedUpVol.getUuid();
                     VolumeVO vol = _volumeDao.findByUuidIncludingRemoved(volId);
+                    vol.setDeviceId(backedUpVol.getDeviceId());
                     usedVols.put(backedUpVol.getUuid(), true);
                     map.put(disk, vol);
                     s_logger.debug("VM restore mapping for disk " + disk.getBacking() + " (capacity: " + toHumanReadableSize(disk.getCapacityInBytes()) + ") with volume ID" + vol.getId());
@@ -1065,12 +1062,13 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         VirtualMachineRuntimeInfo runtimeInfo = vmToImport.getRuntimeInfo();
 
         String msg = "Trying to import VM [%s] with config summary [%s] and runtime info [%s].";
-        LogUtils.logGsonWithoutException(msg , vmToImport, configSummary, runtimeInfo);
+        s_logger.debug(LogUtils.logGsonWithoutException(msg , vmToImport, configSummary, runtimeInfo));
 
         List<VirtualDisk> virtualDisks = vmToImport.getVirtualDisks();
         String[] vmNetworkNames = vmToImport.getNetworks();
         VirtualDevice[] nicDevices = vmToImport.getNicDevices();
 
+        s_logger.debug(LogUtils.logGsonWithoutException("Mapped VM [%s] with virtual disks [%s], network names [%s] and nic devices [%s].", vmInternalName, virtualDisks, vmNetworkNames, nicDevices));
         Map<VirtualDisk, VolumeVO> disksMapping = getDisksMapping(backup, virtualDisks);
         Map<String, NetworkVO> networksMapping = getNetworksMapping(vmNetworkNames, accountId, zoneId, domainId);
 
@@ -1144,13 +1142,6 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
             return false;
         }
         createVolume(attachedDisk, vmMo, vm.getDomainId(), vm.getDataCenterId(), vm.getAccountId(), vm.getId(), poolId, vm.getTemplateId(), backup, false);
-
-        if (vm.getBackupOfferingId() == null) {
-            return true;
-        }
-        VMInstanceVO vmVO = (VMInstanceVO)vm;
-        vmVO.setBackupVolumes(createVolumeInfoFromVolumes(_volumeDao.findByInstance(vm.getId())));
-        _vmDao.update(vmVO.getId(), vmVO);
         return true;
     }
 
