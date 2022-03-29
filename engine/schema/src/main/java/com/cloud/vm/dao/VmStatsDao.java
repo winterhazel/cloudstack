@@ -35,11 +35,12 @@ public interface VmStatsDao extends GenericDao<VmStatsVO, Long> {
     List<VmStatsVO> findByVmId(long vmId);
 
     /**
-     * Find VM stats by VM ID. The result is sorted by timestamp in descending order.
+     * Find VM stats by VM ID.
      * @param vmId the VM ID.
+     * @param ascendingOrder if set as {@code true} then the result will be sorted by timestamp in ascending order, otherwise in descending order.
      * @return ordered list of stats for the specified VM.
      */
-    List<VmStatsVO> findByVmIdOrderByTimestampDesc(long vmId);
+    List<VmStatsVO> findByVmIdOrderByTimestamp(long vmId, boolean ascendingOrder);
 
     /**
      * Find stats by VM ID and timestamp >= a given time.

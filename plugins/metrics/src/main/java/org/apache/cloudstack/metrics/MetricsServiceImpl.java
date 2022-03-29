@@ -283,10 +283,10 @@ public class MetricsServiceImpl extends MutualExclusiveIdsManagerBase implements
     }
 
     /**
-     * Creates a {@code Set<StatsResponse>} from a given {@code List<VmStatsVO>}.
+     * Creates a {@code List<StatsResponse>} from a given {@code List<VmStatsVO>}.
      *
      * @param vmStatsList the list of VM stats.
-     * @return the set of responses that was created.
+     * @return the list of responses that was created.
      */
     protected List<StatsResponse> createStatsResponse(List<VmStatsVO> vmStatsList) {
         List<StatsResponse> statsResponseList = new ArrayList<StatsResponse>();
