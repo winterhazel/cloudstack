@@ -25,6 +25,9 @@
       <a-tab-pane :tab="$t('label.details')" key="details">
         <DetailsTab :resource="resource" :loading="loading" />
       </a-tab-pane>
+      <a-tab-pane :tab="$t('label.statistics')" key="stats">
+        <StatsTab :resource="resource" :loading="loading" />
+      </a-tab-pane>
       <a-tab-pane :tab="$t('label.iso')" key="cdrom" v-if="vm.isoid">
         <a-icon type="usb" />
         <router-link :to="{ path: '/iso/' + vm.isoid }">{{ vm.isoname }}</router-link> <br/>
@@ -303,6 +306,7 @@ import { mixinDevice } from '@/utils/mixin.js'
 import ResourceLayout from '@/layouts/ResourceLayout'
 import Status from '@/components/widgets/Status'
 import DetailsTab from '@/components/view/DetailsTab'
+import StatsTab from '@/components/view/StatsTab'
 import DetailSettings from '@/components/view/DetailSettings'
 import NicsTable from '@/views/network/NicsTable'
 import ListResourceTable from '@/components/view/ListResourceTable'
@@ -315,6 +319,7 @@ export default {
   components: {
     ResourceLayout,
     DetailsTab,
+    StatsTab,
     DetailSettings,
     NicsTable,
     Status,

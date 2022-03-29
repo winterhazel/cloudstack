@@ -682,7 +682,7 @@ public class StatsCollector extends ManagerBase implements ComponentMethodInterc
      * @return the latest or the accumulation of the stats for the specified VM.
      */
     public VmStats getVmStats(long vmId, Boolean accumulate) {
-        List<VmStatsVO> vmStatsVOList = vmStatsDao.findByVmIdOrderByTimestampDesc(vmId);
+        List<VmStatsVO> vmStatsVOList = vmStatsDao.findByVmIdOrderByTimestamp(vmId, true);
 
         if (CollectionUtils.isNotEmpty(vmStatsVOList)) {
             if (accumulate != null) {
@@ -706,7 +706,7 @@ public class StatsCollector extends ManagerBase implements ComponentMethodInterc
         if (accumulate) {
             return accumulateVmMetricsStats(vmStatsVOList);
         }
-        return gson.fromJson(vmStatsVOList.get(0).getVmStatsData(), VmStatsEntry.class);
+        return gson.fromJson(vmStatsVOList.get(vmStatsVOList.size() - 1).getVmStatsData(), VmStatsEntry.class);
     }
 
     /**

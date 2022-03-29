@@ -305,7 +305,7 @@ public class StatsCollectorTest {
 
     @Test
     public void getVmStatsTestWithNoVmStats() {
-        Mockito.doReturn(new ArrayList<VmStatsVO>()).when(vmStatsDaoMock).findByVmIdOrderByTimestampDesc(Mockito.anyLong());
+        Mockito.doReturn(new ArrayList<VmStatsVO>()).when(vmStatsDaoMock).findByVmIdOrderByTimestamp(Mockito.anyLong(), Mockito.anyBoolean());
 
         VmStats result = statsCollector.getVmStats(1L, accumulateMock);
 
@@ -314,7 +314,7 @@ public class StatsCollectorTest {
 
     @Test
     public void getVmStatsTestWithAccumulateNotNull() {
-        Mockito.doReturn(Arrays.asList(vmStatsVoMock1)).when(vmStatsDaoMock).findByVmIdOrderByTimestampDesc(Mockito.anyLong());
+        Mockito.doReturn(Arrays.asList(vmStatsVoMock1)).when(vmStatsDaoMock).findByVmIdOrderByTimestamp(Mockito.anyLong(), Mockito.anyBoolean());
         Mockito.doReturn(true).when(accumulateMock).booleanValue();
         Mockito.doReturn(vmStatsEntryMock).when(statsCollector).getLatestOrAccumulatedVmMetricsStats(Mockito.anyList(), Mockito.anyBoolean());
 
@@ -329,7 +329,7 @@ public class StatsCollectorTest {
     @Test
     public void getVmStatsTestWithNullAccumulate() {
         setVmStatsIncrementMetrics("true");
-        Mockito.doReturn(Arrays.asList(vmStatsVoMock1)).when(vmStatsDaoMock).findByVmIdOrderByTimestampDesc(Mockito.anyLong());
+        Mockito.doReturn(Arrays.asList(vmStatsVoMock1)).when(vmStatsDaoMock).findByVmIdOrderByTimestamp(Mockito.anyLong(), Mockito.anyBoolean());
         Mockito.doReturn(vmStatsEntryMock).when(statsCollector).getLatestOrAccumulatedVmMetricsStats(Mockito.anyList(), Mockito.anyBoolean());
 
         VmStats result = statsCollector.getVmStats(1L, null);
