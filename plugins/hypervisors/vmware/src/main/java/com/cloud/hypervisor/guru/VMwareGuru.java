@@ -29,6 +29,7 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import org.apache.cloudstack.acl.ControlledEntity;
+import org.apache.cloudstack.api.command.user.volume.DetachVolumeCmd;
 import org.apache.cloudstack.backup.Backup;
 import org.apache.cloudstack.engine.subsystem.api.storage.ObjectInDataStoreStateMachine;
 import org.apache.cloudstack.engine.subsystem.api.storage.PrimaryDataStore;
@@ -120,6 +121,7 @@ import com.cloud.storage.VMTemplateStoragePoolVO;
 import com.cloud.storage.VMTemplateStorageResourceAssoc;
 import com.cloud.storage.VMTemplateVO;
 import com.cloud.storage.Volume;
+import com.cloud.storage.VolumeApiService;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.GuestOSDao;
@@ -159,7 +161,7 @@ import com.vmware.vim25.VirtualMachineConfigSummary;
 import com.vmware.vim25.VirtualMachineRuntimeInfo;
 
 public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Configurable {
-    private static final Logger s_logger = Logger.getLogger(VMwareGuru.class);
+    protected static Logger s_logger = Logger.getLogger(VMwareGuru.class);
     private static final Gson GSON = new Gson();
 
 
@@ -190,6 +192,8 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
     @Inject UserVmDao userVmDao;
     @Inject DiskOfferingDao diskOfferingDao;
     @Inject PhysicalNetworkDao physicalNetworkDao;
+    @Inject
+    protected VolumeApiService volumeService;
 
     protected VMwareGuru() {
         super();
@@ -789,21 +793,48 @@ public class VMwareGuru extends HypervisorGuruBase implements HypervisorGuru, Co
         long domainId = vmInstanceVO.getDomainId();
         long templateId = vmInstanceVO.getTemplateId();
         long instanceId = vmInstanceVO.getId();
+        List<Backup.VolumeInfo> backedUpVolumes = backup.getBackupVolumeList();
 
         String operation = "";
         for (VirtualDisk disk : virtualDisks) {
             Long poolId = getPoolId(disk);
             Volume volume = null;
-            if (disksMapping.containsKey(disk) && disksMapping.get(disk) != null) {
-                volume = updateVolume(disk, disksMapping, vmToImport, poolId, vmInstanceVO);
-                operation = "updated";
+            if (disksMapping.containsKey(disk)) {
+                if (disksMapping.get(disk) != null) {
+                    volume = updateVolume(disk, disksMapping, vmToImport, poolId, vmInstanceVO);
+                    operation = "updated";
+                } else {
+                    volume = createVolume(disk, vmToImport, domainId, zoneId, accountId, instanceId, poolId, templateId, backup, true);
+                    operation = "created";
+                }
             } else {
-                volume = createVolume(disk, vmToImport, domainId, zoneId, accountId, instanceId, poolId, templateId, backup, true);
-                operation = "created";
+                volume = detachVolume(vmInstanceVO, disk, backup);
+                operation = "detached";
             }
             s_logger.debug(String.format("Sync volumes to VM [id: %s, instanceName: %s] in backup restore operation: %s volume [id: %s].", instanceId, vmInstanceVO.getInstanceName(),
-                    operation, volume.getUuid()));
+                    operation, volume != null ? volume.getUuid() : "null"));
         }
+    }
+
+    protected VolumeVO detachVolume(VMInstanceVO vmInstanceVO, VirtualDisk disk, Backup backup) {
+        VolumeVO volume = null;
+        s_logger.debug(LogUtils.logGsonWithoutException("Disk [%s] of VM [uuid: %s, name: %s] does not exist in the metadata of backup [uuid: %s]. Therefore, we need to detach it.",
+                disk, vmInstanceVO.getUuid(), vmInstanceVO.getInstanceName(), backup.getUuid()));
+        String volumeFullPath = getVolumeFullPath(disk);
+        volume = _volumeDao.findByPath(getVolumeNameFromFileName(volumeFullPath));
+        if (volume != null && vmInstanceVO.getId() == volume.getInstanceId() && volume.getRemoved() == null) {
+            DetachVolumeCmd detachVolumeCmd = new DetachVolumeCmd();
+            detachVolumeCmd.setId(volume.getId());
+            Volume result = volumeService.detachVolumeFromVM(detachVolumeCmd);
+            if (result != null) {
+                s_logger.debug(String.format("Volume [uuid: %s] detached with success from VM [uuid: %s, name: %s], during the backup restore process (as this volume does not exist in the metadata of backup [uuid: %s]).",
+                        result.getUuid(), vmInstanceVO.getUuid(), vmInstanceVO.getInstanceName(), backup.getUuid()));
+            } else {
+                s_logger.warn(String.format("Failed to detach volume [uuid: %s] from VM [uuid: %s, name: %s], during the backup restore process (as this volume does not exist in the metadata of backup [uuid: %s]).",
+                        volume.getUuid(), vmInstanceVO.getUuid(), vmInstanceVO.getInstanceName(), backup.getUuid()));
+            }
+        }
+        return volume;
     }
 
     private VirtualMachineDiskInfo getDiskInfo(VirtualMachineMO vmMo, Long poolId, String volumeName) throws Exception {
