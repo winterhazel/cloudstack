@@ -106,7 +106,7 @@ export default {
           icon: 'paper-clip',
           label: 'label.action.attach.disk',
           dataView: true,
-          show: (record) => { return record.type !== 'ROOT' && ['Allocated', 'Ready', 'Uploaded'].includes(record.state) && !('virtualmachineid' in record) },
+          show: (record) => { return ['Allocated', 'Ready', 'Uploaded'].includes(record.state) && !('virtualmachineid' in record) },
           popup: true,
           component: () => import('@/views/storage/AttachVolume.vue')
         },
@@ -117,8 +117,7 @@ export default {
           message: 'message.detach.disk',
           dataView: true,
           show: (record) => {
-            return record.type !== 'ROOT' && record.virtualmachineid &&
-              ['Running', 'Stopped', 'Destroyed'].includes(record.vmstate)
+            return record.virtualmachineid && ['Running', 'Stopped', 'Destroyed'].includes(record.vmstate)
           }
         },
         {

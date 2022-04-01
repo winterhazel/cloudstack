@@ -39,6 +39,25 @@
             {{ vm.name || vm.displayname }}
           </a-select-option>
         </a-select>
+      </a-form-item >
+      <a-form-item :label="$t('label.deviceid')">
+        <div style="margin-bottom: 10px">
+          <a-collapse v-model="activeKey">
+            <a-collapse-panel key="1" header="More information about deviceID">
+              <a-alert type="warning">
+                <span slot="message" v-html="apiParams.deviceid.description" />
+              </a-alert>
+            </a-collapse-panel>
+          </a-collapse>
+        </div>
+        <a-input-number
+          v-decorator="['deviceid', {
+            rules: [{ required: false, message: $t('message.error.select') }]
+          }]"
+          style="width: 100%;"
+          :min="0"
+          :placeholder="$t('label.deviceid')"
+        />
       </a-form-item>
     </a-form>
     <div class="actions">
@@ -49,9 +68,13 @@
 </template>
 <script>
 import { api } from '@/api'
+import TooltipLabel from '@/components/widgets/TooltipLabel'
 
 export default {
   name: 'AttachVolume',
+  components: {
+    TooltipLabel
+  },
   props: {
     resource: {
       type: Object,
@@ -113,7 +136,8 @@ export default {
         this.loading = true
         api('attachVolume', {
           id: this.resource.id,
-          virtualmachineid: values.virtualmachineid
+          virtualmachineid: values.virtualmachineid,
+          deviceid: values.deviceid
         }).then(response => {
           this.$pollJob({
             jobId: response.attachvolumeresponse.jobid,
