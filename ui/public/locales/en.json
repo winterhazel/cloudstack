@@ -1817,6 +1817,7 @@
 "label.rbdpool": "Ceph pool",
 "label.rbdsecret": "Cephx secret",
 "label.read": "Read",
+"label.read.and.write": "Read \u0026 Write",
 "label.read.io": "Read (IO)",
 "label.readonly": "Read-Only",
 "label.reason": "Reason",
