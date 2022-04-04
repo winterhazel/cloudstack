@@ -60,7 +60,7 @@
           <a-col>
             <strong>{{ $t('label.memory') }}</strong>
             <a-icon class="info-icon" :title="$t('label.see.more.info.memory.usage')" type="info-circle" @click="onClickShowResourceInfoModal('MEM')"/>
-            <a-select v-model="selectedMemoryChartType">
+            <a-select class="chart-type-select" v-model="selectedMemoryChartType">
               <a-select-option v-for="(type, typeIndex) in memoryChartTypes" :key="typeIndex">
                 {{ type }}
               </a-select-option>
@@ -132,31 +132,45 @@
           <a-col>
             <strong>{{ $t('label.disk') }}</strong>
             <a-icon class="info-icon" :title="$t('label.see.more.info.disk.usage')" type="info-circle" @click="onClickShowResourceInfoModal('DISK')"/>
-            <a-select v-model="selectedDiskUnitOfMeasurement">
+            <a-select class="chart-type-select" v-model="selectedDiskChartType">
+              <a-select-option v-for="(type, typeIndex) in diskChartTypes" :key="typeIndex">
+                {{ type }}
+              </a-select-option>
+            </a-select>
+            <a-select
+              v-if="selectedDiskChartType === 1"
+              v-model="selectedDiskUnitOfMeasurement">
               <a-select-option v-for="unit in diskUnitsOfMeasurement" :key="unit">
                 {{ unit }}
               </a-select-option>
             </a-select>
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedDiskUnitOfMeasurement === 'KiB'"
+              v-if="selectedDiskChartType === 0"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.inKiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.inKiB, 100, 100), ' KiB')"
+              :chartData="resouceUsageHistory.disk.iops"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.iops, 100, 100), ' IOPS')"
             />
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedDiskUnitOfMeasurement === 'MiB'"
+              v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'KiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.inMiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.inMiB, 10, 10), ' MiB')"
+              :chartData="resouceUsageHistory.disk.readAndWrite.inKiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inKiB, 100, 100), ' KiB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedDiskUnitOfMeasurement === 'GiB'"
+              v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'MiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.inGiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.inGiB, 1, 1), ' GiB')"
+              :chartData="resouceUsageHistory.disk.readAndWrite.inMiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inMiB, 10, 10), ' MiB')"
+            />
+            <multi-line-chart
+              class="resource-usage-chart"
+              v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'GiB'"
+              :chartLabels="chartLabels"
+              :chartData="resouceUsageHistory.disk.readAndWrite.inGiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inGiB, 1, 1), ' GiB')"
             />
           </a-col>
         </a-row>
@@ -205,6 +219,8 @@ export default {
       memoryUnitsOfMeasurement: ['MB', 'GB'],
       selectedNetworkUnitOfMeasurement: 'MiB',
       networkUnitsOfMeasurement: ['KiB', 'MiB', 'GiB'],
+      selectedDiskChartType: 0,
+      diskChartTypes: ['IOPS', this.$t('label.read.and.write')],
       selectedDiskUnitOfMeasurement: 'KiB',
       diskUnitsOfMeasurement: ['KiB', 'MiB', 'GiB'],
       chartLabels: [],
@@ -223,9 +239,12 @@ export default {
           inGiB: []
         },
         disk: {
-          inKiB: [],
-          inMiB: [],
-          inGiB: []
+          iops: [],
+          readAndWrite: {
+            inKiB: [],
+            inMiB: [],
+            inGiB: []
+          }
         }
       }
     }
@@ -329,6 +348,7 @@ export default {
       const diskWriteLineInMiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [] }
       const diskReadLineInGiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [] }
       const diskWriteLineInGiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [] }
+      const diskIopsLine = { label: 'IOPS', backgroundColor: blueInRgba, borderColor: blue, data: [] }
 
       for (const element of vm[0].stats) {
         const currentLabel = element.timestamp.split('T')[0] + ' ' + element.timestamp.split('T')[1].split('+')[0]
@@ -355,6 +375,7 @@ export default {
         diskWriteLineInMiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbswrite, 1) })
         diskReadLineInGiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbsread, 2) })
         diskWriteLineInGiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbswrite, 2) })
+        diskIopsLine.data.push({ timestamp: currentLabel, stat: element.diskiopstotal })
       }
 
       this.resouceUsageHistory.cpu.push(cpuLine)
@@ -372,12 +393,14 @@ export default {
       this.resouceUsageHistory.network.inGiB.push(netDownloadLineInGiB)
       this.resouceUsageHistory.network.inGiB.push(netUploadLineInGiB)
 
-      this.resouceUsageHistory.disk.inKiB.push(diskReadLineInKiB)
-      this.resouceUsageHistory.disk.inKiB.push(diskWriteLineInKiB)
-      this.resouceUsageHistory.disk.inMiB.push(diskReadLineInMiB)
-      this.resouceUsageHistory.disk.inMiB.push(diskWriteLineInMiB)
-      this.resouceUsageHistory.disk.inGiB.push(diskReadLineInGiB)
-      this.resouceUsageHistory.disk.inGiB.push(diskWriteLineInGiB)
+      this.resouceUsageHistory.disk.readAndWrite.inKiB.push(diskReadLineInKiB)
+      this.resouceUsageHistory.disk.readAndWrite.inKiB.push(diskWriteLineInKiB)
+      this.resouceUsageHistory.disk.readAndWrite.inMiB.push(diskReadLineInMiB)
+      this.resouceUsageHistory.disk.readAndWrite.inMiB.push(diskWriteLineInMiB)
+      this.resouceUsageHistory.disk.readAndWrite.inGiB.push(diskReadLineInGiB)
+      this.resouceUsageHistory.disk.readAndWrite.inGiB.push(diskWriteLineInGiB)
+
+      this.resouceUsageHistory.disk.iops.push(diskIopsLine)
 
       this.loaded = true
     },
@@ -410,9 +433,10 @@ export default {
       this.resouceUsageHistory.network.inKiB = []
       this.resouceUsageHistory.network.inMiB = []
       this.resouceUsageHistory.network.inGiB = []
-      this.resouceUsageHistory.disk.inKiB = []
-      this.resouceUsageHistory.disk.inMiB = []
-      this.resouceUsageHistory.disk.inGiB = []
+      this.resouceUsageHistory.disk.iops = []
+      this.resouceUsageHistory.disk.readAndWrite.inKiB = []
+      this.resouceUsageHistory.disk.readAndWrite.inMiB = []
+      this.resouceUsageHistory.disk.readAndWrite.inGiB = []
     },
     calculateMemoryUsed (memorykbs, memoryintfreekbs) {
       var memoryUsed = -1

@@ -1816,6 +1816,7 @@
 "label.rbdpool": "Pool Ceph",
 "label.rbdsecret": "Segredo Cephx",
 "label.read": "Leitura",
+"label.read.and.write": "Leitura \u0026 Escrita",
 "label.read.io": "Leitura (IO)",
 "label.readonly": "Apenas leitura",
 "label.reason": "Motivo",
