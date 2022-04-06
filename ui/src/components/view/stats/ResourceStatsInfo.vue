@@ -57,7 +57,8 @@ export default {
         {
           resourceType: 'MEM',
           messageList: [
-            this.$t('message.memory.usage.info.negative.value')
+            this.$t('message.memory.usage.info.negative.value'),
+            this.$t('message.memory.usage.info.hypervisor.additionals')
           ]
         },
         {

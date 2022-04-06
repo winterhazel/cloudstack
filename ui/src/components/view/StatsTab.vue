@@ -51,8 +51,8 @@
             <multi-line-chart
               class="resource-usage-chart"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.cpu"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.cpu, 100, 10), '%')"
+              :chartData="resourceUsageHistory.cpu"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.cpu, 100, 10), '%')"
             />
           </a-col>
         </a-row>
@@ -65,6 +65,11 @@
                 {{ type }}
               </a-select-option>
             </a-select>
+            <a-select v-model="selectedMemoryUsageType">
+              <a-select-option v-for="(type, typeIndex) in memoryUsageTypes" :key="typeIndex">
+                {{ type }}
+              </a-select-option>
+            </a-select>
             <a-select v-model="selectedMemoryUnitOfMeasurement" v-if="selectedMemoryChartType === 0">
               <a-select-option v-for="unit in memoryUnitsOfMeasurement" :key="unit">
                 {{ unit }}
@@ -72,27 +77,45 @@
             </a-select>
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedMemoryChartType === 0 && selectedMemoryUnitOfMeasurement === 'MB'"
+              v-if="selectedMemoryChartType === 0 && selectedMemoryUsageType === 0 && selectedMemoryUnitOfMeasurement === 'MB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.memory.rawData.inMB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.memory.rawData.inMB, 10, 100), ' MB')"
+              :chartData="resourceUsageHistory.memory.rawData.used.inMB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.rawData.used.inMB, 10, 100), ' MB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedMemoryChartType === 0 && selectedMemoryUnitOfMeasurement === 'GB'"
+              v-if="selectedMemoryChartType === 0 && selectedMemoryUsageType === 0 && selectedMemoryUnitOfMeasurement === 'GB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.memory.rawData.inGB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.memory.rawData.inGB, 1, 1), ' GB')"
+              :chartData="resourceUsageHistory.memory.rawData.used.inGB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.rawData.used.inGB, 1, 1), ' GB')"
             />
-            <div class="memory-free-alert" v-show="selectedMemoryChartType === 1">
-              <a-alert :message="$t('message.alert.memory')" banner closable/>
-            </div>
             <multi-line-chart
               class="resource-usage-chart"
-              v-if="selectedMemoryChartType === 1"
+              v-if="selectedMemoryChartType === 0 && selectedMemoryUsageType === 1 && selectedMemoryUnitOfMeasurement === 'MB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.memory.percentage"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.memory.percentage, 100, 10), '%')"
+              :chartData="resourceUsageHistory.memory.rawData.free.inMB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.rawData.free.inMB, 10, 100), ' MB')"
+            />
+            <multi-line-chart
+              class="resource-usage-chart"
+              v-if="selectedMemoryChartType === 0 && selectedMemoryUsageType === 1 && selectedMemoryUnitOfMeasurement === 'GB'"
+              :chartLabels="chartLabels"
+              :chartData="resourceUsageHistory.memory.rawData.free.inGB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.rawData.free.inGB, 1, 1), ' GB')"
+            />
+            <multi-line-chart
+              class="resource-usage-chart"
+              v-if="selectedMemoryChartType === 1 && selectedMemoryUsageType === 0"
+              :chartLabels="chartLabels"
+              :chartData="resourceUsageHistory.memory.percentage.used"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.percentage.used, 100, 10), '%')"
+            />
+            <multi-line-chart
+              class="resource-usage-chart"
+              v-if="selectedMemoryChartType === 1 && selectedMemoryUsageType === 1"
+              :chartLabels="chartLabels"
+              :chartData="resourceUsageHistory.memory.percentage.free"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.memory.percentage.free, 100, 10), '%')"
             />
           </a-col>
         </a-row>
@@ -109,22 +132,22 @@
               class="resource-usage-chart"
               v-if="selectedNetworkUnitOfMeasurement === 'KiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.network.inKiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.network.inKiB, 100, 100), ' KiB')"
+              :chartData="resourceUsageHistory.network.inKiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.network.inKiB, 100, 100), ' KiB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
               v-if="selectedNetworkUnitOfMeasurement === 'MiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.network.inMiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.network.inMiB, 100, 100), ' MiB')"
+              :chartData="resourceUsageHistory.network.inMiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.network.inMiB, 100, 100), ' MiB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
               v-if="selectedNetworkUnitOfMeasurement === 'GiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.network.inGiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.network.inGiB, 1, 1), ' GiB')"
+              :chartData="resourceUsageHistory.network.inGiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.network.inGiB, 1, 1), ' GiB')"
             />
           </a-col>
         </a-row>
@@ -148,29 +171,29 @@
               class="resource-usage-chart"
               v-if="selectedDiskChartType === 0"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.iops"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.iops, 100, 100), ' IOPS')"
+              :chartData="resourceUsageHistory.disk.iops"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.disk.iops, 100, 100), ' IOPS')"
             />
             <multi-line-chart
               class="resource-usage-chart"
               v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'KiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.readAndWrite.inKiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inKiB, 100, 100), ' KiB')"
+              :chartData="resourceUsageHistory.disk.readAndWrite.inKiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.disk.readAndWrite.inKiB, 100, 100), ' KiB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
               v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'MiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.readAndWrite.inMiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inMiB, 10, 10), ' MiB')"
+              :chartData="resourceUsageHistory.disk.readAndWrite.inMiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.disk.readAndWrite.inMiB, 10, 10), ' MiB')"
             />
             <multi-line-chart
               class="resource-usage-chart"
               v-if="selectedDiskChartType === 1 && selectedDiskUnitOfMeasurement === 'GiB'"
               :chartLabels="chartLabels"
-              :chartData="resouceUsageHistory.disk.readAndWrite.inGiB"
-              :options="getChartOptions(calculateMaxYAxisAndStepSize(resouceUsageHistory.disk.readAndWrite.inGiB, 1, 1), ' GiB')"
+              :chartData="resourceUsageHistory.disk.readAndWrite.inGiB"
+              :options="getChartOptions(calculateMaxYAxisAndStepSize(resourceUsageHistory.disk.readAndWrite.inGiB, 1, 1), ' GiB')"
             />
           </a-col>
         </a-row>
@@ -214,7 +237,9 @@ export default {
       startDate: new Date().setHours(new Date().getHours() - 1),
       formatedPeriod: null,
       selectedMemoryChartType: 0,
+      selectedMemoryUsageType: 0,
       memoryChartTypes: [this.$t('label.raw.data'), this.$t('label.percentage')],
+      memoryUsageTypes: [this.$t('label.used'), this.$t('label.free')],
       selectedMemoryUnitOfMeasurement: 'GB',
       memoryUnitsOfMeasurement: ['MB', 'GB'],
       selectedNetworkUnitOfMeasurement: 'MiB',
@@ -224,13 +249,22 @@ export default {
       selectedDiskUnitOfMeasurement: 'KiB',
       diskUnitsOfMeasurement: ['KiB', 'MiB', 'GiB'],
       chartLabels: [],
-      resouceUsageHistory: {
+      resourceUsageHistory: {
         cpu: [],
         memory: {
-          percentage: [],
+          percentage: {
+            free: [],
+            used: []
+          },
           rawData: {
-            inMB: [],
-            inGB: []
+            free: {
+              inMB: [],
+              inGB: []
+            },
+            used: {
+              inMB: [],
+              inGB: []
+            }
           }
         },
         network: {
@@ -329,13 +363,18 @@ export default {
       const green = '#389357'
       const blueInRgba = 'rgba(24, 144, 255, 0.5)'
       const greenInRgba = 'rgba(59, 198, 133, 0.65)'
+      const red = '#ff4d4f'
+      const redInRgba = 'rgb(255, 77, 79, 0.65)'
 
       const cpuLine = { label: 'CPU', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const memUsedLine = { label: this.$t('label.memory.used'), backgroundColor: blueInRgba, borderColor: blue, data: [] }
+      const memFreeLinePercent = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
+      const memUsedLinePercent = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
       const memAllocatedLineInMB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [] }
       const memFreeLineInMB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
+      const memUsedLineInMB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
       const memAllocatedLineInGB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [] }
       const memFreeLineInGB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
+      const memUsedLineInGB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
       const netDownloadLineInKiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [] }
       const netUploadLineInKiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [] }
       const netDownloadLineInMiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [] }
@@ -356,11 +395,15 @@ export default {
 
         cpuLine.data.push({ timestamp: currentLabel, stat: element.cpuused.split('%')[0] })
 
-        memUsedLine.data.push({ timestamp: currentLabel, stat: this.calculateMemoryUsed(element.memorykbs, element.memoryintfreekbs) })
+        element.memoryusedkbs = element.memorykbs - element.memoryintfreekbs
+        memFreeLinePercent.data.push({ timestamp: currentLabel, stat: this.calculateMemoryPercentage(false, element.memorykbs, element.memoryintfreekbs) })
+        memUsedLinePercent.data.push({ timestamp: currentLabel, stat: this.calculateMemoryPercentage(true, element.memorykbs, element.memoryintfreekbs) })
         memAllocatedLineInMB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memorykbs, 1) })
         memFreeLineInMB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memoryintfreekbs, 1) })
+        memUsedLineInMB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memoryusedkbs, 1) })
         memAllocatedLineInGB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memorykbs, 2) })
         memFreeLineInGB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memoryintfreekbs, 2) })
+        memUsedLineInGB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.memoryusedkbs, 2) })
 
         netDownloadLineInKiB.data.push({ timestamp: currentLabel, stat: element.networkkbsread })
         netUploadLineInKiB.data.push({ timestamp: currentLabel, stat: element.networkkbswrite })
@@ -378,29 +421,33 @@ export default {
         diskIopsLine.data.push({ timestamp: currentLabel, stat: element.diskiopstotal })
       }
 
-      this.resouceUsageHistory.cpu.push(cpuLine)
+      this.resourceUsageHistory.cpu.push(cpuLine)
 
-      this.resouceUsageHistory.memory.percentage.push(memUsedLine)
-      this.resouceUsageHistory.memory.rawData.inMB.push(memAllocatedLineInMB)
-      this.resouceUsageHistory.memory.rawData.inMB.push(memFreeLineInMB)
-      this.resouceUsageHistory.memory.rawData.inGB.push(memAllocatedLineInGB)
-      this.resouceUsageHistory.memory.rawData.inGB.push(memFreeLineInGB)
+      this.resourceUsageHistory.memory.percentage.free.push(memFreeLinePercent)
+      this.resourceUsageHistory.memory.percentage.used.push(memUsedLinePercent)
+      this.resourceUsageHistory.memory.rawData.free.inMB.push(memAllocatedLineInMB)
+      this.resourceUsageHistory.memory.rawData.free.inMB.push(memFreeLineInMB)
+      this.resourceUsageHistory.memory.rawData.used.inMB.push(memAllocatedLineInMB)
+      this.resourceUsageHistory.memory.rawData.used.inMB.push(memUsedLineInMB)
+      this.resourceUsageHistory.memory.rawData.free.inGB.push(memAllocatedLineInGB)
+      this.resourceUsageHistory.memory.rawData.free.inGB.push(memFreeLineInGB)
+      this.resourceUsageHistory.memory.rawData.used.inGB.push(memAllocatedLineInGB)
+      this.resourceUsageHistory.memory.rawData.used.inGB.push(memUsedLineInGB)
 
-      this.resouceUsageHistory.network.inKiB.push(netDownloadLineInKiB)
-      this.resouceUsageHistory.network.inKiB.push(netUploadLineInKiB)
-      this.resouceUsageHistory.network.inMiB.push(netDownloadLineInMiB)
-      this.resouceUsageHistory.network.inMiB.push(netUploadLineInMiB)
-      this.resouceUsageHistory.network.inGiB.push(netDownloadLineInGiB)
-      this.resouceUsageHistory.network.inGiB.push(netUploadLineInGiB)
+      this.resourceUsageHistory.network.inKiB.push(netDownloadLineInKiB)
+      this.resourceUsageHistory.network.inKiB.push(netUploadLineInKiB)
+      this.resourceUsageHistory.network.inMiB.push(netDownloadLineInMiB)
+      this.resourceUsageHistory.network.inMiB.push(netUploadLineInMiB)
+      this.resourceUsageHistory.network.inGiB.push(netDownloadLineInGiB)
+      this.resourceUsageHistory.network.inGiB.push(netUploadLineInGiB)
 
-      this.resouceUsageHistory.disk.readAndWrite.inKiB.push(diskReadLineInKiB)
-      this.resouceUsageHistory.disk.readAndWrite.inKiB.push(diskWriteLineInKiB)
-      this.resouceUsageHistory.disk.readAndWrite.inMiB.push(diskReadLineInMiB)
-      this.resouceUsageHistory.disk.readAndWrite.inMiB.push(diskWriteLineInMiB)
-      this.resouceUsageHistory.disk.readAndWrite.inGiB.push(diskReadLineInGiB)
-      this.resouceUsageHistory.disk.readAndWrite.inGiB.push(diskWriteLineInGiB)
-
-      this.resouceUsageHistory.disk.iops.push(diskIopsLine)
+      this.resourceUsageHistory.disk.readAndWrite.inKiB.push(diskReadLineInKiB)
+      this.resourceUsageHistory.disk.readAndWrite.inKiB.push(diskWriteLineInKiB)
+      this.resourceUsageHistory.disk.readAndWrite.inMiB.push(diskReadLineInMiB)
+      this.resourceUsageHistory.disk.readAndWrite.inMiB.push(diskWriteLineInMiB)
+      this.resourceUsageHistory.disk.readAndWrite.inGiB.push(diskReadLineInGiB)
+      this.resourceUsageHistory.disk.readAndWrite.inGiB.push(diskWriteLineInGiB)
+      this.resourceUsageHistory.disk.iops.push(diskIopsLine)
 
       this.loaded = true
     },
@@ -426,28 +473,41 @@ export default {
     },
     resetData () {
       this.chartLabels = []
-      this.resouceUsageHistory.cpu = []
-      this.resouceUsageHistory.memory.percentage = []
-      this.resouceUsageHistory.memory.rawData.inMB = []
-      this.resouceUsageHistory.memory.rawData.inGB = []
-      this.resouceUsageHistory.network.inKiB = []
-      this.resouceUsageHistory.network.inMiB = []
-      this.resouceUsageHistory.network.inGiB = []
-      this.resouceUsageHistory.disk.iops = []
-      this.resouceUsageHistory.disk.readAndWrite.inKiB = []
-      this.resouceUsageHistory.disk.readAndWrite.inMiB = []
-      this.resouceUsageHistory.disk.readAndWrite.inGiB = []
-    },
-    calculateMemoryUsed (memorykbs, memoryintfreekbs) {
-      var memoryUsed = -1
-      if (memorykbs != null && memoryintfreekbs != null) {
-        memoryUsed = parseFloat(100.0 * (memorykbs - memoryintfreekbs) / memorykbs).toFixed(2)
-        return memoryUsed
-      }
-      return memoryUsed
+      this.resourceUsageHistory.cpu = []
+      this.resourceUsageHistory.memory.percentage.free = []
+      this.resourceUsageHistory.memory.percentage.used = []
+      this.resourceUsageHistory.memory.rawData.free.inMB = []
+      this.resourceUsageHistory.memory.rawData.free.inGB = []
+      this.resourceUsageHistory.memory.rawData.used.inMB = []
+      this.resourceUsageHistory.memory.rawData.used.inGB = []
+      this.resourceUsageHistory.network.inKiB = []
+      this.resourceUsageHistory.network.inMiB = []
+      this.resourceUsageHistory.network.inGiB = []
+      this.resourceUsageHistory.disk.readAndWrite.inKiB = []
+      this.resourceUsageHistory.disk.readAndWrite.inMiB = []
+      this.resourceUsageHistory.disk.readAndWrite.inGiB = []
     },
     /**
-     * Calculates de maximum Y axis and the step size based on the chart data.
+     * Calculates the memory percentage.
+     * @param isUsed "true" if the memory used percentage should be returned, "false" if the free memory percentage should be returned.
+     * @param memoryTotalInKB the memory total (in KB).
+     * @param memoryFreeInKB the memory free (in KB).
+     * @returns the percentage of used/free memory.
+     */
+    calculateMemoryPercentage (isUsed, memoryTotalInKB, memoryFreeInKB) {
+      var percentage = -1
+      if (memoryTotalInKB != null && memoryFreeInKB != null) {
+        if (isUsed) {
+          percentage = parseFloat(100.0 * (memoryTotalInKB - memoryFreeInKB) / memoryTotalInKB).toFixed(2)
+          return percentage
+        }
+        percentage = parseFloat(100.0 * memoryFreeInKB / memoryTotalInKB).toFixed(2)
+        return percentage
+      }
+      return percentage
+    },
+    /**
+     * Calculates the maximum Y axis and the step size based on the chart data.
      * @param chartLines the chart lines with their respective data.
      * @param initialMaxValue the initial maximum value to the Y axis.
      * @param incrementValue the increment value.
