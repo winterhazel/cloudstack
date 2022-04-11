@@ -61,6 +61,7 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
     protected final GenericSearchBuilder<VolumeVO, Long> ActiveTemplateSearch;
     protected final SearchBuilder<VolumeVO> InstanceStatesSearch;
     protected final SearchBuilder<VolumeVO> AllFieldsSearch;
+    protected final SearchBuilder<VolumeVO> DiskOfferingSearch;
     protected final SearchBuilder<VolumeVO> RootDiskStateSearch;
     protected GenericSearchBuilder<VolumeVO, Long> CountByAccount;
     protected GenericSearchBuilder<VolumeVO, SumCount> primaryStorageSearch;
@@ -261,6 +262,14 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
     }
 
     @Override
+    public List<VolumeVO> findByDiskOfferingId(long diskOfferingId) {
+        SearchCriteria<VolumeVO> sc = DiskOfferingSearch.create();
+        sc.setParameters("diskOfferingId", diskOfferingId);
+
+        return listBy(sc);
+    }
+
+    @Override
     public List<VolumeVO> findByTemplateAndZone(long templateId, long zoneId) {
         SearchCriteria<VolumeVO> sc = TemplateZoneSearch.create();
         sc.setParameters("template", templateId);
@@ -399,6 +408,10 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
         TemplateZoneSearch.and("template", TemplateZoneSearch.entity().getTemplateId(), Op.EQ);
         TemplateZoneSearch.and("zone", TemplateZoneSearch.entity().getDataCenterId(), Op.EQ);
         TemplateZoneSearch.done();
+
+        DiskOfferingSearch = createSearchBuilder();
+        DiskOfferingSearch.and("diskOfferingId", DiskOfferingSearch.entity().getDiskOfferingId(), Op.EQ);
+        DiskOfferingSearch.done();
 
         TotalSizeByPoolSearch = createSearchBuilder(SumCount.class);
         TotalSizeByPoolSearch.select("sum", Func.SUM, TotalSizeByPoolSearch.entity().getSize());
