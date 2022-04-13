@@ -48,7 +48,8 @@ export default {
             borderWidth: 3,
             label: element.label,
             data: element.data.map(d => d.stat),
-            hidden: this.hideLine(element.data.map(d => d.stat))
+            hidden: this.hideLine(element.data.map(d => d.stat)),
+            pointRadius: element.pointRadius
           }
         )
       }

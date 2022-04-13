@@ -359,6 +359,9 @@ export default {
     handleStatsResponse (responseData) {
       this.resetData()
       const vm = responseData.listvirtualmachinesusagehistoryresponse.virtualmachine
+
+      const chartPointRadius = this.getChartPointRadius(vm[0].stats.length)
+
       const blue = '#166ab7'
       const green = '#389357'
       const blueInRgba = 'rgba(24, 144, 255, 0.5)'
@@ -366,28 +369,28 @@ export default {
       const red = '#ff4d4f'
       const redInRgba = 'rgb(255, 77, 79, 0.65)'
 
-      const cpuLine = { label: 'CPU', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const memFreeLinePercent = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const memUsedLinePercent = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
-      const memAllocatedLineInMB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const memFreeLineInMB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const memUsedLineInMB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
-      const memAllocatedLineInGB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const memFreeLineInGB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const memUsedLineInGB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [] }
-      const netDownloadLineInKiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const netUploadLineInKiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const netDownloadLineInMiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const netUploadLineInMiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const netDownloadLineInGiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const netUploadLineInGiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const diskReadLineInKiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const diskWriteLineInKiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const diskReadLineInMiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const diskWriteLineInMiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const diskReadLineInGiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [] }
-      const diskWriteLineInGiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [] }
-      const diskIopsLine = { label: 'IOPS', backgroundColor: blueInRgba, borderColor: blue, data: [] }
+      const cpuLine = { label: 'CPU', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const memFreeLinePercent = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const memUsedLinePercent = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [], pointRadius: chartPointRadius }
+      const memAllocatedLineInMB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const memFreeLineInMB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const memUsedLineInMB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [], pointRadius: chartPointRadius }
+      const memAllocatedLineInGB = { label: this.$t('label.memoryallocated'), backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const memFreeLineInGB = { label: this.$t('label.memory.free'), backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const memUsedLineInGB = { label: this.$t('label.memory.used'), backgroundColor: redInRgba, borderColor: red, data: [], pointRadius: chartPointRadius }
+      const netDownloadLineInKiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const netUploadLineInKiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const netDownloadLineInMiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const netUploadLineInMiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const netDownloadLineInGiB = { label: 'Download', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const netUploadLineInGiB = { label: 'Upload', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const diskReadLineInKiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const diskWriteLineInKiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const diskReadLineInMiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const diskWriteLineInMiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const diskReadLineInGiB = { label: 'Read', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
+      const diskWriteLineInGiB = { label: 'Write', backgroundColor: greenInRgba, borderColor: green, data: [], pointRadius: chartPointRadius }
+      const diskIopsLine = { label: 'IOPS', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
 
       for (const element of vm[0].stats) {
         const currentLabel = element.timestamp.split('T')[0] + ' ' + element.timestamp.split('T')[1].split('+')[0]
@@ -450,6 +453,23 @@ export default {
       this.resourceUsageHistory.disk.iops.push(diskIopsLine)
 
       this.loaded = true
+    },
+    /**
+     * Calculates the ideal chart points radius based on the number of data points and the screen width.
+     * @param numberOfDataPoints the number of data points.
+     * @returns the ideal chart points radius (which is the size of the points on the chart).
+     */
+    getChartPointRadius (numberOfDataPoints) {
+      const maxSizeLimit = 3
+      const minSizeLimit = 2
+      const minSize = 0.1 // the smallest value that allows to render the point in the chart
+      const result = (screen.width * 0.04) / numberOfDataPoints
+      if (result > maxSizeLimit) {
+        return maxSizeLimit
+      } else if (result < minSizeLimit) {
+        return minSize
+      }
+      return parseFloat(result).toFixed(2)
     },
     /**
      * Converts a value (Byte-based) from an unit to other one. For example: from Byte to KiB; from GiB to MiB; etc.
