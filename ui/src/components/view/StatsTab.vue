@@ -503,6 +503,7 @@ export default {
       this.resourceUsageHistory.network.inKiB = []
       this.resourceUsageHistory.network.inMiB = []
       this.resourceUsageHistory.network.inGiB = []
+      this.resourceUsageHistory.disk.iops = []
       this.resourceUsageHistory.disk.readAndWrite.inKiB = []
       this.resourceUsageHistory.disk.readAndWrite.inMiB = []
       this.resourceUsageHistory.disk.readAndWrite.inGiB = []
