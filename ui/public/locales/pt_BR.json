@@ -120,7 +120,7 @@
 "label.action.delete.network": "Remover rede",
 "label.action.delete.network.processing": "Removendo rede....",
 "label.action.delete.nexusvswitch": "Remover NexusVswitch",
-"label.action.delete.nic": "Remover interface de rede",
+"label.action.remove.nic": "Remover interface de rede",
 "label.action.delete.node": "Remover nodo",
 "label.action.delete.physical.network": "Remover rede f\u00edsica",
 "label.action.delete.pod": "Remover pod",
