@@ -511,7 +511,7 @@ export default {
       title: 'label.internal.lb',
       docHelp: 'adminguide/networking_and_traffic.html#load-balancing-across-tiers',
       icon: 'share-alt',
-      hidden: false,
+      hidden: true,
       permission: ['listLoadBalancers'],
       columns: ['name', 'sourceipaddress', 'loadbalancerrule', 'algorithm', 'account', 'domain'],
       details: ['name', 'sourceipaddress', 'loadbalancerrule', 'algorithm', 'account', 'domain'],
