@@ -506,7 +506,7 @@ public class PresetVariableHelperTest {
                 Mockito.any(VMInstanceVO.class));
 
         Mockito.doReturn(expected.getId()).when(vmInstanceVoMock).getUuid();
-        Mockito.doReturn(expected.getName()).when(vmInstanceVoMock).getName();
+        Mockito.doReturn(expected.getName()).when(vmInstanceVoMock).getHostName();
         Mockito.doReturn(expected.getOsName()).when(presetVariableHelperSpy).getPresetVariableValueOsName(Mockito.anyLong());
         Mockito.doNothing().when(presetVariableHelperSpy).setPresetVariableValueServiceOfferingAndComputingResources(Mockito.any(), Mockito.anyInt(), Mockito.any());
         Mockito.doReturn(expected.getTags()).when(presetVariableHelperSpy).getPresetVariableValueResourceTags(Mockito.anyLong(), Mockito.any(ResourceObjectType.class));
@@ -542,7 +542,7 @@ public class PresetVariableHelperTest {
                 Mockito.any(VMInstanceVO.class));
 
         Mockito.doReturn(expected.getId()).when(vmInstanceVoMock).getUuid();
-        Mockito.doReturn(expected.getName()).when(vmInstanceVoMock).getName();
+        Mockito.doReturn(expected.getName()).when(vmInstanceVoMock).getHostName();
         Mockito.doReturn(expected.isRemoved()).when(vmInstanceVoMock).isRemoved();
 
         presetVariableHelperSpy.isLoadOnlyValuesToReturnInQuotaStatementResponse = true;
