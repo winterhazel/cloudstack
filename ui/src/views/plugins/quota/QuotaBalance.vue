@@ -74,7 +74,7 @@ export default {
       pattern: dateUtils.formats.ISO_DATE_ONLY,
       currency: '',
       dataSource: [],
-      startDate: moment().startOf('month'),
+      startDate: moment().subtract(30, 'days'),
       endDate: moment().subtract(1, 'days'),
       presetRanges: {
         [this.$t('label.quota.filter.preset.thismonth')]: [moment().startOf('month'), moment().subtract(1, 'days')],

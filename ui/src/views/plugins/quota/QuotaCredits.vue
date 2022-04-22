@@ -72,7 +72,7 @@ export default {
       pattern: dateUtils.formats.ISO_DATE_ONLY,
       currency: '',
       dataSource: [],
-      startDate: moment().startOf('month'),
+      startDate: moment().subtract(30, 'days'),
       endDate: moment()
     }
   },
@@ -84,7 +84,7 @@ export default {
           dataIndex: 'date',
           width: 'calc(100% / 2)',
           scopedSlots: { customRender: 'date' },
-          customRender: (text) => dateUtils.formatDatetimeToExtended(text),
+          customRender: (text) => dateUtils.formatToExtended(text, dateUtils.formats.DATETIME_EXTENDED_WITHOUT_SECONDS),
           sorter: (a, b) => a.date - b.date,
           defaultSortOrder: 'descend'
         },

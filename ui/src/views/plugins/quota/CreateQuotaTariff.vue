@@ -101,8 +101,8 @@ export default {
     this.form = this.$form.createForm(this)
     this.apiParams = this.$getApiParams('quotaTariffCreate')
   },
-  created () {
-    this.fetchData()
+  mounted () {
+    this.form.setFieldsValue({ value: 0 })
   },
   inject: ['parentFetchData'],
   methods: {

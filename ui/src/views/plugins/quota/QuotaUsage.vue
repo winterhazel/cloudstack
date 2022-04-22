@@ -117,7 +117,7 @@ export default {
       pattern: dateUtils.formats.ISO_DATE_ONLY,
       currency: '',
       totalQuota: 0,
-      startDate: moment().startOf('month'),
+      startDate: moment().subtract(30, 'days'),
       endDate: moment(),
       selectedResource: ''
     }
@@ -172,7 +172,7 @@ export default {
               return text
             }
 
-            return <a href={ `#/${quotaType.componentUrl}/${record.resource.id}`}>{{ text }}</a>
+            return <a href={ `#/${quotaType.componentUrl}/${record.resource.id}`} target="_blank">{{ text }}</a>
           }
         },
         {
@@ -180,7 +180,7 @@ export default {
           dataIndex: 'startDate',
           width: '25%',
           scopedSlots: { customRender: 'startDate' },
-          customRender: (text) => dateUtils.formatDatetimeToExtended(text),
+          customRender: (text) => dateUtils.formatToExtended(text, dateUtils.formats.DATETIME_EXTENDED_WITHOUT_SECONDS),
           sorter: (a, b) => a.startDate - b.startDate,
           defaultSortOrder: 'descend'
         },
@@ -189,7 +189,7 @@ export default {
           dataIndex: 'endDate',
           width: '25%',
           scopedSlots: { customRender: 'endDate' },
-          customRender: (text) => dateUtils.formatDatetimeToExtended(text),
+          customRender: (text) => dateUtils.formatToExtended(text, dateUtils.formats.DATETIME_EXTENDED_WITHOUT_SECONDS),
           sorter: (a, b) => a.endDate - b.endDate
         },
         {
@@ -262,7 +262,7 @@ export default {
           endDate: endDate.format(this.pattern)
         })
 
-        this.dataSource = quotaStatement.quotausage
+        this.dataSource = quotaStatement.quotausage.filter(item => item.quota !== 0)
         this.currency = quotaStatement.currency
         this.totalQuota = quotaStatement.totalquota
       } finally {
