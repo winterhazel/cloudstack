@@ -12,7 +12,7 @@
               v-decorator="['dates']"
               :disabled-date="getDisabledDates"
               :ranges="presetDateRanges"
-              :default-value="presetDateRanges[this.$t('label.quota.filter.preset.thismonth')]"
+              :default-value="[startDate, endDate]"
             />
           </a-form-item>
           <div :span="24" class="action-button">
@@ -43,7 +43,7 @@ export default {
   props: {
     startDate: {
       type: Object,
-      default: () => moment().startOf('month')
+      default: () => moment().subtract(30, 'days')
     },
     endDate: {
       type: Object,

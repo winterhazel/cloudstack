@@ -33,7 +33,7 @@
           :loading="domainLoading"
           :placeholder="this.$t('label.domainid')"
           @change="val => { this.handleDomainChange(val) }">
-          <a-select-option v-for="domain in this.domainList" :key="domain.id">
+          <a-select-option v-for="domain in this.domainList" :value="`${domain.id}|${domain.path}`" :key="domain.id">
             {{ domain.path || domain.name || domain.description }}
           </a-select-option>
         </a-select>
@@ -135,7 +135,7 @@ export default {
       this.$emit('close-action')
     },
     handleDomainChange (domain) {
-      this.domainId = domain
+      this.domainId = domain?.split('|')[0]
       if ('listAccounts' in this.$store.getters.apis) {
         this.fetchAccounts()
       }
