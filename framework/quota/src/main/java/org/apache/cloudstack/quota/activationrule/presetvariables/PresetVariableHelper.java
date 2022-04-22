@@ -320,7 +320,7 @@ public class PresetVariableHelper {
         validateIfObjectIsNull(vmVo, vmId, "VM");
 
         value.setId(vmVo.getUuid());
-        value.setName(vmVo.getName());
+        value.setName(vmVo.getHostName());
 
         if (isLoadOnlyValuesToReturnInQuotaStatementResponse) {
             value.setRemoved(vmVo.isRemoved());
