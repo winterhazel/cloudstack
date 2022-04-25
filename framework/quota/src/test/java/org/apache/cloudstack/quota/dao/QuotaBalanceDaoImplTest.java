@@ -38,8 +38,9 @@ public class QuotaBalanceDaoImplTest {
     QuotaBalanceVO quotaBalanceVoMock;
 
     @Test
-    public void getLastQuotaBalanceTestLastEntryIsNullReturnsZero() {
+    public void getLastQuotaBalanceTestLastEntryIsNullAndNoCreditsReturnsZero() {
         Mockito.doReturn(null).when(quotaBalanceDaoImplSpy).getLastQuotaBalanceEntry(Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
+        Mockito.doReturn(new ArrayList<>()).when(quotaBalanceDaoImplSpy).findCreditBalances(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
 
         BigDecimal result = quotaBalanceDaoImplSpy.getLastQuotaBalance(1l, 2l);
 
@@ -67,6 +68,21 @@ public class QuotaBalanceDaoImplTest {
 
         Mockito.doReturn(quotaBalanceVoMock).when(quotaBalanceDaoImplSpy).getLastQuotaBalanceEntry(Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
         Mockito.doReturn(balance, credit1, credit2).when(quotaBalanceVoMock).getCreditBalance();
+        Mockito.doReturn(Arrays.asList(quotaBalanceVoMock, quotaBalanceVoMock)).when(quotaBalanceDaoImplSpy).findCreditBalances(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
+
+        BigDecimal result = quotaBalanceDaoImplSpy.getLastQuotaBalance(5l, 8l);
+
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test
+    public void getLastQuotaBalanceTestReturnsLastEntryIsNullPlusCredits() {
+        BigDecimal credit1 = new BigDecimal(150.14);
+        BigDecimal credit2 = new BigDecimal(78.96);
+        BigDecimal expected = credit1.add(credit2);
+
+        Mockito.doReturn(null).when(quotaBalanceDaoImplSpy).getLastQuotaBalanceEntry(Mockito.anyLong(), Mockito.anyLong(), Mockito.any());
+        Mockito.doReturn(credit1, credit2).when(quotaBalanceVoMock).getCreditBalance();
         Mockito.doReturn(Arrays.asList(quotaBalanceVoMock, quotaBalanceVoMock)).when(quotaBalanceDaoImplSpy).findCreditBalances(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any());
 
         BigDecimal result = quotaBalanceDaoImplSpy.getLastQuotaBalance(5l, 8l);
