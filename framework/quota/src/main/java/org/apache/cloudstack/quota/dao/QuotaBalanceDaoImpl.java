@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.cloudstack.quota.vo.QuotaBalanceVO;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -132,13 +133,16 @@ public class QuotaBalanceDaoImpl extends GenericDaoBase<QuotaBalanceVO, Long> im
     public BigDecimal getLastQuotaBalance(Long accountId, Long domainId) {
         QuotaBalanceVO quotaBalance = getLastQuotaBalanceEntry(accountId, domainId, null);
 
+        BigDecimal finalBalance = BigDecimal.ZERO;
+        Date startDate = DateUtils.addDays(new Date(), -1);
         if (quotaBalance == null) {
-            s_logger.info(String.format("There are no balance entries for account [%s] and domain [%s]. Returning zero as last quota balance.", accountId, domainId));
-            return BigDecimal.ZERO;
+            s_logger.info(String.format("There are no balance entries for account [%s] and domain [%s]. Considering only new added credits.", accountId, domainId));
+        } else {
+            finalBalance = quotaBalance.getCreditBalance();
+            startDate = quotaBalance.getUpdatedOn();
         }
 
-        List<QuotaBalanceVO> credits = findCreditBalances(accountId, domainId, quotaBalance.getUpdatedOn(), new Date());
-        BigDecimal finalBalance = quotaBalance.getCreditBalance();
+        List<QuotaBalanceVO> credits = findCreditBalances(accountId, domainId, startDate, new Date());
 
         for (QuotaBalanceVO credit : credits) {
             finalBalance = finalBalance.add(credit.getCreditBalance());
