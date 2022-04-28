@@ -557,7 +557,9 @@
               <resource-icon :image="getImage(images.account)" size="1x" style="margin-right: 5px"/>
             </span>
             <a-icon v-else type="user" />
-            <router-link v-if="!isStatic && $store.getters.userInfo.roletype !== 'User'" :to="{ path: '/account', query: { name: resource.account, domainid: resource.domainid } }">{{ resource.account }}</router-link>
+            <router-link
+              v-if="(!$route.path.includes('quotasummary') || ($route.path.includes('quotasummary') && !resource.accountremoved)) && !isStatic && $store.getters.userInfo.roletype !== 'User'"
+              :to="{ path: '/account', query: { name: resource.account, domainid: resource.domainid } }">{{ resource.account }}</router-link>
             <span v-else>{{ resource.account }}</span>
           </div>
         </div>
@@ -574,7 +576,9 @@
           <div class="resource-detail-item__details">
             <resource-icon v-if="images.domain" :image="getImage(images.domain)" size="1x" style="margin-right: 5px"/>
             <a-icon v-else type="block" />
-            <router-link v-if="!isStatic && $store.getters.userInfo.roletype !== 'User'" :to="{ path: '/domain/' + resource.domainid + '?tab=details' }">{{ resource.domain || resource.domainid }}</router-link>
+            <router-link
+              v-if="(!$route.path.includes('quotasummary') || ($route.path.includes('quotasummary') && !resource.domainremoved)) && !isStatic && $store.getters.userInfo.roletype !== 'User'"
+              :to="{ path: '/domain/' + resource.domainid + '?tab=details' }">{{ resource.domain || resource.domainid }}</router-link>
             <span v-else>{{ resource.domain || resource.domainid }}</span>
           </div>
         </div>

@@ -34,8 +34,9 @@ import com.cloud.utils.db.TransactionStatus;
 public class QuotaSummaryDaoImpl extends GenericDaoBase<QuotaSummaryVO, Long> implements QuotaSummaryDao {
 
     @Override
-    public Pair<List<QuotaSummaryVO>, Integer> listQuotaSummariesForAccountAndOrDomain(Long accountId, Long domainId, String domainPath, Long startIndex, Long pageSize) {
-        SearchCriteria<QuotaSummaryVO> searchCriteria = createListQuotaSummariesSearchCriteria(accountId, domainId, domainPath);
+    public Pair<List<QuotaSummaryVO>, Integer> listQuotaSummariesForAccountAndOrDomain(Long accountId, Long domainId, String domainPath, String showRemovedAccounts, Long startIndex,
+            Long pageSize) {
+        SearchCriteria<QuotaSummaryVO> searchCriteria = createListQuotaSummariesSearchCriteria(accountId, domainId, domainPath, showRemovedAccounts);
         Filter sorter = new Filter(QuotaSummaryVO.class, "accountName", true, startIndex, pageSize);
 
         return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<Pair<List<QuotaSummaryVO>, Integer>>() {
@@ -46,8 +47,8 @@ public class QuotaSummaryDaoImpl extends GenericDaoBase<QuotaSummaryVO, Long> im
         });
     }
 
-    protected SearchCriteria<QuotaSummaryVO> createListQuotaSummariesSearchCriteria(Long accountId, Long domainId, String domainPath) {
-        SearchCriteria<QuotaSummaryVO> searchCriteria = createListQuotaSummariesSearchBuilder(accountId, domainId, domainPath).create();
+    protected SearchCriteria<QuotaSummaryVO> createListQuotaSummariesSearchCriteria(Long accountId, Long domainId, String domainPath, String showRemovedAccounts) {
+        SearchCriteria<QuotaSummaryVO> searchCriteria = createListQuotaSummariesSearchBuilder(accountId, domainId, domainPath, showRemovedAccounts).create();
 
         searchCriteria.setParametersIfNotNull("account_id", accountId);
         searchCriteria.setParametersIfNotNull("domain_id", domainId);
@@ -59,7 +60,7 @@ public class QuotaSummaryDaoImpl extends GenericDaoBase<QuotaSummaryVO, Long> im
         return searchCriteria;
     }
 
-    protected SearchBuilder<QuotaSummaryVO> createListQuotaSummariesSearchBuilder(Long accountId, Long domainId, String domainPath) {
+    protected SearchBuilder<QuotaSummaryVO> createListQuotaSummariesSearchBuilder(Long accountId, Long domainId, String domainPath, String showRemovedAccounts) {
         SearchBuilder<QuotaSummaryVO> searchBuilder = createSearchBuilder();
 
         if (accountId != null) {
@@ -72,6 +73,12 @@ public class QuotaSummaryDaoImpl extends GenericDaoBase<QuotaSummaryVO, Long> im
 
         if (domainPath != null) {
             searchBuilder.and("domain_path", searchBuilder.entity().getDomainPath(), SearchCriteria.Op.LIKE);
+        }
+
+        if (showRemovedAccounts.equalsIgnoreCase("only")) {
+            searchBuilder.and("account_removed", searchBuilder.entity().getAccountRemoved(), SearchCriteria.Op.NNULL);
+        } else if (!showRemovedAccounts.equalsIgnoreCase("true")) {
+            searchBuilder.and("account_removed", searchBuilder.entity().getAccountRemoved(), SearchCriteria.Op.NULL);
         }
 
         return searchBuilder;

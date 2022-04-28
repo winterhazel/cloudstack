@@ -52,6 +52,14 @@ public class QuotaSummaryResponse extends BaseResponse {
     @Param(description = "account state")
     private State state;
 
+    @SerializedName("domainremoved")
+    @Param(description = "domain is removed or not")
+    private boolean domainRemoved;
+
+    @SerializedName("accountremoved")
+    @Param(description = "account is removed or not")
+    private boolean accountRemoved;
+
     @SerializedName("currency")
     @Param(description = "currency")
     private String currency;
@@ -115,4 +123,21 @@ public class QuotaSummaryResponse extends BaseResponse {
     public void setCurrency(String currency) {
         this.currency = currency;
     }
+
+    public boolean isDomainRemoved() {
+        return domainRemoved;
+    }
+
+    public void setDomainRemoved(boolean domainRemoved) {
+        this.domainRemoved = domainRemoved;
+    }
+
+    public boolean isAccountRemoved() {
+        return accountRemoved;
+    }
+
+    public void setAccountRemoved(boolean accountRemoved) {
+        this.accountRemoved = accountRemoved;
+    }
+
 }

@@ -70,6 +70,7 @@ import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.cloud.domain.Domain;
+import com.cloud.domain.DomainVO;
 import com.cloud.domain.dao.DomainDao;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.network.dao.IPAddressDao;
@@ -160,10 +161,19 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
 
     protected Pair<List<QuotaSummaryResponse>, Integer> getQuotaSummaryResponseWithListAll(QuotaSummaryCmd cmd, Account caller) {
         String accountName = cmd.getAccountName();
-        Long domainId = cmd.getDomainId();
+        String domainUuid = cmd.getDomainId();
 
-        if (accountName != null && domainId == null) {
+        Long domainId = null;
+        if (accountName != null && domainUuid == null) {
             domainId = caller.getDomainId();
+        } else if (domainUuid != null) {
+            DomainVO domain = domainDao.findByUuidIncludingRemoved(domainUuid);
+
+            if (domain == null) {
+                throw new InvalidParameterValueException(String.format("Domain [%s] does not exist.", domainUuid));
+            }
+
+            domainId = domain.getId();
         }
 
         Long accountId = getAccountIdByAccountName(accountName, domainId, caller);
@@ -177,7 +187,7 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             return null;
         }
 
-        Domain domain = domainDao.findById(domainId);
+        Domain domain = domainDao.findByIdIncludingRemoved(domainId);
         _accountMgr.checkAccess(caller, domain);
 
         Account account = _accountDao.findAccountIncludingRemoved(accountName, domainId);
@@ -206,7 +216,8 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     }
 
     protected Pair<List<QuotaSummaryResponse>, Integer> getQuotaSummaryResponse(Long accountId, Long domainId, String domainPath, Long startIndex, Long pageSize, QuotaSummaryCmd cmd) {
-        Pair<List<QuotaSummaryVO>, Integer> pairSummaries = quotaSummaryDao.listQuotaSummariesForAccountAndOrDomain(accountId, domainId, domainPath, startIndex, pageSize);
+        Pair<List<QuotaSummaryVO>, Integer> pairSummaries = quotaSummaryDao.listQuotaSummariesForAccountAndOrDomain(accountId, domainId, domainPath, cmd.getShowRemovedAccounts(),
+            startIndex, pageSize);
         List<QuotaSummaryVO> summaries = pairSummaries.first();
 
         if (CollectionUtils.isEmpty(summaries)) {
@@ -224,6 +235,8 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             response.setDomainPath(summary.getDomainPath());
             response.setBalance(summary.getQuotaBalance());
             response.setState(summary.getAccountState());
+            response.setDomainRemoved(summary.getDomainRemoved() != null);
+            response.setAccountRemoved(summary.getAccountRemoved() != null);
             response.setCurrency(QuotaConfig.QuotaCurrencySymbol.value());
             response.setObjectName("summary");
 

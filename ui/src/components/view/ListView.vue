@@ -244,21 +244,24 @@
       <template v-if="text">
         <template v-if="!text.startsWith('PrjAcct-')">
           <router-link
-            v-if="'balance' in record && 'currency' in record && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
-            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, accountid: record.accountid, quota: true } }">{{ text }}</router-link>
+            v-if="$route.path.includes('quotasummary') && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
+            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, accountid: record.accountid, quota: true, filter: $route.query.filter } }">{{ text }}</router-link>
           <router-link :to="{ path: '/account/' + record.accountid }" v-else-if="record.accountid">{{ text }}</router-link>
           <router-link :to="{ path: '/account', query: { name: record.account, domainid: record.domainid, dataView: true } }" v-else-if="$store.getters.userInfo.roletype !== 'User'">{{ text }}</router-link>
         </template>
         <span v-else>
           <router-link
-            v-if="'balance' in record && 'currency' in record && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
-            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, quota: true } }">{{ text.replace('PrjAcct-', '').concat(' (').concat($t('label.project')).concat(')') }}</router-link>
+            v-if="$route.path.includes('quotasummary') && $router.resolve(`${$route.path}/${record.account}`) !== '404'"
+            :to="{ path: `${$route.path}/${record.account}`, query: { account: record.account, domainid: record.domainid, quota: true, filter: $route.query.filter } }">{{ text.replace('PrjAcct-', '').concat(' (').concat($t('label.project')).concat(')') }}</router-link>
           <span v-else>{{ text.replace('PrjAcct-', '').concat(' (').concat($t('label.project')).concat(')') }}</span>
         </span>
       </template>
     </span>
     <span slot="domain" slot-scope="text, record" href="javascript:;">
-      <router-link v-if="record.domainid && !record.domainid.toString().includes(',') && $store.getters.userInfo.roletype !== 'User'" :to="{ path: '/domain/' + record.domainid }">{{ text }}</router-link>
+      <router-link
+        v-if="(!$route.path.includes('quotasummary') || ($route.path.includes('quotasummary') && !record.domainremoved))
+          && record.domainid && !record.domainid.toString().includes(',') && $store.getters.userInfo.roletype !== 'User'"
+        :to="{ path: '/domain/' + record.domainid }">{{ text }}</router-link>
       <span v-else>{{ text }}</span>
     </span>
     <span slot="domainpath" slot-scope="text, record" href="javascript:;">

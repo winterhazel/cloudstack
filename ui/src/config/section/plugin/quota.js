@@ -34,6 +34,7 @@ export default {
       columnNames: ['account', 'domain', 'state', 'currency', 'currentbalance'],
       details: ['currency', 'currentbalance'],
       component: () => import('@/views/plugins/quota/QuotaSummary.vue'),
+      filters: ['all', 'activeaccounts', 'removedaccounts'],
       tabs: [
         {
           name: 'details',
