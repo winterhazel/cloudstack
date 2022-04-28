@@ -26,5 +26,5 @@ import com.cloud.utils.db.GenericDao;
 
 public interface QuotaSummaryDao extends GenericDao<QuotaSummaryVO, Long> {
 
-    Pair<List<QuotaSummaryVO>, Integer> listQuotaSummariesForAccountAndOrDomain(Long accountId, Long domainId, String domainPath, Long startIndex, Long pageSize);
+    Pair<List<QuotaSummaryVO>, Integer> listQuotaSummariesForAccountAndOrDomain(Long accountId, Long domainId, String domainPath, String showRemoved, Long startIndex, Long pageSize);
 }

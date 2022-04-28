@@ -20,6 +20,7 @@ import com.cloud.user.Account;
 import com.cloud.utils.Pair;
 
 import org.apache.cloudstack.api.APICommand;
+import org.apache.cloudstack.api.ApiArgValidator;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseListCmd;
 import org.apache.cloudstack.api.Parameter;
@@ -42,13 +43,18 @@ public class QuotaSummaryCmd extends BaseListCmd {
     @Parameter(name = ApiConstants.ACCOUNT, type = CommandType.STRING, required = false, description = "Account's name for which balance will be listed.")
     private String accountName;
 
-    @Parameter(name = ApiConstants.DOMAIN_ID, type = CommandType.UUID, required = false, entityType = DomainResponse.class, description = "If domain's id is given and the caller"
-            + " is domain admin then the statement is generated for domain.")
-    private Long domainId;
+    @Parameter(name = ApiConstants.DOMAIN_ID, type = CommandType.STRING, required = false, entityType = DomainResponse.class,
+            description = "If domain's id is given and the caller is domain admin then the statement is generated for domain.", validations = {ApiArgValidator.UuidString})
+    private String domainId;
 
     @Parameter(name = ApiConstants.LIST_ALL, type = CommandType.BOOLEAN, required = false, description = "False (default) lists balance summary for account. True lists"
             + " balance summary for accounts which te account has access.")
     private Boolean listAll;
+
+    @Parameter(name = ApiConstants.SHOW_REMOVED_ACCOUNTS, type = CommandType.STRING, required = false, description = "If set to 'true', we will list also the removed accounts' summaries."
+            + "If set to 'false', we will not list summaries of removed accounts. If set to 'only', we will list only removed accounts' summaries. If one set other than these"
+            + " values, we will consider it as the 'default'. The default is 'false'.")
+    private String showRemovedAccounts = "false";
 
     @Inject
     QuotaResponseBuilder quotaResponseBuilder;
@@ -74,11 +80,11 @@ public class QuotaSummaryCmd extends BaseListCmd {
         this.accountName = accountName;
     }
 
-    public Long getDomainId() {
+    public String getDomainId() {
         return domainId;
     }
 
-    public void setDomainId(Long domainId) {
+    public void setDomainId(String domainId) {
         this.domainId = domainId;
     }
 
@@ -98,6 +104,14 @@ public class QuotaSummaryCmd extends BaseListCmd {
     @Override
     public long getEntityOwnerId() {
         return Account.ACCOUNT_ID_SYSTEM;
+    }
+
+    public String getShowRemovedAccounts() {
+        return showRemovedAccounts;
+    }
+
+    public void setShowRemovedAccounts(String showRemoved) {
+        this.showRemovedAccounts = showRemoved;
     }
 
 }

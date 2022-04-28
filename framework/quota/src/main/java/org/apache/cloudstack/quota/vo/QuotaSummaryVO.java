@@ -73,6 +73,9 @@ public class QuotaSummaryVO {
     @Enumerated(EnumType.STRING)
     private Account.State accountState;
 
+    @Column(name = "account_removed")
+    private Date accountRemoved;
+
     @Column(name = "domain_id")
     private Long domainId;
 
@@ -84,6 +87,10 @@ public class QuotaSummaryVO {
 
     @Column(name = "domain_path")
     private String domainPath;
+
+    @Column(name = "domain_removed")
+    private Date domainRemoved;
+
 
     public Long getAccountId() {
         return accountId;
@@ -203,6 +210,22 @@ public class QuotaSummaryVO {
 
     public void setDomainId(Long domainId) {
         this.domainId = domainId;
+    }
+
+    public Date getAccountRemoved() {
+        return accountRemoved;
+    }
+
+    public void setAccountRemoved(Date accountRemoved) {
+        this.accountRemoved = accountRemoved;
+    }
+
+    public Date getDomainRemoved() {
+        return domainRemoved;
+    }
+
+    public void setDomainRemoved(Date domainRemoved) {
+        this.domainRemoved = domainRemoved;
     }
 
 }

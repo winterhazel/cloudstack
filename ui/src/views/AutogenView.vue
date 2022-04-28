@@ -47,8 +47,10 @@
                     v-if="!dataView && filters && filters.length > 0"
                     :placeholder="$t('label.filterby')"
                     :value="$route.query.filter || (projectView && $route.name === 'vm' ||
-                      ['Admin', 'DomainAdmin'].includes($store.getters.userInfo.roletype) && ['vm', 'iso', 'template'].includes($route.name)
-                      ? 'all' : ['guestnetwork'].includes($route.name) ? 'all' : ['quotatariff'].includes($route.name) ? 'active' : 'self')"
+                      ['Admin', 'DomainAdmin'].includes($store.getters.userInfo.roletype) && ['vm', 'iso', 'template'].includes($route.name) ? 'all' :
+                        ['guestnetwork'].includes($route.name) ? 'all' :
+                        ['quotatariff'].includes($route.name) ? 'active' :
+                        ['quotasummary'].includes($route.name) ? 'activeaccounts' : 'self')"
                     style="min-width: 100px; margin-left: 10px"
                     @change="changeFilter"
                     showSearch
@@ -855,6 +857,19 @@ export default {
 
         if (['removed'].includes(this.$route.query.filter)) {
           params.listonlyremoved = true
+        }
+      }
+
+      if (this.apiName === 'quotaSummary') {
+        switch (this.$route.query.filter) {
+          case 'all':
+            params.showremovedaccounts = 'true'
+            break
+          case 'removedaccounts':
+            params.showremovedaccounts = 'only'
+            break
+          default:
+            params.showremovedaccounts = 'false'
         }
       }
 
