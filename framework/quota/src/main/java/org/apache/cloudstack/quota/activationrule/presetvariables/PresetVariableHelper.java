@@ -29,6 +29,8 @@ import javax.inject.Inject;
 
 import org.apache.cloudstack.acl.RoleVO;
 import org.apache.cloudstack.acl.dao.RoleDao;
+import org.apache.cloudstack.backup.BackupOfferingVO;
+import org.apache.cloudstack.backup.dao.BackupOfferingDao;
 import org.apache.cloudstack.engine.subsystem.api.storage.SnapshotInfo;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.constant.VmDetails;
@@ -161,6 +163,9 @@ public class PresetVariableHelper {
     @Inject
     UserVmDetailsDao userVmDetailsDao;
 
+    @Inject
+    BackupOfferingDao backupOfferingDao;
+
     protected boolean backupSnapshotAfterTakingSnapshot = SnapshotInfo.BackupSnapshotAfterTakingSnapshot.value();
 
     private List<Integer> runningAndAllocatedVmQuotaTypes = Arrays.asList(QuotaTypes.RUNNING_VM, QuotaTypes.ALLOCATED_VM);
@@ -280,6 +285,7 @@ public class PresetVariableHelper {
         loadPresetVariableValueForSnapshot(usageRecord, value);
         loadPresetVariableValueForNetworkOffering(usageRecord, value);
         loadPresetVariableValueForVmSnapshot(usageRecord, value);
+        loadPresetVariableValueForBackup(usageRecord, value);
 
         return value;
     }
@@ -656,6 +662,29 @@ public class PresetVariableHelper {
 
         value.setTags(getPresetVariableValueResourceTags(vmSnapshotId, ResourceObjectType.VMSnapshot));
         value.setVmSnapshotType(vmSnapshotVo.getType());
+    }
+    protected void loadPresetVariableValueForBackup(UsageVO usageRecord, Value value) {
+        int usageType = usageRecord.getUsageType();
+        if (usageType != QuotaTypes.BACKUP) {
+            logNotLoadingMessageInTrace("Backup", usageType);
+            return;
+        }
+
+        value.setSize(usageRecord.getSize());
+        value.setVirtualSize(usageRecord.getVirtualSize());
+        value.setBackupOffering(getPresetVariableValueBackupOffering(usageRecord.getOfferingId()));
+    }
+
+    protected BackupOffering getPresetVariableValueBackupOffering(Long offeringId) {
+        BackupOfferingVO backupOfferingVo = backupOfferingDao.findByIdIncludingRemoved(offeringId);
+        validateIfObjectIsNull(backupOfferingVo, offeringId, "backup offering");
+
+        BackupOffering backupOffering = new BackupOffering();
+        backupOffering.setId(backupOfferingVo.getUuid());
+        backupOffering.setName(backupOfferingVo.getName());
+        backupOffering.setExternalId(backupOfferingVo.getExternalId());
+
+        return backupOffering;
     }
 
     /**

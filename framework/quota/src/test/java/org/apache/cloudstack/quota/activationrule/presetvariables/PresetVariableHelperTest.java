@@ -30,6 +30,8 @@ import java.util.Set;
 import org.apache.cloudstack.acl.RoleType;
 import org.apache.cloudstack.acl.RoleVO;
 import org.apache.cloudstack.acl.dao.RoleDao;
+import org.apache.cloudstack.backup.BackupOfferingVO;
+import org.apache.cloudstack.backup.dao.BackupOfferingDao;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.dao.VmTemplateDao;
 import org.apache.cloudstack.storage.datastore.db.ImageStoreDao;
@@ -159,6 +161,9 @@ public class PresetVariableHelperTest {
     @Mock
     VolumeDao volumeDaoMock;
 
+    @Mock
+    BackupOfferingDao backupOfferingDaoMock;
+
     @InjectMocks
     PresetVariableHelper presetVariableHelperSpy = Mockito.spy(PresetVariableHelper.class);
 
@@ -207,11 +212,13 @@ public class PresetVariableHelperTest {
         value.setProvisioningType(ProvisioningType.THIN);
         value.setStorage(getStorageForTests());
         value.setSize(ByteScaleUtils.GiB * 1l);
+        value.setVirtualSize(ByteScaleUtils.GiB * 54l);
         value.setSnapshotType(Snapshot.Type.HOURLY);
         value.setTag("tag_test");
         value.setVmSnapshotType(VMSnapshot.Type.Disk);
         value.setComputingResources(getComputingResourcesForTests());
         value.setRemoved(true);
+        value.setBackupOffering(getBackupOfferingForTests());
         return value;
     }
 
@@ -221,6 +228,14 @@ public class PresetVariableHelperTest {
         computeOffering.setName("compute_offering_name");
         computeOffering.setCustomized(false);
         return computeOffering;
+    }
+
+    private BackupOffering getBackupOfferingForTests() {
+        BackupOffering backupOffering = new BackupOffering();
+        backupOffering.setId("backup_offering_id");
+        backupOffering.setName("backup_offering_name");
+        backupOffering.setExternalId("backup_offering_external_id");
+        return backupOffering;
     }
 
     private ComputingResources getComputingResourcesForTests() {
@@ -442,6 +457,7 @@ public class PresetVariableHelperTest {
         Mockito.doNothing().when(presetVariableHelperSpy).loadPresetVariableValueForSnapshot(Mockito.any(UsageVO.class), Mockito.any(Value.class));
         Mockito.doNothing().when(presetVariableHelperSpy).loadPresetVariableValueForNetworkOffering(Mockito.any(UsageVO.class), Mockito.any(Value.class));
         Mockito.doNothing().when(presetVariableHelperSpy).loadPresetVariableValueForVmSnapshot(Mockito.any(UsageVO.class), Mockito.any(Value.class));
+        Mockito.doNothing().when(presetVariableHelperSpy).loadPresetVariableValueForBackup(Mockito.any(UsageVO.class), Mockito.any(Value.class));
 
         Value result = presetVariableHelperSpy.getPresetVariableValue(usageVoMock);
 
@@ -1245,5 +1261,60 @@ public class PresetVariableHelperTest {
 
         Assert.assertEquals(expected.toString(), result.toString());
         Mockito.verify(userVmDetailsDaoMock).listDetails(Mockito.anyLong());
+    }
+
+    @Test
+    public void loadPresetVariableValueForBackupTestRecordIsNotABackupDoNothing() {
+        getQuotaTypesForTests(QuotaTypes.BACKUP).forEach(type -> {
+            Mockito.doReturn(type.getKey()).when(usageVoMock).getUsageType();
+            presetVariableHelperSpy.loadPresetVariableValueForBackup(usageVoMock, null);
+        });
+
+        Mockito.verifyNoInteractions(backupOfferingDaoMock);
+    }
+
+    @Test
+    public void loadPresetVariableValueForBackupTestRecordIsBackupSetAllFields() {
+        Value expected = getValueForTests();
+
+        BackupOfferingVO backupOfferingVoMock = Mockito.mock(BackupOfferingVO.class);
+        Mockito.doReturn(backupOfferingVoMock).when(backupOfferingDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
+
+        mockMethodValidateIfObjectIsNull();
+
+        Mockito.doReturn(expected.getSize()).when(usageVoMock).getSize();
+        Mockito.doReturn(expected.getVirtualSize()).when(usageVoMock).getVirtualSize();
+        Mockito.doReturn(expected.getBackupOffering()).when(presetVariableHelperSpy).getPresetVariableValueBackupOffering(Mockito.anyLong());
+
+        Mockito.doReturn(QuotaTypes.BACKUP).when(usageVoMock).getUsageType();
+
+        Value result = new Value();
+        presetVariableHelperSpy.loadPresetVariableValueForBackup(usageVoMock, result);
+
+        Assert.assertEquals(expected.getSize(), result.getSize());
+        Assert.assertEquals(expected.getVirtualSize(), result.getVirtualSize());
+        Assert.assertEquals(expected.getBackupOffering(), result.getBackupOffering());
+
+        validateFieldNamesToIncludeInToString(Arrays.asList("size", "virtualSize", "backupOffering"), result);
+
+        Mockito.verify(presetVariableHelperSpy).getPresetVariableValueBackupOffering(Mockito.anyLong());
+    }
+
+    @Test
+    public void getPresetVariableValueBackupOfferingTestSetValuesAndReturnObject() {
+        BackupOfferingVO backupOfferingVoMock = Mockito.mock(BackupOfferingVO.class);
+        Mockito.doReturn(backupOfferingVoMock).when(backupOfferingDaoMock).findByIdIncludingRemoved(Mockito.anyLong());
+        mockMethodValidateIfObjectIsNull();
+
+        BackupOffering expected = getBackupOfferingForTests();
+        Mockito.doReturn(expected.getId()).when(backupOfferingVoMock).getUuid();
+        Mockito.doReturn(expected.getName()).when(backupOfferingVoMock).getName();
+        Mockito.doReturn(expected.getExternalId()).when(backupOfferingVoMock).getExternalId();
+
+        BackupOffering result = presetVariableHelperSpy.getPresetVariableValueBackupOffering(1l);
+
+        assertPresetVariableIdAndName(expected, result);
+        Assert.assertEquals(expected.getExternalId(), result.getExternalId());
+        validateFieldNamesToIncludeInToString(Arrays.asList("id", "name", "externalId"), result);
     }
 }
