@@ -318,6 +318,7 @@ import com.vmware.vim25.PerfMetricIntSeries;
 import com.vmware.vim25.PerfMetricSeries;
 import com.vmware.vim25.PerfQuerySpec;
 import com.vmware.vim25.RuntimeFaultFaultMsg;
+import com.vmware.vim25.StorageIOAllocationInfo;
 import com.vmware.vim25.StoragePodSummary;
 import com.vmware.vim25.ToolsUnavailableFaultMsg;
 import com.vmware.vim25.VAppOvfSectionInfo;
@@ -877,6 +878,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             boolean volumePathChangeObserved = false;
             boolean datastoreChangeObserved = false;
 
+            StorageIOAllocationInfo limitIops = vdisk.first().getStorageIOAllocation();
             Pair<String, String> pathAndChainInfo = getNewPathAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
             Pair<String, String> poolUUIDandChainInfo = getNewPoolUUIDAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
 
@@ -901,6 +903,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             }
 
             disk.setCapacityInKB(newSize);
+            disk.setStorageIOAllocation(limitIops);
 
             VirtualDeviceConfigSpec deviceConfigSpec = new VirtualDeviceConfigSpec();
 
@@ -2271,8 +2274,10 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                         scsiUnitNumber++;
                     }
 
-                    VirtualDevice device = VmwareHelper.prepareDiskDevice(vmMo, null, controllerKey, diskChain, volumeDsDetails.first(), deviceNumber, i + 1);
-                    s_logger.debug(LogUtils.logGsonWithoutException("VirtualDevice definition: [%s].", device));
+                    Long maxIops = volumeTO.getIopsWriteRate() + volumeTO.getIopsReadRate();
+                    VirtualDevice device = VmwareHelper.prepareDiskDevice(vmMo, null, controllerKey, diskChain, volumeDsDetails.first(), deviceNumber, i + 1, maxIops);
+                    s_logger.debug(LogUtils.logGsonWithoutException("The following definitions will be used to start the VM: virtual device [%s], volume [%s].", device, volumeTO));
+
                     diskStoragePolicyId = volumeTO.getvSphereStoragePolicyId();
                     if (!StringUtils.isEmpty(diskStoragePolicyId)) {
                         PbmProfileManagerMO profMgrMo = new PbmProfileManagerMO(context);
