@@ -155,3 +155,7 @@ CREATE VIEW `cloud_usage`.`quota_summary_view` AS
     FROM    cloud_usage.quota_account quota_account
     INNER   JOIN cloud.account account ON (account.id = quota_account.account_id)
     INNER   JOIN cloud.domain domain on (domain.id = account.domain_id);
+
+UPDATE  configuration
+SET     description = "Order in which hosts within a cluster will be considered for VM/volume allocation. The value can be 'random', 'firstfit', 'userdispersing', 'userconcentratedpod_random', 'userconcentratedpod_firstfit', or 'firstfitleastconsumed'."
+WHERE   name = 'vm.allocation.algorithm';
