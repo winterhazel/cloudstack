@@ -398,6 +398,13 @@ public class AgentProperties {
     public static final Property<Boolean> VM_MEMBALLOON_DISABLE = new Property<Boolean>("vm.memballoon.disable", false);
 
     /**
+     * The time interval (in seconds) at which the balloon driver will get memory stats updates. This is equivalent to Libvirt's <code>--period</code> parameter when using the dommemstat command.
+     * Data type: Integer.<br>
+     * Default value: <code>60</code>
+     */
+    public static final Property<Integer> VM_MEMBALLOON_STATS_PERIOD = new Property<Integer>("vm.memballoon.stats.period", 60);
+
+    /**
      * Set to true to check disk activity on VM's disks before starting a VM.<br>
      * This only applies to QCOW2 files, and ensures that there is no other running instance accessing the file before starting.<br>
      * It works by checking the modified time against the current time, so care must be taken to ensure that the cluster's time is synchronized, otherwise VMs may fail to start.<br>
