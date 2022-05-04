@@ -1609,6 +1609,7 @@
 "label.templatename": "Template",
 "label.templates": "Templates",
 "label.templatesubject": "Subject",
+"label.templatetype": "Template Type",
 "label.emailtemplate": "Email template",
 "label.tftpdir": "TFTP root directory",
 "label.theme.alert": "The settings panel is only visible in the development environment, please save so the changes take effect.",
