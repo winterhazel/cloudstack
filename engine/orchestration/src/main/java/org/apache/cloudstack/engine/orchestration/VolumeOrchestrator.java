@@ -80,8 +80,6 @@ import org.apache.cloudstack.storage.datastore.db.SnapshotDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreVO;
-import org.apache.cloudstack.storage.to.SnapshotObjectTO;
-import org.apache.cloudstack.storage.to.VolumeObjectTO;
 import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.collections.CollectionUtils;
@@ -263,13 +261,13 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     }
 
     @Override
-    public VolumeInfo moveVolume(VolumeInfo volume, long destPoolDcId, Long destPoolPodId, Long destPoolClusterId, HypervisorType dataDiskHyperType)
+    public VolumeInfo moveVolume(VolumeInfo volumeInfo, long destPoolDcId, Long destPoolPodId, Long destPoolClusterId, HypervisorType dataDiskHyperType)
             throws ConcurrentOperationException, StorageUnavailableException {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(volume), "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volumeInfo.getVolume());
 
         // Find a destination storage pool with the specified criteria
-        DiskOffering diskOffering = _entityMgr.findById(DiskOffering.class, volume.getDiskOfferingId());
-        DiskProfile dskCh = new DiskProfile(volume.getId(), volume.getVolumeType(), volume.getName(), diskOffering.getId(), diskOffering.getDiskSize(), diskOffering.getTagsArray(),
+        DiskOffering diskOffering = _entityMgr.findById(DiskOffering.class, volumeInfo.getDiskOfferingId());
+        DiskProfile dskCh = new DiskProfile(volumeInfo.getId(), volumeInfo.getVolumeType(), volumeInfo.getName(), diskOffering.getId(), diskOffering.getDiskSize(), diskOffering.getTagsArray(),
                 diskOffering.isUseLocalStorage(), diskOffering.isRecreatable(), null);
         dskCh.setHyperType(dataDiskHyperType);
         storageMgr.setDiskProfileThrottling(dskCh, null, diskOffering);
@@ -283,7 +281,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             throw new CloudRuntimeException(String.format("Failed to find a storage pool with enough capacity to move the volume [%s] to.", volumeToString));
         }
 
-        Volume newVol = migrateVolume(volume, destPool);
+        Volume newVol = migrateVolume(volumeInfo, destPool);
         return volFactory.getVolume(newVol.getId());
     }
 
@@ -324,13 +322,12 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         Optional<StoragePool> storagePool = getMatchingStoragePool(accountStoragePoolUuid, poolList);
 
         if (storagePool.isPresent()) {
-            String storagePoolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(storagePool.get(), "uuid", "name");
+            String storagePoolToString = getReflectOnlySelectedFields(storagePool.get());
             s_logger.debug(String.format("The storage pool [%s] was specified for this account [%s] and will be used for allocation.", storagePoolToString, vm.getAccountId()));
         } else {
             String globalStoragePoolUuid = StorageManager.PreferredStoragePool.value();
             storagePool = getMatchingStoragePool(globalStoragePoolUuid, poolList);
-            String storagePoolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(storagePool.get(), "uuid", "name");
-            storagePool.ifPresent(pool -> s_logger.debug(String.format("The storage pool [%s] was specified in the Global Settings and will be used for allocation.", storagePoolToString)));
+            storagePool.ifPresent(pool -> s_logger.debug(String.format("The storage pool [%s] was specified in the Global Settings and will be used for allocation.", getReflectOnlySelectedFields(pool))));
         }
         return storagePool;
     }
@@ -409,8 +406,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @DB
     @Override
     public VolumeInfo createVolumeFromSnapshot(Volume volume, Snapshot snapshot, UserVm vm) throws StorageUnavailableException {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volume);
+        String vmToString = getReflectOnlySelectedFields(vm);
 
         Account account = _entityMgr.findById(Account.class, volume.getAccountId());
 
@@ -478,7 +475,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 }
 
                 if (pool != null) {
-                    String poolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(pool, "uuid", "name");
+                    String poolToString = getReflectOnlySelectedFields(pool);
 
                     if (s_logger.isDebugEnabled()) {
                         s_logger.debug(String.format("Found a suitable pool [%s] to create the volume [%s] in.", poolToString, volumeToString));
@@ -523,7 +520,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
         // create volume on primary from snapshot
         AsyncCallFuture<VolumeApiResult> future = volService.createVolumeFromSnapshot(vol, store, snapInfo);
-        String snapshotToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new SnapshotObjectTO(snapInfo), "uuid", "name");
+        String snapshotToString = getReflectOnlySelectedFields(snapInfo.getSnapshotVO());
 
         try {
             VolumeApiResult result = future.get();
@@ -543,33 +540,33 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     }
 
-    protected DiskProfile createDiskCharacteristics(VolumeInfo volume, VirtualMachineTemplate template, DataCenter dc, DiskOffering diskOffering) {
-        String templateToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(template, "uuid", "name");
-        String zoneToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(dc, "uuid", "name");
+    protected DiskProfile createDiskCharacteristics(VolumeInfo volumeInfo, VirtualMachineTemplate template, DataCenter dc, DiskOffering diskOffering) {
+        String templateToString = getReflectOnlySelectedFields(template);
+        String zoneToString = getReflectOnlySelectedFields(dc);
 
-        if (volume.getVolumeType() == Type.ROOT && Storage.ImageFormat.ISO != template.getFormat()) {
+        if (volumeInfo.getVolumeType() == Type.ROOT && Storage.ImageFormat.ISO != template.getFormat()) {
             TemplateDataStoreVO ss = _vmTemplateStoreDao.findByTemplateZoneDownloadStatus(template.getId(), dc.getId(), VMTemplateStorageResourceAssoc.Status.DOWNLOADED);
             if (ss == null) {
                 throw new CloudRuntimeException(String.format("Template [%s] has not been completely downloaded to the zone [%s].",
                         templateToString, zoneToString));
             }
 
-            return new DiskProfile(volume.getId(), volume.getVolumeType(), volume.getName(), diskOffering.getId(), ss.getSize(), diskOffering.getTagsArray(), diskOffering.isUseLocalStorage(),
+            return new DiskProfile(volumeInfo.getId(), volumeInfo.getVolumeType(), volumeInfo.getName(), diskOffering.getId(), ss.getSize(), diskOffering.getTagsArray(), diskOffering.isUseLocalStorage(),
                     diskOffering.isRecreatable(), Storage.ImageFormat.ISO != template.getFormat() ? template.getId() : null);
         } else {
-            return new DiskProfile(volume.getId(), volume.getVolumeType(), volume.getName(), diskOffering.getId(), diskOffering.getDiskSize(), diskOffering.getTagsArray(),
+            return new DiskProfile(volumeInfo.getId(), volumeInfo.getVolumeType(), volumeInfo.getName(), diskOffering.getId(), diskOffering.getDiskSize(), diskOffering.getTagsArray(),
                     diskOffering.isUseLocalStorage(), diskOffering.isRecreatable(), null);
         }
     }
 
     @DB
-    public VolumeInfo copyVolumeFromSecToPrimary(VolumeInfo volume, VirtualMachine vm, VirtualMachineTemplate template, DataCenter dc, Pod pod, Long clusterId, ServiceOffering offering,
+    public VolumeInfo copyVolumeFromSecToPrimary(VolumeInfo volumeInfo, VirtualMachine vm, VirtualMachineTemplate template, DataCenter dc, Pod pod, Long clusterId, ServiceOffering offering,
                                                  DiskOffering diskOffering, List<StoragePool> avoids, long size, HypervisorType hyperType) throws NoTransitionException {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm, "uuid", "name");
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(volume), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm);
+        String volumeToString = getReflectOnlySelectedFields(volumeInfo.getVolume());
 
         final HashSet<StoragePool> avoidPools = new HashSet<StoragePool>(avoids);
-        DiskProfile dskCh = createDiskCharacteristics(volume, template, dc, diskOffering);
+        DiskProfile dskCh = createDiskCharacteristics(volumeInfo, template, dc, diskOffering);
         dskCh.setHyperType(vm.getHypervisorType());
         storageMgr.setDiskProfileThrottling(dskCh, null, diskOffering);
 
@@ -579,7 +576,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             throw new CloudRuntimeException(String.format("Failed to find a suitable storage pool in the pod/cluster of the provided VM [%s] to create the volume in.", vmToString));
         }
         DataStore destStore = dataStoreMgr.getDataStore(destPool.getId(), DataStoreRole.Primary);
-        AsyncCallFuture<VolumeApiResult> future = volService.copyVolume(volume, destStore);
+        AsyncCallFuture<VolumeApiResult> future = volService.copyVolume(volumeInfo, destStore);
 
         try {
             VolumeApiResult result = future.get();
@@ -597,22 +594,22 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     }
 
     @DB
-    public VolumeInfo createVolume(VolumeInfo volume, VirtualMachine vm, VirtualMachineTemplate template, DataCenter dc, Pod pod, Long clusterId, ServiceOffering offering, DiskOffering diskOffering,
+    public VolumeInfo createVolume(VolumeInfo volumeInfo, VirtualMachine vm, VirtualMachineTemplate template, DataCenter dc, Pod pod, Long clusterId, ServiceOffering offering, DiskOffering diskOffering,
                                    List<StoragePool> avoids, long size, HypervisorType hyperType) {
         // update the volume's hv_ss_reserve (hypervisor snapshot reserve) from a disk offering (used for managed storage)
-        volume = volService.updateHypervisorSnapshotReserveForVolume(diskOffering, volume.getId(), hyperType);
+        volumeInfo = volService.updateHypervisorSnapshotReserveForVolume(diskOffering, volumeInfo.getId(), hyperType);
 
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(volume), "uuid", "name");
-        String templateToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(template, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volumeInfo.getVolume());
+        String templateToString = getReflectOnlySelectedFields(template);
 
         StoragePool pool = null;
 
         DiskProfile dskCh = null;
-        if (volume.getVolumeType() == Type.ROOT && Storage.ImageFormat.ISO != template.getFormat()) {
-            dskCh = createDiskCharacteristics(volume, template, dc, offering);
+        if (volumeInfo.getVolumeType() == Type.ROOT && Storage.ImageFormat.ISO != template.getFormat()) {
+            dskCh = createDiskCharacteristics(volumeInfo, template, dc, offering);
             storageMgr.setDiskProfileThrottling(dskCh, offering, diskOffering);
         } else {
-            dskCh = createDiskCharacteristics(volume, template, dc, diskOffering);
+            dskCh = createDiskCharacteristics(volumeInfo, template, dc, diskOffering);
             storageMgr.setDiskProfileThrottling(dskCh, null, diskOffering);
         }
 
@@ -631,7 +628,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             throw new CloudRuntimeException(msg);
         }
 
-        String poolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(pool, "uuid", "name");
+        String poolToString = getReflectOnlySelectedFields(pool);
         if (s_logger.isDebugEnabled()) {
             s_logger.debug(String.format("Trying to create volume [%s] on storage pool [%s].",
                     volumeToString, poolToString));
@@ -640,12 +637,12 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         for (int i = 0; i < 2; i++) {
             // retry one more time in case of template reload is required for Vmware case
             AsyncCallFuture<VolumeApiResult> future = null;
-            boolean isNotCreatedFromTemplate = volume.getTemplateId() == null ? true : false;
+            boolean isNotCreatedFromTemplate = volumeInfo.getTemplateId() == null ? true : false;
             if (isNotCreatedFromTemplate) {
-                future = volService.createVolumeAsync(volume, store);
+                future = volService.createVolumeAsync(volumeInfo, store);
             } else {
                 TemplateInfo templ = tmplFactory.getTemplate(template.getId(), DataStoreRole.Image);
-                future = volService.createVolumeFromTemplateAsync(volume, store.getId(), templ);
+                future = volService.createVolumeFromTemplateAsync(volumeInfo, store.getId(), templ);
             }
             try {
                 VolumeApiResult result = future.get();
@@ -668,6 +665,10 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             }
         }
         throw new CloudRuntimeException(String.format("Failed to create volume [%s] even after retrying to deploy the template.", volumeToString));
+    }
+
+    private String getReflectOnlySelectedFields(Object obj) {
+        return ReflectionToStringBuilderUtils.reflectOnlySelectedFields(obj, "uuid", "name");
     }
 
     public String getRandomVolumeName() {
@@ -887,8 +888,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Override
     public List<DiskProfile> allocateTemplatedVolumes(Type type, String name, DiskOffering offering, Long rootDisksize, Long minIops, Long maxIops, VirtualMachineTemplate template, VirtualMachine vm,
                                                       Account owner) {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm, "uuid", "name");
-        String templateToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(template, "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm);
+        String templateToString = getReflectOnlySelectedFields(template);
 
         int volumesNumber = 1;
         List<DatadiskTO> templateAsIsDisks = null;
@@ -988,43 +989,43 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         }
     }
 
-    private VolumeInfo copyVolume(StoragePool rootDiskPool, VolumeInfo volume, VirtualMachine vm, VirtualMachineTemplate rootDiskTmplt, DataCenter dcVO, Pod pod, DiskOffering diskVO,
+    private VolumeInfo copyVolume(StoragePool rootDiskPool, VolumeInfo volumeInfo, VirtualMachine vm, VirtualMachineTemplate rootDiskTmplt, DataCenter dcVO, Pod pod, DiskOffering diskVO,
                                   ServiceOffering svo, HypervisorType rootDiskHyperType) throws NoTransitionException {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm, "uuid", "name");
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(volume), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm);
+        String volumeToString = getReflectOnlySelectedFields(volumeInfo.getVolume());
 
-        if (!isSupportedImageFormatForCluster(volume, rootDiskHyperType)) {
+        if (!isSupportedImageFormatForCluster(volumeInfo, rootDiskHyperType)) {
             throw new InvalidParameterValueException(String.format("Failed to attach the volume [%s] to the VM [%s]: volume's format [%s] is not compatible with the VM hypervisor type [%s].",
-                    volumeToString, vmToString, volume.getFormat().getFileExtension(), rootDiskHyperType.toString()));
+                    volumeToString, vmToString, volumeInfo.getFormat().getFileExtension(), rootDiskHyperType.toString()));
         }
 
-        VolumeInfo volumeOnPrimary = copyVolumeFromSecToPrimary(volume, vm, rootDiskTmplt, dcVO, pod, rootDiskPool.getClusterId(), svo, diskVO, new ArrayList<StoragePool>(), volume.getSize(),
+        VolumeInfo volumeOnPrimary = copyVolumeFromSecToPrimary(volumeInfo, vm, rootDiskTmplt, dcVO, pod, rootDiskPool.getClusterId(), svo, diskVO, new ArrayList<StoragePool>(), volumeInfo.getSize(),
                 rootDiskHyperType);
 
         return volumeOnPrimary;
     }
 
     @Override
-    public VolumeInfo createVolumeOnPrimaryStorage(VirtualMachine vm, VolumeInfo volume, HypervisorType rootDiskHyperType, StoragePool storagePool) throws NoTransitionException {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(volume), "uuid", "name");
+    public VolumeInfo createVolumeOnPrimaryStorage(VirtualMachine vm, VolumeInfo volumeInfo, HypervisorType rootDiskHyperType, StoragePool storagePool) throws NoTransitionException {
+        String volumeToString = getReflectOnlySelectedFields(volumeInfo.getVolume());
 
         VirtualMachineTemplate rootDiskTmplt = _entityMgr.findById(VirtualMachineTemplate.class, vm.getTemplateId());
         DataCenter dcVO = _entityMgr.findById(DataCenter.class, vm.getDataCenterId());
         Pod pod = _entityMgr.findById(Pod.class, storagePool.getPodId());
 
         ServiceOffering svo = _entityMgr.findById(ServiceOffering.class, vm.getServiceOfferingId());
-        DiskOffering diskVO = _entityMgr.findById(DiskOffering.class, volume.getDiskOfferingId());
+        DiskOffering diskVO = _entityMgr.findById(DiskOffering.class, volumeInfo.getDiskOfferingId());
         Long clusterId = storagePool.getClusterId();
 
         VolumeInfo vol = null;
-        if (volume.getState() == Volume.State.Allocated) {
-            vol = createVolume(volume, vm, rootDiskTmplt, dcVO, pod, clusterId, svo, diskVO, new ArrayList<StoragePool>(), volume.getSize(), rootDiskHyperType);
-        } else if (volume.getState() == Volume.State.Uploaded) {
-            vol = copyVolume(storagePool, volume, vm, rootDiskTmplt, dcVO, pod, diskVO, svo, rootDiskHyperType);
+        if (volumeInfo.getState() == Volume.State.Allocated) {
+            vol = createVolume(volumeInfo, vm, rootDiskTmplt, dcVO, pod, clusterId, svo, diskVO, new ArrayList<StoragePool>(), volumeInfo.getSize(), rootDiskHyperType);
+        } else if (volumeInfo.getState() == Volume.State.Uploaded) {
+            vol = copyVolume(storagePool, volumeInfo, vm, rootDiskTmplt, dcVO, pod, diskVO, svo, rootDiskHyperType);
             if (vol != null) {
                 // Moving of Volume is successful, decrement the volume resource count from secondary for an account and increment it into primary storage under same account.
-                _resourceLimitMgr.decrementResourceCount(volume.getAccountId(), ResourceType.secondary_storage, volume.getSize());
-                _resourceLimitMgr.incrementResourceCount(volume.getAccountId(), ResourceType.primary_storage, volume.getSize());
+                _resourceLimitMgr.decrementResourceCount(volumeInfo.getAccountId(), ResourceType.secondary_storage, volumeInfo.getSize());
+                _resourceLimitMgr.incrementResourceCount(volumeInfo.getAccountId(), ResourceType.primary_storage, volumeInfo.getSize());
             }
         }
 
@@ -1041,7 +1042,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @DB
     protected VolumeVO switchVolume(final VolumeVO existingVolume, final VirtualMachineProfile vm) throws StorageUnavailableException {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(existingVolume, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(existingVolume);
 
         Long templateIdToUse = null;
         Long volTemplateId = existingVolume.getTemplateId();
@@ -1089,8 +1090,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @Override
     public void release(long vmId, long hostId) {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(_userVmDao.findById(vmId), "uuid", "name");
-        String hostToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(_hostDao.findById(hostId), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(_userVmDao.findById(vmId));
+        String hostToString = getReflectOnlySelectedFields(_hostDao.findById(hostId));
 
         List<VolumeVO> volumesForVm = _volsDao.findUsableVolumesForInstance(vmId);
         if (volumesForVm == null || volumesForVm.isEmpty()) {
@@ -1121,7 +1122,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Override
     @DB
     public void cleanupVolumes(long vmId) throws ConcurrentOperationException {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(_userVmDao.findById(vmId), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(_userVmDao.findById(vmId));
 
         if (s_logger.isDebugEnabled()) {
             s_logger.debug(String.format("Cleaning storage for VM [%s].", vmToString));
@@ -1133,7 +1134,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             @Override
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 for (VolumeVO vol : volumesForVm) {
-                    String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+                    String volumeToString = getReflectOnlySelectedFields(vol);
 
                     if (vol.getVolumeType().equals(Type.ROOT)) {
                         // Destroy volume if not already destroyed
@@ -1160,7 +1161,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
         AsyncCallFuture<VolumeApiResult> future = null;
         for (VolumeVO expunge : toBeExpunged) {
-            String expungeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(expunge, "uuid", "name");
+            String expungeToString = getReflectOnlySelectedFields(expunge);
             future = volService.expungeVolumeAsync(volFactory.getVolume(expunge.getId()));
             try {
                 future.get();
@@ -1214,7 +1215,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Override
     @DB
     public Volume migrateVolume(Volume volume, StoragePool destPool) throws StorageUnavailableException {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volume);
 
         VolumeInfo vol = volFactory.getVolume(volume.getId());
         if (vol == null){
@@ -1231,7 +1232,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         try {
             VolumeApiResult result = future.get();
             if (result.isFailed()) {
-                String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(vol), "uuid", "name");
+                String volToString = getReflectOnlySelectedFields(vol.getVolume());
 
                 String msg = String.format("Volume [%s] migration failed due to [%s].", volToString, result.getResult());
                 s_logger.error(msg);
@@ -1261,7 +1262,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         DataStore dataStoreTarget = dataStoreMgr.getDataStore(destPool.getId(), DataStoreRole.Primary);
         AsyncCallFuture<VolumeApiResult> future = volService.migrateVolume(vol, dataStoreTarget);
 
-        String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(new VolumeObjectTO(vol), "uuid", "name");
+        String volToString = getReflectOnlySelectedFields(vol.getVolume());
 
         try {
             VolumeApiResult result = future.get();
@@ -1281,15 +1282,15 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         // Check if all the vms being migrated belong to the vm.
         // Check if the storage pool is of the right type.
         // Create a VolumeInfo to DataStore map too.
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm, "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm);
 
         Map<VolumeInfo, DataStore> volumeMap = new HashMap<VolumeInfo, DataStore>();
         for (Map.Entry<Volume, StoragePool> entry : volumeToPool.entrySet()) {
             Volume volume = entry.getKey();
             StoragePool storagePool = entry.getValue();
             StoragePool destPool = (StoragePool)dataStoreMgr.getDataStore(storagePool.getId(), DataStoreRole.Primary);
-            String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
-            String storagePoolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(storagePool, "uuid", "name");
+            String volumeToString = getReflectOnlySelectedFields(volume);
+            String storagePoolToString = getReflectOnlySelectedFields(storagePool);
 
             if (volume.getInstanceId() != vm.getId()) {
                 throw new CloudRuntimeException(String.format("Volume [%s] has to be migrated, but it doesn't belong to the instance [%s].", volumeToString, vmToString));
@@ -1321,8 +1322,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         for (Map.Entry<Volume, StoragePool> entry : volumeToPool.entrySet()) {
             Volume volume = entry.getKey();
             StoragePool pool = entry.getValue();
-            String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
-            String poolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(pool, "uuid", "name");
+            String volumeToString = getReflectOnlySelectedFields(volume);
+            String poolToString = getReflectOnlySelectedFields(pool);
             if (volume.getState() != Volume.State.Ready) {
                 String msg = String.format("Volume [%s] is in [%s] state.", volumeToString, volume.getState());
                 s_logger.error(msg);
@@ -1354,7 +1355,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @Override
     public void prepareForMigration(VirtualMachineProfile vm, DeployDestination dest) {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm.getVirtualMachine(), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm.getVirtualMachine());
 
         List<VolumeVO> vols = _volsDao.findUsableVolumesForInstance(vm.getId());
         if (s_logger.isDebugEnabled()) {
@@ -1442,7 +1443,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         boolean recreate = RecreatableSystemVmEnabled.value();
         List<VolumeTask> tasks = new ArrayList<VolumeTask>();
         for (VolumeVO vol : vols) {
-            String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+            String volToString = getReflectOnlySelectedFields(vol);
 
             StoragePoolVO assignedPool = null;
             if (destVols != null) {
@@ -1455,7 +1456,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 assignedPool = _storagePoolDao.findById(vol.getPoolId());
             }
             if (assignedPool != null) {
-                String assignedPoolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(assignedPool, "uuid", "name");
+                String assignedPoolToString = getReflectOnlySelectedFields(assignedPool);
 
                 Volume.State state = vol.getState();
                 if (state == Volume.State.Allocated || state == Volume.State.Creating) {
@@ -1529,7 +1530,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     }
 
     private Pair<VolumeVO, DataStore> recreateVolume(VolumeVO vol, VirtualMachineProfile vm, DeployDestination dest) throws StorageUnavailableException, StorageAccessException {
-        String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+        String volToString = getReflectOnlySelectedFields(vol);
 
         VolumeVO newVol;
         boolean recreate = RecreatableSystemVmEnabled.value();
@@ -1545,7 +1546,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             newVol = vol;
         } else {
             newVol = switchVolume(vol, vm);
-            String newVolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(newVol, "uuid", "name");
+            String newVolToString = getReflectOnlySelectedFields(newVol);
 
             // update the volume->PrimaryDataStoreVO map since volumeId has
             // changed
@@ -1616,7 +1617,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 }
             }
             VolumeApiResult result;
-            String newVolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(newVol, "uuid", "name");
+            String newVolToString = getReflectOnlySelectedFields(newVol);
 
             try {
                 result = future.get();
@@ -1636,7 +1637,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 if (storagePool.isManaged()) {
                     long hostId = vm.getVirtualMachine().getHostId();
                     Host host = _hostDao.findById(hostId);
-                    String hostToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(host, "uuid", "name");
+                    String hostToString = getReflectOnlySelectedFields(host);
 
                     try {
                         volService.grantAccess(volFactory.getVolume(newVol.getId()), host, destPool);
@@ -1661,7 +1662,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @Override
     public void prepare(VirtualMachineProfile vm, DeployDestination dest) throws StorageUnavailableException, InsufficientStorageCapacityException, ConcurrentOperationException, StorageAccessException {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vm.getVirtualMachine(), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(vm.getVirtualMachine());
 
         if (dest == null) {
             String msg = String.format("Unable to prepare volumes for the VM [%s] because DeployDestination is null.", vmToString);
@@ -1685,7 +1686,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             if (task.type == VolumeTaskType.NOP) {
                 vol = task.volume;
 
-                String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+                String volToString = getReflectOnlySelectedFields(vol);
 
                 pool = (StoragePool)dataStoreMgr.getDataStore(task.pool.getId(), DataStoreRole.Primary);
 
@@ -1695,7 +1696,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                     Host lastHost = _hostDao.findById(vm.getVirtualMachine().getLastHostId());
                     Host host = _hostDao.findById(vm.getVirtualMachine().getHostId());
 
-                    String hostToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(host, "uuid", "name");
+                    String hostToString = getReflectOnlySelectedFields(host);
 
                     long lastClusterId = lastHost == null || lastHost.getClusterId() == null ? -1 : lastHost.getClusterId();
                     long clusterId = host == null || host.getClusterId() == null ? -1 : host.getClusterId();
@@ -1817,8 +1818,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             return;
         }
 
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(_userVmDao.findById(vmId), "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volume);
+        String vmToString = getReflectOnlySelectedFields(_userVmDao.findById(vmId));
 
         if (volume.getState().equals(Volume.State.Creating)) {
             s_logger.debug(String.format("Removing volume [%s], as it was leftover from the last management server stop.", volumeToString));
@@ -1840,13 +1841,13 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
         VolumeVO volume = _volsDao.findById(volumeId);
 
-        String destPoolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(destPool, "uuid", "name");
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
+        String destPoolToString = getReflectOnlySelectedFields(destPool);
+        String volumeToString = getReflectOnlySelectedFields(volume);
 
         if (volume.getState() == Volume.State.Migrating) {
             VolumeVO duplicateVol = _volsDao.findByPoolIdName(destPoolId, volume.getName());
             if (duplicateVol != null) {
-                String duplicateVolToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(duplicateVol, "uuid", "name");
+                String duplicateVolToString = getReflectOnlySelectedFields(duplicateVol);
 
                 s_logger.debug(String.format("Removing volume [%s] from storage pool [%s] because it's duplicated.", duplicateVolToString, destPoolToString));
                 _volsDao.remove(duplicateVol.getId());
@@ -1863,7 +1864,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         _snapshotSrv.cleanupVolumeDuringSnapshotFailure(volumeId, snapshotId);
         VolumeVO volume = _volsDao.findById(volumeId);
 
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volume);
 
         if (volume.getState() == Volume.State.Snapshotting) {
             s_logger.debug(String.format("Changing volume [%s] state back to Ready.", volumeToString));
@@ -1907,7 +1908,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @Override
     public void destroyVolume(Volume volume) {
-        String volumeToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(volume, "uuid", "name");
+        String volumeToString = getReflectOnlySelectedFields(volume);
 
         try {
             // Mark volume as removed if volume has not been created on primary
@@ -1947,7 +1948,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         VolumeVO vol = _volsDao.findById(volumeId);
         boolean needUpdate = false;
 
-        String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+        String volToString = getReflectOnlySelectedFields(vol);
 
         // Volume path is not getting updated in the DB, need to find reason and fix the issue.
         if (vol.getPath() == null) {
@@ -2034,7 +2035,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
     @Override
     public void unmanageVolumes(long vmId) {
-        String vmToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(_userVmDao.findById(vmId), "uuid", "name");
+        String vmToString = getReflectOnlySelectedFields(_userVmDao.findById(vmId));
 
         if (s_logger.isDebugEnabled()) {
             s_logger.debug(String.format("Unmanaging storage for VM [%s].", vmToString));
@@ -2045,7 +2046,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             @Override
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 for (VolumeVO vol : volumesForVm) {
-                    String volToString = ReflectionToStringBuilderUtils.reflectOnlySelectedFields(vol, "uuid", "name");
+                    String volToString = getReflectOnlySelectedFields(vol);
 
                     boolean volumeAlreadyDestroyed = (vol.getState() == Volume.State.Destroy || vol.getState() == Volume.State.Expunged
                             || vol.getState() == Volume.State.Expunging);
