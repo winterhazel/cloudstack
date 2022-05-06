@@ -37,7 +37,6 @@ public class SnapshotObjectTO implements DataTO {
     private DataStoreTO dataStore;
     private String vmName;
     private String name;
-    private String uuid;
     private HypervisorType hypervisorType;
     private long id;
     private boolean quiescevm;
@@ -72,7 +71,6 @@ public class SnapshotObjectTO implements DataTO {
 
         this.dataStore = snapshot.getDataStore().getTO();
         this.setName(snapshot.getName());
-        this.setUuid(snapshot.getUuid());
         this.hypervisorType = snapshot.getHypervisorType();
         this.quiescevm = false;
     }
@@ -147,14 +145,6 @@ public class SnapshotObjectTO implements DataTO {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     @Override
