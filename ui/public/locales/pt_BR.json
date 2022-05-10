@@ -299,6 +299,7 @@
 "label.backup.offerings": "Ofertas de backup",
 "label.backup.restore": "Restaurar backup da VM",
 "label.backupofferingid": "Oferta de backup",
+"label.backupofferingname": "Oferta de backup",
 "label.balance": "Saldo",
 "label.bandwidth": "Largura de banda",
 "label.baremetal.dhcp.devices": "Dispositivos DHCP baremetal",
