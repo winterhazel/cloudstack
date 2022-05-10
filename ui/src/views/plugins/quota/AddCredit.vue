@@ -119,6 +119,8 @@ export default {
           return
         }
 
+        values.domainid = this.domainId
+
         this.loading = true
         api('quotaCredits', values).then(response => {
           this.$message.success(this.$t('message.action.quota.credit.add.success', { credit: values.value, account: values.account }))
