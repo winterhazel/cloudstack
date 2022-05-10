@@ -416,7 +416,7 @@ export default {
         netUploadLineInGiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.networkkbswrite, 2) })
 
         diskReadLineInKiB.data.push({ timestamp: currentLabel, stat: element.diskkbsread })
-        diskReadLineInKiB.data.push({ timestamp: currentLabel, stat: element.diskkbswrite })
+        diskWriteLineInKiB.data.push({ timestamp: currentLabel, stat: element.diskkbswrite })
         diskReadLineInMiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbsread, 1) })
         diskWriteLineInMiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbswrite, 1) })
         diskReadLineInGiB.data.push({ timestamp: currentLabel, stat: this.convertByteBasedUnitOfMeasure(element.diskkbsread, 2) })
