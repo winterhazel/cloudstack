@@ -72,6 +72,7 @@ import org.apache.log4j.Logger;
 
 import com.cloud.utils.LogUtils;
 import com.cloud.utils.Pair;
+import com.cloud.utils.UuidUtils;
 import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.nio.TrustAllManager;
 import com.cloud.utils.ssh.SshHelper;
@@ -745,14 +746,20 @@ public class VeeamClient {
         return restorePoints;
     }
 
-    public Pair<Boolean, String> restoreVMToDifferentLocation(String restorePointId, String host, String dataStoreUuid) {
+    public Pair<Boolean, String> restoreVMToDifferentLocation(String restorePointId, String host, String datastore) {
         final String restoreLocation = RESTORE_VM_SUFFIX + UUID.randomUUID().toString();
-        final String datastoreId = dataStoreUuid.replace("-","");
+        if (UuidUtils.validateUUID(datastore)) {
+            LOG.trace(String.format("Removing the dash symbol of datastore name [%s] because it is a UUID. This happens because when a new NFS storage is created via ACS, "
+                    + "this storage is created in vCenter with a name that uses the UUID in ACS, but removing the dashes. "
+                    + "However, if the storage is created first in vCenter (e.g. VMFS), and its name contains dashes, this causes ACS to remove the dashes, "
+                    + "and then the restore backup fails, because Veeam does not find the datastore.", datastore));
+            datastore = datastore.replace("-","");
+        }
         final List<String> cmds = Arrays.asList(
                 "$points = Get-VBRRestorePoint",
                 String.format("foreach($point in $points) { if ($point.Id -eq '%s') { break; } }", restorePointId),
                 String.format("$server = Get-VBRServer -Name \"%s\"", host),
-                String.format("$ds = Find-VBRViDatastore -Server:$server -Name \"%s\"", datastoreId),
+                String.format("$ds = Find-VBRViDatastore -Server:$server -Name \"%s\"", datastore),
                 String.format("$job = Start-VBRRestoreVM -RestorePoint:$point -Server:$server -Datastore:$ds -VMName \"%s\" -RunAsync", restoreLocation),
                 "while (-not (Get-VBRRestoreSession -Id $job.Id).IsCompleted) { Start-Sleep -Seconds 10 }"
         );
