@@ -148,6 +148,7 @@ import com.cloud.vm.dao.SecondaryStorageVmDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
 import com.cloud.vm.dao.VMInstanceDao;
 import org.apache.commons.lang3.BooleanUtils;
+import com.cloud.storage.VolumeApiService;
 
 /**
 * Class to manage secondary storages. <br><br>
@@ -1161,6 +1162,10 @@ public class SecondaryStorageManagerImpl extends ManagerBase implements Secondar
         if (s_logger.isDebugEnabled()) {
             s_logger.debug(String.format("Boot args for machine profile [%s]: [%s].", profile.toString(), bootArgs));
         }
+
+        boolean useHttpsToUpload = BooleanUtils.toBooleanDefaultIfNull(VolumeApiService.UseHttpsToUpload.value(), true);
+        s_logger.debug(String.format("Setting UseHttpsToUpload config on cmdline with [%s] value.", useHttpsToUpload));
+        buf.append(" useHttpsToUpload=").append(useHttpsToUpload);
 
         return true;
     }
