@@ -64,6 +64,7 @@ import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.cloud.api.ApiDispatcher;
@@ -632,7 +633,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         LOG.debug(String.format("Trying to restore volume using host private IP address: [%s].", host.getPrivateIpAddress()));
 
         String[] hostPossibleValues = {host.getPrivateIpAddress(), host.getName()};
-        String[] datastoresPossibleValues = {datastore.getUuid(), datastore.getName()};
+        String[] datastoresPossibleValues = {datastore.getUuid(), datastore.getName(), StringUtils.substringAfterLast(datastore.getPath(), "/")};
 
         Pair<Boolean, String> result = restoreBackedUpVolume(backedUpVolumeUuid, backup, backupProvider, hostPossibleValues, datastoresPossibleValues);
 
@@ -642,7 +643,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         }
         if (!attachVolumeToVM(vm.getDataCenterId(), result.second(), backup.getBackupVolumeList(),
                             backedUpVolumeUuid, vm, datastore.getUuid(), backup)) {
-            throw new CloudRuntimeException(String.format("Error attaching volume [%s] to VM [%s]." + backedUpVolumeUuid, vm.getUuid()));
+            throw new CloudRuntimeException(String.format("Error attaching volume [%s] to VM [%s].", backedUpVolumeUuid, vm.getUuid()));
         }
         return true;
     }
@@ -662,7 +663,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
                         return result;
                     }
                 } catch (Exception e) {
-                    LOG.debug(String.format("Failed to restore volume [UUID: %s], using host [%s] and datastore [%s] due to: [%s].",
+                    LOG.error(String.format("Failed to restore volume [UUID: %s], using host [%s] and datastore [%s] due to: [%s].",
                             backedUpVolumeUuid, hostData, datastoreData, e.getMessage()), e);
                 }
             }
