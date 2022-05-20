@@ -105,7 +105,7 @@ public interface VolumeOrchestrationService {
 
     void release(VirtualMachineProfile profile);
 
-    void release(long vmId, long hostId);
+    void release(VirtualMachine vm, Host host);
 
     void cleanupVolumes(long vmId) throws ConcurrentOperationException;
 
@@ -162,5 +162,5 @@ public interface VolumeOrchestrationService {
     /**
      * Unmanage VM volumes
      */
-    void unmanageVolumes(long vmId);
+    void unmanageVolumes(VirtualMachine vm);
 }
