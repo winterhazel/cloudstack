@@ -1643,7 +1643,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         if (hostId != null) {
             volumeMgr.revokeAccess(vm.getId(), hostId);
         }
-        volumeMgr.unmanageVolumes(vm.getId());
+        volumeMgr.unmanageVolumes(vm);
 
         List<Map<String, String>> targets = getTargets(hostId, vm.getId());
         if (hostId != null && CollectionUtils.isNotEmpty(targets)) {
@@ -2739,7 +2739,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         } finally {
             if (pfma == null) {
                 _networkMgr.rollbackNicForMigration(vmSrc, profile);
-                volumeMgr.release(vm.getId(), dstHostId);
+                volumeMgr.release(vm, dest.getHost());
                 work.setStep(Step.Done);
                 _workDao.update(work.getId(), work);
             }
@@ -2750,7 +2750,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             if (vm == null || vm.getHostId() == null || vm.getHostId() != srcHostId || !changeState(vm, Event.MigrationRequested, dstHostId, work, Step.Migrating)) {
                 _networkMgr.rollbackNicForMigration(vmSrc, profile);
                 if (vm != null) {
-                    volumeMgr.release(vm.getId(), dstHostId);
+                    volumeMgr.release(vm, dest.getHost());
                 }
 
                 s_logger.info("Migration cancelled because state has changed: " + vm);
@@ -2758,12 +2758,12 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             }
         } catch (final NoTransitionException e1) {
             _networkMgr.rollbackNicForMigration(vmSrc, profile);
-            volumeMgr.release(vm.getId(), dstHostId);
+            volumeMgr.release(vm, dest.getHost());
             s_logger.info("Migration cancelled because " + e1.getMessage());
             throw new ConcurrentOperationException("Migration cancelled because " + e1.getMessage());
         } catch (final CloudRuntimeException e2) {
             _networkMgr.rollbackNicForMigration(vmSrc, profile);
-            volumeMgr.release(vm.getId(), dstHostId);
+            volumeMgr.release(vm, dest.getHost());
             s_logger.info("Migration cancelled because " + e2.getMessage());
             work.setStep(Step.Done);
             _workDao.update(work.getId(), work);
@@ -2835,7 +2835,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             if (!migrated) {
                 s_logger.info("Migration was unsuccessful.  Cleaning up: " + vm);
                 _networkMgr.rollbackNicForMigration(vmSrc, profile);
-                volumeMgr.release(vm.getId(), dstHostId);
+                volumeMgr.release(vm, dest.getHost());
 
                 _alertMgr.sendAlert(alertType, fromHost.getDataCenterId(), fromHost.getPodId(),
                         "Unable to migrate vm " + vm.getInstanceName() + " from host " + fromHost.getName() + " in zone " + dest.getDataCenter().getName() + " and pod " +
@@ -2853,7 +2853,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 }
             } else {
                 _networkMgr.commitNicForMigration(vmSrc, profile);
-                volumeMgr.release(vm.getId(), srcHostId);
+                volumeMgr.release(vm, fromHost);
                 _networkMgr.setHypervisorHostname(profile, dest, true);
             }
 
@@ -3265,7 +3265,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             if (!migrated) {
                 s_logger.info("Migration was unsuccessful.  Cleaning up: " + vm);
                 _networkMgr.rollbackNicForMigration(vmSrc, profile);
-                volumeMgr.release(vm.getId(), destHostId);
+                volumeMgr.release(vm, destHost);
 
                 _alertMgr.sendAlert(alertType, srcHost.getDataCenterId(), srcHost.getPodId(),
                         "Unable to migrate vm " + vm.getInstanceName() + " from host " + srcHost.getName() + " in zone " + dc.getName() + " and pod " + dc.getName(),
@@ -3282,7 +3282,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 _networkMgr.setHypervisorHostname(profile, destination, false);
             } else {
                 _networkMgr.commitNicForMigration(vmSrc, profile);
-                volumeMgr.release(vm.getId(), srcHostId);
+                volumeMgr.release(vm, srcHost);
                 _networkMgr.setHypervisorHostname(profile, destination, true);
             }
 
