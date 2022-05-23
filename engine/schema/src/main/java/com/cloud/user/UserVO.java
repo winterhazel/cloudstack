@@ -35,6 +35,7 @@ import com.cloud.user.Account.State;
 import com.cloud.utils.db.Encrypt;
 import com.cloud.utils.db.GenericDao;
 import com.google.common.base.Strings;
+import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 
 /**
  * A bean representing a user
@@ -283,7 +284,7 @@ public class UserVO implements User, Identity, InternalIdentity {
 
     @Override
     public String toString() {
-        return new StringBuilder("User[").append(id).append("-").append(username).append("]").toString();
+        return String.format("User %s.", ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "username", "uuid"));
     }
 
     @Override
