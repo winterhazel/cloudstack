@@ -29,6 +29,7 @@ import com.cloud.offering.ServiceOffering;
 import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.Storage.ProvisioningType;
 import com.cloud.vm.VirtualMachine;
+import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 
 @Entity
 @Table(name = "service_offering")
@@ -299,7 +300,7 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
 
     @Override
     public String toString() {
-        return String.format("Service offering {\"id\": %s, \"name\": \"%s\", \"uuid\": \"%s\"}", getId(), getName(), getUuid());
+        return String.format("Service offering %s.", ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "id", "name", "uuid"));
     }
 
     public boolean isDynamicScalingEnabled() {
