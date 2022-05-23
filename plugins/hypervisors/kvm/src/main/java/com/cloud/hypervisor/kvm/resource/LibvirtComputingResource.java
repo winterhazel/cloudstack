@@ -62,9 +62,10 @@ import org.apache.cloudstack.utils.qemu.QemuImg.PhysicalDiskFormat;
 import org.apache.cloudstack.utils.security.KeyStoreUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.joda.time.Duration;
 import org.libvirt.Connect;
@@ -177,7 +178,6 @@ import com.cloud.utils.ExecutionResult;
 import com.cloud.utils.NumbersUtil;
 import com.cloud.utils.Pair;
 import com.cloud.utils.PropertiesUtil;
-import com.cloud.utils.StringUtils;
 import com.cloud.utils.Ternary;
 import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.net.NetUtils;
@@ -214,7 +214,7 @@ import org.apache.cloudstack.utils.bytescale.ByteScaleUtils;
  *         pool | the parent of the storage pool hierarchy * }
  **/
 public class LibvirtComputingResource extends ServerResourceBase implements ServerResource, VirtualRouterDeployer {
-    private static final Logger s_logger = Logger.getLogger(LibvirtComputingResource.class);
+    protected static Logger s_logger = Logger.getLogger(LibvirtComputingResource.class);
 
     private static final String LEGACY = "legacy";
     private static final String SECURE = "secure";
@@ -430,6 +430,19 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private final LibvirtUtilitiesHelper libvirtUtilitiesHelper = new LibvirtUtilitiesHelper();
 
     protected Boolean enableManuallySettingCpuTopologyOnKvmVm = AgentPropertiesFileHandler.getPropertyValue(AgentProperties.ENABLE_MANUALLY_SETTING_CPU_TOPOLOGY_ON_KVM_VM);
+
+    /**
+     * Virsh command to set the memory balloon stats period.<br><br>
+     * 1st parameter: the VM name;<br>
+     * 2nd parameter: the period (in seconds).
+     */
+    private static final String COMMAND_SET_MEM_BALLOON_STATS_PERIOD = "virsh dommemstat %s --period %s --live";
+
+    /**
+     * Virsh command to get the memory balloon tag from the VM's XML file.<br><br>
+     * 1st parameter: the VM name;<br>
+     */
+    private static final String COMMAND_GET_MEM_BALLOON_FROM_XML_FILE = "virsh dumpxml %s | grep '<memballoon model='";
 
     protected long getHypervisorLibvirtVersion() {
         return _hypervisorLibvirtVersion;
@@ -1182,7 +1195,65 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.info("iscsi session clean up is disabled");
         }
 
+        setupMemoryBalloonStatsPeriod(conn);
+
         return true;
+    }
+
+    /**
+     * Sets the balloon driver of each VM to get the memory stats at the time interval defined in the agent.properties file.
+     * @param conn the Libvirt connection.
+     */
+    protected void setupMemoryBalloonStatsPeriod(Connect conn) {
+        Integer[] vmIds = null;
+        try {
+            vmIds = ArrayUtils.toObject(conn.listDomains());
+        } catch (final LibvirtException e) {
+            s_logger.error("Unable to get the list of Libvirt domains on this host.", e);
+            return;
+        }
+        List<Integer> vmIdList = Arrays.asList(vmIds);
+        s_logger.debug(String.format("We have found a total of [%s] VMs (Libvirt domains) on this host: [%s].", vmIdList.size(), vmIdList.toString()));
+
+        if (vmIdList.isEmpty()) {
+            s_logger.debug("Skipping the memory balloon stats period setting, since there are no VMs (active Libvirt domains) on this host.");
+            return;
+        }
+
+        if (AgentPropertiesFileHandler.getPropertyValue(AgentProperties.VM_MEMBALLOON_DISABLE)) {
+            s_logger.debug(String.format("Skipping the memory balloon stats period setting because the [%s] property is set to 'true'.",
+                    AgentProperties.VM_MEMBALLOON_DISABLE.getName()));
+            return;
+        }
+
+        Integer currentVmBalloonStatsPeriod = AgentPropertiesFileHandler.getPropertyValue(AgentProperties.VM_MEMBALLOON_STATS_PERIOD);
+
+        for (Integer vmId : vmIdList) {
+            String getMemBalloonFromXmlFileCommand = String.format(COMMAND_GET_MEM_BALLOON_FROM_XML_FILE, vmId);
+            String getMemBalloonFromXmlFileResult = Script.runSimpleBashScript(getMemBalloonFromXmlFileCommand);
+            if (StringUtils.isBlank(getMemBalloonFromXmlFileResult)) {
+                s_logger.error(String.format("Unable to get the <memballoon> tag from the XML file for the VM (Libvirt Domain) with ID [%s] due to an error when running the [%s] command. "
+                        + "Therefore, we cannot set the period to collect memory information for the VM. This situation can happen if the <memballoon> tag was manually removed "
+                        + "from the XML file of the VM.", vmId,
+                        getMemBalloonFromXmlFileCommand));
+                continue;
+            }
+            s_logger.trace(String.format("The <memballoon> tag was successfully obtained from the XML file for the VM (Libvirt Domain) with ID [%s].", vmId));
+
+            if (getMemBalloonFromXmlFileResult.contains("virtio")) {
+                String setMemBalloonStatsPeriodCommand = String.format(COMMAND_SET_MEM_BALLOON_STATS_PERIOD, vmId, currentVmBalloonStatsPeriod);
+                String setMemBalloonStatsPeriodResult = Script.runSimpleBashScript(setMemBalloonStatsPeriodCommand);
+                if (StringUtils.isNotBlank(setMemBalloonStatsPeriodResult)) {
+                    s_logger.error(String.format("Unable to set up memory balloon stats period for VM (Libvirt Domain) with ID [%s] due to an error when running the [%s] command. Output: [%s].",
+                            vmId, setMemBalloonStatsPeriodCommand, setMemBalloonStatsPeriodResult));
+                    continue;
+                }
+                s_logger.debug(String.format("The memory balloon stats period [%s] has been set successfully for the VM (Libvirt Domain) with ID [%s].", currentVmBalloonStatsPeriod,
+                        vmId));
+                continue;
+            }
+            s_logger.debug(String.format("Skipping the memory balloon stats period setting for the VM (Libvirt Domain) with ID [%s] because this VM has no memory balloon.", vmId));
+        }
     }
 
     public boolean configureHostParams(final Map<String, String> params) {
