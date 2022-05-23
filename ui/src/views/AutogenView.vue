@@ -1349,6 +1349,14 @@ export default {
           params.uuid = this.resource.uuid
         }
 
+        if (['updateDiskOffering'].includes(action.api)) {
+          const isTagsTouched = this.form.isFieldTouched('tags')
+
+          if (!isTagsTouched || (isTagsTouched && values.tags === action.resource.tags)) {
+            delete values.tags
+          }
+        }
+
         for (const key in values) {
           const input = values[key]
           for (const param of action.params) {
