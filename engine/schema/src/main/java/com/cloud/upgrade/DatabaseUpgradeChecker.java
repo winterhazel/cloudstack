@@ -30,6 +30,7 @@ import java.util.Date;
 import javax.inject.Inject;
 
 import com.cloud.upgrade.dao.Upgrade41510to41520;
+import com.cloud.upgrade.dao.Upgrade41606to41607;
 import org.apache.cloudstack.utils.CloudStackVersion;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -210,6 +211,7 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
                 .next("4.16.0.3", new Upgrade41603to41604())
                 .next("4.16.0.4", new Upgrade41604to41605())
                 .next("4.16.0.5", new Upgrade41605to41606())
+                .next("4.16.0.6", new Upgrade41606to41607())
                 .build();
     }
 
