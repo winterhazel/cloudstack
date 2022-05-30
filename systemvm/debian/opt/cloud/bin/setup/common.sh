@@ -762,6 +762,9 @@ parse_cmd_line() {
         authorized_key)
             export AUTHORIZED_KEYS=$VALUE
             ;;
+        useHttpsToUpload)
+            export USEHTTPS=$VALUE
+            ;;
       esac
   done
   echo -e "\n\t}\n}" >> ${CHEF_TMP_FILE}

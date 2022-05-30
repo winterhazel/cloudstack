@@ -59,9 +59,6 @@ setup_secstorage() {
   a2enmod proxy_http
   a2enmod headers
 
-  CMDLINE=/var/cache/cloud/cmdline
-  USEHTTPS=$(grep -Po 'useHttpsToUpload=\K[a-zA-Z]*' $CMDLINE)
-
   if [ -z $USEHTTPS ] | $USEHTTPS ; then
     if [ -f /etc/apache2/http.conf ]; then
       rm -rf /etc/apache2/http.conf
