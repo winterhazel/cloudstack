@@ -17,6 +17,14 @@
     "404": "assets/404.png",
     "500": "assets/500.png"
   },
+  "externalLinksIcon": "",
+  "externalLinks": [
+    {
+      "title": "Example",
+      "link": "",
+      "icon": ""
+    }
+  ],
   "theme": {
     "@logo-background-color": "#ffffff",
     "@navigation-background-color": "#ffffff",
