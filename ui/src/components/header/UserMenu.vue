@@ -17,7 +17,7 @@
 
 <template>
   <div class="user-menu">
-
+    <external-link class="action"/>
     <translation-menu class="action"/>
     <header-notice class="action"/>
     <label class="user-menu-server-info action" v-if="$config.multipleServer">
@@ -70,6 +70,7 @@ import Vue from 'vue'
 import { api } from '@/api'
 import HeaderNotice from './HeaderNotice'
 import TranslationMenu from './TranslationMenu'
+import ExternalLink from './ExternalLink'
 import { mapActions, mapGetters } from 'vuex'
 import ResourceIcon from '@/components/view/ResourceIcon'
 import eventBus from '@/config/eventBus'
@@ -78,6 +79,7 @@ import { SERVER_MANAGER } from '@/store/mutation-types'
 export default {
   name: 'UserMenu',
   components: {
+    ExternalLink,
     TranslationMenu,
     HeaderNotice,
     ResourceIcon

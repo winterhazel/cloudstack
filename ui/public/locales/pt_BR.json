@@ -1310,6 +1310,7 @@
 "label.reboot": "Reiniciar",
 "label.receivedbytes": "Bytes recebidos",
 "label.recover.vm": "Recuperar VM",
+"label.redirect": "Clique para acessar:",
 "label.redundantrouter": "Roteador redundantee",
 "label.redundantstate": "Estado redundante",
 "label.redundantvpcrouter": "VPC redundante",
