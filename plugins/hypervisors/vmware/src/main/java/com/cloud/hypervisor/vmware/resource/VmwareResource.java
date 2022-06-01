@@ -6432,7 +6432,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                         }
                     }
 
-                    double doubleMemKb = NumberUtils.toDouble(memkb)
+                    double doubleMemKb = NumberUtils.toDouble(memkb);
                     double guestFreeMem =  doubleMemKb - NumberUtils.toDouble(guestMemusage);
 
                     final VmStatsEntry vmStats = new VmStatsEntry(0, doubleMemKb * 1024, guestFreeMem * 1024, NumberUtils.toDouble(memlimit) * 1024,
