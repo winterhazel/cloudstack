@@ -22,7 +22,8 @@
     :collapsible="collapsible"
     v-model="collapsed"
     :trigger="null">
-    <logo />
+    <logo
+      :collapsed="collapsed"/>
     <s-menu
       :collapsed="collapsed"
       :menu="menus"
