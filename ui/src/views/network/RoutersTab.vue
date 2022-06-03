@@ -32,7 +32,7 @@
       <status class="status" :text="item.state" displayText />
     </template>
     <template slot="requiresupgrade" slot-scope="text, item">
-      {{ item.requiresupgrade ? $t('label.yes') : $t('label.no') }}
+      <status :text="item.requiresupgrade ? 'warning' : ''" /> {{ item.requiresupgrade ? $t('label.yes') : $t('label.no') }}
     </template>
     <template slot="isredundantrouter" slot-scope="text, record">
       {{ record.isredundantrouter ? record.redundantstate : record.isredundantrouter }}
