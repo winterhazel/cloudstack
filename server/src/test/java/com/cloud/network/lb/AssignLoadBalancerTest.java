@@ -201,7 +201,7 @@ public class AssignLoadBalancerTest {
         List<Long> vmIds = new ArrayList<Long>();
         vmIds.add(2L);
 
-        LoadBalancerVO lbVO = new LoadBalancerVO("1", "L1", "Lbrule", 1, 22, 22, "rb", 204, 0, 0, "tcp");
+        LoadBalancerVO lbVO = new LoadBalancerVO("1", "L1", "Lbrule", 1, 22, 22, "rb", 204, 0, 0, "tcp", null);
 
         LoadBalancerDao lbDao = Mockito.mock(LoadBalancerDao.class);
         LoadBalancerVMMapDao lb2VmMapDao = Mockito.mock(LoadBalancerVMMapDao.class);
@@ -239,7 +239,7 @@ public class AssignLoadBalancerTest {
         List<Long> vmIds = new ArrayList<Long>();
         vmIds.add(2L);
 
-        LoadBalancerVO lbVO = new LoadBalancerVO("1", "L1", "Lbrule", 1, 22, 22, "rb", 204, 0, 0, "tcp");
+        LoadBalancerVO lbVO = new LoadBalancerVO("1", "L1", "Lbrule", 1, 22, 22, "rb", 204, 0, 0, "tcp", null);
 
         LoadBalancerDao lbDao = Mockito.mock(LoadBalancerDao.class);
         LoadBalancerVMMapDao lb2VmMapDao = Mockito.mock(LoadBalancerVMMapDao.class);
