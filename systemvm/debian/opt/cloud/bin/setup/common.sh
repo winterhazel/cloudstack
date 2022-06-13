@@ -762,6 +762,9 @@ parse_cmd_line() {
         authorized_key)
             export AUTHORIZED_KEYS=$VALUE
             ;;
+        logrotatefrequency)
+            export LOGROTATE_FREQUENCY=$VALUE
+            ;;
         useHttpsToUpload)
             export USEHTTPS=$VALUE
             ;;
