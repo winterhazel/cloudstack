@@ -52,6 +52,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import com.cloud.network.router.CommandSetupHelper;
 import com.cloud.network.router.NetworkHelper;
+import com.cloud.storage.VolumeApiServiceImpl;
 import org.apache.cloudstack.acl.ControlledEntity;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.acl.SecurityChecker.AccessType;
@@ -1163,7 +1164,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Check that the specified service offering ID is valid
         _itMgr.checkIfCanUpgrade(vmInstance, newServiceOffering);
 
-        resizeRootVolumeOfVmWithNewOffering(vmInstance, newServiceOffering);
+        updateRootDiskIfItWasNotOverridden(vmInstance, newServiceOffering, currentServiceOffering);
 
         _itMgr.upgradeVmDb(vmId, newServiceOffering, currentServiceOffering);
 
@@ -1288,26 +1289,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         ServiceOffering newSvcOffering = _offeringDao.findById(svcOffId);
         _accountMgr.checkAccess(owner, newSvcOffering, _dcDao.findById(vmInstance.getDataCenterId()));
 
-        DiskOfferingVO newRootDiskOffering = _diskOfferingDao.findById(newServiceOffering.getId());
-
-        List<VolumeVO> vols = _volsDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
-
-        for (final VolumeVO rootVolumeOfVm : vols) {
-            DiskOfferingVO currentRootDiskOffering = _diskOfferingDao.findById(rootVolumeOfVm.getDiskOfferingId());
-
-            ResizeVolumeCmd resizeVolumeCmd = prepareResizeVolumeCmd(rootVolumeOfVm, currentRootDiskOffering, newRootDiskOffering);
-
-            if (rootVolumeOfVm.getDiskOfferingId() != newRootDiskOffering.getId()) {
-                rootVolumeOfVm.setDiskOfferingId(newRootDiskOffering.getId());
-                _volsDao.update(rootVolumeOfVm.getId(), rootVolumeOfVm);
-            }
-            HypervisorType hypervisorType = _volsDao.getHypervisorType(rootVolumeOfVm.getId());
-            if (HypervisorType.Simulator != hypervisorType) {
-                _volumeService.resizeVolume(resizeVolumeCmd);
-            } else if (newRootDiskOffering.getDiskSize() > 0 && currentRootDiskOffering.getDiskSize() != newRootDiskOffering.getDiskSize()) {
-                throw new InvalidParameterValueException("Hypervisor " + hypervisorType + " does not support volume resize");
-            }
-        }
+        updateRootDiskIfItWasNotOverridden(vmInstance, newServiceOffering, currentServiceOffering);
 
         _itMgr.upgradeVmDb(vmId, newServiceOffering, currentServiceOffering);
 
@@ -1327,6 +1309,41 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         return _vmDao.findById(vmInstance.getId());
 
+    }
+
+    /**
+     * Checks and updates the disk offering only if it has not been overwritten.
+     * @param vmInstance vm instance being upgraded.
+     * @param newServiceOffering new service offering that is being applied to vmInstance.
+     * @param currentServiceOffering current service offering of vmInstance.
+     * @throws ResourceAllocationException if the disk offering needed to be updated, but resize of this new volume was not possible.
+     */
+    public void updateRootDiskIfItWasNotOverridden(VMInstanceVO vmInstance, ServiceOfferingVO newServiceOffering, ServiceOfferingVO currentServiceOffering)
+            throws ResourceAllocationException {
+        DiskOfferingVO newRootDiskOffering = _diskOfferingDao.findById(newServiceOffering.getId());
+        List<VolumeVO> currentRootDisks = _volsDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
+        if (currentRootDisks.isEmpty()) {
+            s_logger.debug(String.format("Could not find any root disk attached to the instance with UUID [%s]. Skipping checking storage tags.", vmInstance.getUuid()));
+            return;
+        }
+        VolumeVO currentRootDisk = currentRootDisks.get(0);
+        DiskOfferingVO currentRootDiskOffering = _diskOfferingDao.findById(currentRootDisk.getDiskOfferingId());
+        if (!shouldValidateStorageTags(currentRootDisk, currentServiceOffering)) {
+            return;
+        }
+        s_logger.debug(String.format("Since the ID of the disk offering and service offering is the same [%s], the disk offering will be updated to the " +
+                "disk offering with ID [%s].", currentRootDiskOffering.getId(), newRootDiskOffering.getId()));
+        ResizeVolumeCmd resizeVolumeCmd = prepareResizeVolumeCmd(currentRootDisk, currentRootDiskOffering, newRootDiskOffering);
+        if (currentRootDisk.getDiskOfferingId() != newRootDiskOffering.getId()) {
+            currentRootDisk.setDiskOfferingId(newRootDiskOffering.getId());
+            _volsDao.update(currentRootDisk.getId(), currentRootDisk);
+        }
+        HypervisorType hypervisorType = _volsDao.getHypervisorType(currentRootDisk.getId());
+        if (HypervisorType.Simulator != hypervisorType) {
+            _volumeService.resizeVolume(resizeVolumeCmd);
+        } else if (newRootDiskOffering.getDiskSize() > 0 && currentRootDiskOffering.getDiskSize() != newRootDiskOffering.getDiskSize()) {
+            throw new InvalidParameterValueException(String.format("Hypervisor [%s] does not support volume resize", hypervisorType));
+        }
     }
 
     /**
@@ -1361,19 +1378,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     newRootDiskOffering.getId(), newRootDiskOffering.getName(), newNewOfferingRootSizeInGiB, currentRootDiskOfferingGiB));
         }
         return resizeVolumeCmd;
-    }
-
-    private void resizeRootVolumeOfVmWithNewOffering(VMInstanceVO vmInstance, ServiceOfferingVO newServiceOffering)
-            throws ResourceAllocationException {
-        DiskOfferingVO newROOTDiskOffering = _diskOfferingDao.findById(newServiceOffering.getId());
-        List<VolumeVO> vols = _volsDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
-
-        for (final VolumeVO rootVolumeOfVm : vols) {
-            rootVolumeOfVm.setDiskOfferingId(newROOTDiskOffering.getId());
-            ResizeVolumeCmd resizeVolumeCmd = new ResizeVolumeCmd(rootVolumeOfVm.getId(), newROOTDiskOffering.getMinIops(), newROOTDiskOffering.getMaxIops());
-            _volumeService.resizeVolume(resizeVolumeCmd);
-            _volsDao.update(rootVolumeOfVm.getId(), rootVolumeOfVm);
-        }
     }
 
     @Override
@@ -1972,6 +1976,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         if (newServiceOffering.isDynamicScalingEnabled() != currentServiceOffering.isDynamicScalingEnabled()) {
             throw new InvalidParameterValueException("Unable to Scale VM: since dynamic scaling enabled flag is not same for new service offering and old service offering");
         }
+
+        updateRootDiskIfItWasNotOverridden(vmInstance, newServiceOffering, currentServiceOffering);
 
         int newCpu = newServiceOffering.getCpu();
         int newMemory = newServiceOffering.getRamSize();
@@ -4196,6 +4202,23 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         return canEnableDynamicScaling;
+    }
+
+    @Override
+    public boolean shouldValidateStorageTags(VolumeVO currentRootDisk, ServiceOfferingVO currentServiceOffering) {
+        if (!VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.value()) {
+            s_logger.debug(String.format("The global configuration [%s] has value 'False', therefore we will not check the storage tags compatibility.",
+                    VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.key()));
+            return false;
+        }
+
+        if (currentRootDisk.getDiskOfferingId() != currentServiceOffering.getId()) {
+            s_logger.debug(String.format("The ROOT's disk offering was changed manually. The current ROOT's disk offering [%s] is different from the current VM's " +
+                    "service offering [%s]. As they are different and the ROOT disk offering will not change automatically, " +
+                    "we will not check the storage tags compatibility between them.", currentRootDisk.getUuid(), currentServiceOffering.getUuid()));
+            return false;
+        }
+        return true;
     }
 
     /**

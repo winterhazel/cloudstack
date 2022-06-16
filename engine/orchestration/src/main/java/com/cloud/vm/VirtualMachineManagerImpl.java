@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.storage.VolumeApiServiceImpl;
 import org.apache.cloudstack.affinity.dao.AffinityGroupVMMapDao;
 import org.apache.cloudstack.annotation.AnnotationService;
 import org.apache.cloudstack.annotation.dao.AnnotationDao;
@@ -3937,9 +3938,41 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                     newServiceOffering.getCpu() + " cpu(s) at " + newServiceOffering.getSpeed() + " Mhz, and " + newServiceOffering.getRamSize() + " MB of memory");
         }
 
-        // Check that the service offering being upgraded to has all the tags of the current service offering.
-        final List<String> currentTags = StringUtils.csvTagsToList(currentServiceOffering.getTags());
-        final List<String> newTags = StringUtils.csvTagsToList(newServiceOffering.getTags());
+        checkStorageTagsIfNeeded(vmInstance, newServiceOffering, currentServiceOffering);
+    }
+
+
+    /**
+     * Checks if the new service offering has compatible tags with the current service offering. If the global setting
+     * {@link VolumeApiServiceImpl#MatchStoragePoolTagsWithDiskOffering} is false or the current service offering id is different from the current root disk offering id,
+     * it will not check the compatibility because it means that either one does not want to validate the tags or the root disk offering will not be changed.
+     *
+     * @param vmInstance vm instance being upgraded.
+     * @param newServiceOffering new service offering that is being applied to vmInstance.
+     * @param currentServiceOffering current service offering of vmInstance.
+     * @throws InvalidParameterValueException if tags do not match.
+     */
+    protected void checkStorageTagsIfNeeded(VirtualMachine vmInstance, ServiceOffering newServiceOffering, ServiceOfferingVO currentServiceOffering) {
+        s_logger.debug(String.format("Checking storage tags compatibility between the current service offering [%s] and the new service offering [%s].",
+                currentServiceOffering, newServiceOffering));
+
+        List<VolumeVO> currentRootDisks = _volsDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
+        if (currentRootDisks.isEmpty()){
+            s_logger.debug(String.format("Could not find any root disk attached to the instance with UUID [%s]. Skipping checking storage tags.", vmInstance.getUuid()));
+            return;
+        }
+        VolumeVO currentRootDisk = currentRootDisks.get(0);
+        s_logger.trace(String.format("Performing tag verification for VM with UUID [%s], current service offering UUID [%s] and current root disk UUID [%s].",
+                vmInstance.getUuid(), currentServiceOffering.getUuid(), currentRootDisk.getUuid()));
+        if (!_userVmMgr.shouldValidateStorageTags(currentRootDisk, currentServiceOffering)) {
+            return;
+        }
+        s_logger.debug(String.format("The global configuration [%s] has its value set as true, and the current root disk offering [%s] is equal to the " +
+                        "current service offering [%s], meaning that we need to check storage pool tags because the disk offering will be updated with " +
+                        "the new service offering [%s].",
+                VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.key(), currentRootDisk.getUuid(), currentServiceOffering.getUuid(), newServiceOffering.getUuid()));
+        List<String> currentTags = StringUtils.csvTagsToList(currentServiceOffering.getTags());
+        List<String> newTags = StringUtils.csvTagsToList(newServiceOffering.getTags());
         if (!newTags.containsAll(currentTags)) {
             throw new InvalidParameterValueException("Unable to upgrade virtual machine; the current service offering " + " should have tags as subset of " +
                     "the new service offering tags. Current service offering tags: " + currentTags + "; " + "new service " + "offering tags: " + newTags);

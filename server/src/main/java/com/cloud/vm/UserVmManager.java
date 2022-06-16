@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.cloud.offering.ServiceOffering;
+import com.cloud.storage.VolumeVO;
 import com.cloud.template.VirtualMachineTemplate;
 import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
 import org.apache.cloudstack.framework.config.ConfigKey;
@@ -130,5 +131,7 @@ public interface UserVmManager extends UserVmService {
     HashMap<Long, List<VmNetworkStatsEntry>> getVmNetworkStatistics(long hostId, String hostName, List<Long> vmIds);
 
     boolean checkIfDynamicScalingCanBeEnabled(VirtualMachine vm, ServiceOffering offering, VirtualMachineTemplate template, Long zoneId);
+
+    boolean shouldValidateStorageTags(VolumeVO currentRootDisk, ServiceOfferingVO currentServiceOffering);
 
 }

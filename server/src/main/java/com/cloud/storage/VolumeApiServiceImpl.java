@@ -318,6 +318,11 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     public static final ConfigKey<Boolean> AllowUserExpungeRecoverVolume = new ConfigKey<Boolean>("Advanced", Boolean.class, "allow.user.expunge.recover.volume", "true",
             "Determines whether users can expunge or recover their volume", true, ConfigKey.Scope.Account);
 
+    public static ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOffering = new ConfigKey<Boolean>("Advanced", Boolean.class,
+            "match.storage.pool.tags.with.disk.offering", "true",
+            "Determines when ACS will perform Tag validation for disk offering and storage pools. The default value is true, " +
+                    "which means that ACS will check tags, if needed, for disk offerings and storage pools", true);
+
     private long _maxVolumeSizeInGb;
     private final StateMachine2<Volume.State, Volume.Event, Volume> _volStateMachine;
 
@@ -3876,6 +3881,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
     @Override
     public ConfigKey<?>[] getConfigKeys() {
-        return new ConfigKey<?>[] {ConcurrentMigrationsThresholdPerDatastore, AllowUserExpungeRecoverVolume, UseHttpsToUpload};
+        return new ConfigKey<?>[] {ConcurrentMigrationsThresholdPerDatastore, AllowUserExpungeRecoverVolume, UseHttpsToUpload, MatchStoragePoolTagsWithDiskOffering};
     }
 }
