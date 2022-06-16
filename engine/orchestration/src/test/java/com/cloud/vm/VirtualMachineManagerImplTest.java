@@ -127,6 +127,9 @@ public class VirtualMachineManagerImplTest {
     @Mock
     private DiskOfferingDao diskOfferingDaoMock;
 
+    @Mock
+    private UserVmManagerImpl userVmManagerImplMock;
+
     @Before
     public void setup() {
         virtualMachineManagerImpl.setHostAllocators(new ArrayList<>());
@@ -708,5 +711,58 @@ public class VirtualMachineManagerImplTest {
         Mockito.doReturn("vmInstanceMockedToString").when(vmInstanceMock).toString();
         Mockito.doReturn(isOfferingUsingLocal).when(serviceOfferingMock).isUseLocalStorage();
         virtualMachineManagerImpl.checkIfNewOfferingStorageScopeMatchesStoragePool(vmInstanceMock, serviceOfferingMock);
+    }
+
+    @Test (expected = InvalidParameterValueException.class)
+    public void checkStorageTagsIfNeededTestThrowInvalidParameterValueException() {
+        ServiceOfferingVO currentServiceOffering = mock(ServiceOfferingVO.class);
+        ServiceOfferingVO newServiceOffering = mock(ServiceOfferingVO.class);
+
+        List<VolumeVO> rootVolumes = new ArrayList<>();
+        rootVolumes.add(volumeVoMock);
+
+        Mockito.when(volumeDaoMock.findReadyAndAllocatedRootVolumesByInstance(vmInstanceMock.getId())).thenReturn(rootVolumes);
+        Mockito.doReturn(true).when(userVmManagerImplMock).shouldValidateStorageTags(Mockito.any(VolumeVO.class), Mockito.any(ServiceOfferingVO.class));
+        Mockito.when(currentServiceOffering.getTags()).thenReturn("a, b");
+        Mockito.when(newServiceOffering.getTags()).thenReturn("x, z");
+
+        virtualMachineManagerImpl.checkStorageTagsIfNeeded(vmInstanceMock, newServiceOffering, currentServiceOffering);
+    }
+
+    @Test
+    public void checkStorageTagsIfNeededTestShouldValidateStorageTagsFalse(){
+        ServiceOfferingVO currentServiceOffering = mock(ServiceOfferingVO.class);
+        ServiceOfferingVO newServiceOffering = mock(ServiceOfferingVO.class);
+
+        List<VolumeVO> rootVolumes = new ArrayList<>();
+        rootVolumes.add(volumeVoMock);
+
+        Mockito.when(volumeDaoMock.findReadyAndAllocatedRootVolumesByInstance(vmInstanceMock.getId())).thenReturn(rootVolumes);
+        Mockito.doReturn(false).when(userVmManagerImplMock).shouldValidateStorageTags(Mockito.any(VolumeVO.class), Mockito.any(ServiceOfferingVO.class));
+        virtualMachineManagerImpl.checkStorageTagsIfNeeded(vmInstanceMock, newServiceOffering, currentServiceOffering);
+
+        Mockito.verify(newServiceOffering, Mockito.times(0)).getTags();
+        Mockito.verify(currentServiceOffering, Mockito.times(0)).getTags();
+    }
+
+    @Test
+    public void checkStorageTagsIfNeededTestSameDiskOfferingAndServiceOfferingWithMatchTags(){
+
+        ServiceOfferingVO currentServiceOffering = mock(ServiceOfferingVO.class);
+        ServiceOfferingVO newServiceOffering = mock(ServiceOfferingVO.class);
+
+        List<VolumeVO> rootVolumes = new ArrayList<>();
+        rootVolumes.add(volumeVoMock);
+
+        Mockito.when(volumeDaoMock.findReadyAndAllocatedRootVolumesByInstance(vmInstanceMock.getId())).thenReturn(rootVolumes);
+
+        Mockito.when(currentServiceOffering.getTags()).thenReturn("a, b");
+        Mockito.when(newServiceOffering.getTags()).thenReturn("a, b");
+
+        Mockito.doReturn(true).when(userVmManagerImplMock).shouldValidateStorageTags(Mockito.any(VolumeVO.class), Mockito.any(ServiceOfferingVO.class));
+        virtualMachineManagerImpl.checkStorageTagsIfNeeded(vmInstanceMock, newServiceOffering, currentServiceOffering);
+
+        Mockito.verify(newServiceOffering, Mockito.times(1)).getTags();
+        Mockito.verify(currentServiceOffering, Mockito.times(1)).getTags();
     }
 }

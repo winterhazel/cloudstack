@@ -30,6 +30,10 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
+import com.cloud.storage.VolumeApiServiceImpl;
+import com.cloud.storage.VolumeVO;
+import com.cloud.storage.dao.VolumeDao;
+import com.cloud.vm.UserVmManager;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.affinity.AffinityGroupDomainMapVO;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
@@ -449,6 +453,11 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
 
     @Inject
     private ResourceIconDao resourceIconDao;
+
+    @Inject
+    private VolumeDao volumeDao;
+    @Inject
+    private UserVmManager userVmManager;
 
     private SearchCriteria<ServiceOfferingJoinVO> getMinimumCpuServiceOfferingJoinSearchCriteria(int cpu) {
         SearchCriteria<ServiceOfferingJoinVO> sc = _srvOfferingJoinDao.createSearchCriteria();
@@ -3013,6 +3022,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         Integer cpuNumber = cmd.getCpuNumber();
         Integer memory = cmd.getMemory();
         Integer cpuSpeed = cmd.getCpuSpeed();
+        VMInstanceVO vmInstance = null;
 
         SearchCriteria<ServiceOfferingJoinVO> sc = _srvOfferingJoinDao.createSearchCriteria();
         if (!_accountMgr.isRootAdmin(caller.getId()) && isSystem) {
@@ -3031,7 +3041,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         }
 
         if (vmId != null) {
-            VMInstanceVO vmInstance = _vmInstanceDao.findById(vmId);
+            vmInstance = _vmInstanceDao.findById(vmId);
             if ((vmInstance == null) || (vmInstance.getRemoved() != null)) {
                 InvalidParameterValueException ex = new InvalidParameterValueException("unable to find a virtual machine with specified id");
                 ex.addProxyObject(vmId.toString(), "vmId");
@@ -3188,20 +3198,7 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         }
 
         if (currentVmOffering != null) {
-            List<String> storageTags = StringUtils.csvTagsToList(currentVmOffering.getTags());
-            if (!storageTags.isEmpty()) {
-                SearchBuilder<ServiceOfferingJoinVO> sb = _srvOfferingJoinDao.createSearchBuilder();
-                for(String tag : storageTags) {
-                    sb.and(tag, sb.entity().getTags(), Op.FIND_IN_SET);
-                }
-                sb.done();
-
-                SearchCriteria<ServiceOfferingJoinVO> scc = sb.create();
-                for(String tag : storageTags) {
-                    scc.setParameters(tag, tag);
-                }
-                sc.addAnd("storageTags", SearchCriteria.Op.SC, scc);
-            }
+            checkStorageTagsIfNeeded(vmInstance, currentVmOffering, sc);
 
             List<String> hostTags = StringUtils.csvTagsToList(currentVmOffering.getHostTag());
             if (!hostTags.isEmpty()) {
@@ -3225,6 +3222,41 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         }
 
         return _srvOfferingJoinDao.searchAndCount(sc, searchFilter);
+    }
+
+
+    /**
+     * Checks if the service offering has compatible tags. If the global setting {@link VolumeApiServiceImpl#MatchStoragePoolTagsWithDiskOffering} is false or the
+     * current service offering id is different from the current root disk offering id, it will not check the compatibility because it means that either one does not want to
+     * validate the tags or the root disk offering will not be changed.
+     * @param vmId vm instance id being verified.
+     * @param currentVmOffering current service offering of vm instance.
+     */
+    private void checkStorageTagsIfNeeded(VMInstanceVO vmInstance, ServiceOfferingVO currentVmOffering, SearchCriteria<ServiceOfferingJoinVO> sc) {
+        List<VolumeVO> currentRootDisks = volumeDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
+        if (currentRootDisks.isEmpty()){
+            s_logger.debug(String.format("Could not find any root disk attached to the instance with UUID [%s]. Skipping checking storage tags.", vmInstance.getUuid()));
+            return;
+        }
+        VolumeVO currentRootDisk = currentRootDisks.get(0);
+        if (userVmManager.shouldValidateStorageTags(currentRootDisk, currentVmOffering)) {
+            List<String> storageTags = StringUtils.csvTagsToList(currentVmOffering.getTags());
+            if (storageTags.isEmpty()) {
+                s_logger.debug(String.format("Since the storage tags are empty we do not need to check them."));
+                return;
+            }
+            SearchBuilder<ServiceOfferingJoinVO> sb = _srvOfferingJoinDao.createSearchBuilder();
+            for(String tag : storageTags) {
+                sb.and(tag, sb.entity().getTags(), Op.FIND_IN_SET);
+            }
+            sb.done();
+
+            SearchCriteria<ServiceOfferingJoinVO> scc = sb.create();
+            for(String tag : storageTags) {
+                scc.setParameters(tag, tag);
+            }
+            sc.addAnd("storageTags", Op.SC, scc);
+            }
     }
 
     @Override

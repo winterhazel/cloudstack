@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +38,13 @@ import com.cloud.configuration.Resource;
 import com.cloud.hypervisor.Hypervisor;
 import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.VMTemplateVO;
+import com.cloud.storage.Volume;
+import com.cloud.storage.VolumeApiService;
+import com.cloud.storage.VolumeApiServiceImpl;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VMTemplateDao;
+import com.cloud.storage.dao.VolumeDao;
 import com.cloud.user.ResourceLimitService;
 import com.cloud.user.dao.AccountDao;
 import org.apache.cloudstack.api.BaseCmd.HTTPMethod;
@@ -51,6 +56,7 @@ import org.apache.cloudstack.backup.BackupVO;
 import org.apache.cloudstack.backup.dao.BackupDao;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
+import org.apache.cloudstack.framework.config.ConfigKey;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,6 +75,7 @@ import com.cloud.exception.InsufficientAddressCapacityException;
 import com.cloud.exception.InsufficientCapacityException;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.exception.ResourceUnavailableException;
+import com.cloud.exception.ResourceAllocationException;
 import com.cloud.network.NetworkModel;
 import com.cloud.network.dao.NetworkDao;
 import com.cloud.network.dao.NetworkVO;
@@ -164,6 +171,18 @@ public class UserVmManagerImplTest {
 
     @Mock
     BackupDao backupDao;
+
+    @Mock
+    VolumeDao volumeDaoMock;
+
+    @Mock
+    VMInstanceVO vmInstanceMock;
+
+    @Mock
+    VolumeApiService volumeApiServiceMock;
+
+    @Mock
+    VolumeVO volumeVOMock;
 
     private long vmId = 1l;
 
@@ -613,5 +632,64 @@ public class UserVmManagerImplTest {
         Mockito.when(newRootDiskOffering.getMaxIops()).thenReturn(offeringMaxIops);
         Mockito.when(newRootDiskOffering.getName()).thenReturn("OfferingName");
         return newRootDiskOffering;
+    }
+
+    private void updateRootDiskIfItWasNotOverriddenTest(long currentServiceOfferingId, long currentRootDiskOfferingId, int times) throws ResourceAllocationException {
+        ServiceOfferingVO currentServiceOfferingVO = Mockito.mock(ServiceOfferingVO.class);
+        DiskOfferingVO currentRootDiskOffering = Mockito.mock(DiskOfferingVO.class);
+        DiskOfferingVO newRootDiskOffering = Mockito.mock(DiskOfferingVO.class);
+
+        Mockito.doReturn(newRootDiskOffering, currentRootDiskOffering).when(diskOfferingDao).findById(anyLong());
+        Mockito.when(volumeDaoMock.findReadyAndAllocatedRootVolumesByInstance(anyLong())).thenReturn(Arrays.asList(Mockito.mock(VolumeVO.class)));
+
+        userVmManagerImpl.updateRootDiskIfItWasNotOverridden(vmInstanceMock, serviceOfferingVO, currentServiceOfferingVO);
+        Mockito.verify(userVmManagerImpl, Mockito.times(times)).prepareResizeVolumeCmd(any(VolumeVO.class), any(DiskOfferingVO.class), any(DiskOfferingVO.class));
+    }
+
+    @Test
+    public void updateRootDiskIfItWasNotOverriddenTestDoNotUpdateRootDisk() throws ResourceAllocationException {
+        Mockito.doReturn(false).when(userVmManagerImpl).shouldValidateStorageTags(Mockito.any(VolumeVO.class), Mockito.any(ServiceOfferingVO.class));
+        updateRootDiskIfItWasNotOverriddenTest(1l, 2l, 0);
+    }
+
+    @Test
+    public void updateRootDiskIfItWasNotOverriddenTestUpdateRootDisk() throws ResourceAllocationException {
+        Mockito.doReturn(true).when(userVmManagerImpl).shouldValidateStorageTags(Mockito.any(VolumeVO.class), Mockito.any(ServiceOfferingVO.class));
+        Mockito.doReturn(Mockito.mock(Volume.class)).when(volumeApiServiceMock).resizeVolume(any());
+        updateRootDiskIfItWasNotOverriddenTest(1l, 1l, 1);
+    }
+
+    @Test
+    public void shouldValidateStorageTagsTestMatchStoragePoolTagsWithDiskOfferingFalse() {
+        boolean value = false;
+        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
+        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
+        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
+        boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
+        assertFalse(result);
+    }
+
+    @Test
+    public void shouldValidateStorageTagsTestCurrentRootDiskEqualToCurrentServiceOffering() {
+        Mockito.when(volumeVOMock.getDiskOfferingId()).thenReturn(1l);
+        Mockito.when(serviceOfferingVO.getId()).thenReturn(1l);
+        boolean value = true;
+        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
+        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
+        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
+        boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
+        assertTrue(result);
+    }
+
+    @Test
+    public void shouldValidateStorageTagsTestCurrentRootDiskNotEqualToCurrentServiceOffering() {
+        Mockito.when(volumeVOMock.getDiskOfferingId()).thenReturn(1l);
+        Mockito.when(serviceOfferingVO.getId()).thenReturn(2l);
+        boolean value = true;
+        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
+        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
+        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
+        boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
+        assertFalse(result);
     }
 }
