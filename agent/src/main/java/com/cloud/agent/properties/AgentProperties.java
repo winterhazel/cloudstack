@@ -683,6 +683,14 @@ public class AgentProperties {
      */
     public static final Property<String> MOUNT_PATH = new Property<String>("mount.path", "/mnt");
 
+    /**
+     * Time (in milliseconds) to wait before assuming the VM was unable to detach a volume after the hypervisor sends the detach command.<br>
+     * This property is for KVM only.
+     * Data type: Long.<br>
+     * Default value: <code>10000l</code>
+     */
+    public static final Property<Long> WAIT_DETACH_DEVICE = new Property<Long>("wait.detach.device", 10000l);
+
     public static class Property<T> {
         private String name;
         private T defaultValue;
