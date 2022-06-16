@@ -26,6 +26,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.cloudstack.backup.BackupOffering;
 import org.junit.Assert;
@@ -81,5 +82,27 @@ public class VeeamClientTest {
         verify(getRequestedFor(urlMatching(".*/jobs")));
         Assert.assertEquals(policies.size(), 1);
         Assert.assertEquals(policies.get(0).getName(), "ZONE1-GOLD");
+    }
+
+    @Test
+    public void removeDashesIfDatastoreNameIsUuidTestValidUuid() {
+        String validUuid = UUID.randomUUID().toString();
+        String expected = validUuid.replace("-","");
+        String result = client.removeDashesIfDatastoreNameIsUuid(validUuid);
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test
+    public void removeDashesIfDatastoreNameIsUuidTestNameWithDashesButIsNotUuid() {
+        String datastore = UUID.randomUUID().toString() + "-test-extra-name";
+        String result = client.removeDashesIfDatastoreNameIsUuid(datastore);
+        Assert.assertEquals(datastore, result);
+    }
+
+    @Test
+    public void removeDashesIfDatastoreNameIsUuidTestNotUuidName() {
+        String name = "simple-datastore-name";
+        String result = client.removeDashesIfDatastoreNameIsUuid(name);
+        Assert.assertEquals(name, result);
     }
 }

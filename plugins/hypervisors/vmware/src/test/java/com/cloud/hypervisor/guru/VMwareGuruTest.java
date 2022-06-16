@@ -1,7 +1,13 @@
 package com.cloud.hypervisor.guru;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.ArrayList;
 import java.util.Date;
 
+import org.apache.cloudstack.backup.Backup;
+import org.apache.cloudstack.backup.Backup.VolumeInfo;
 import org.apache.cloudstack.backup.BackupVO;
 import org.apache.log4j.Logger;
 import org.junit.Assert;
@@ -15,6 +21,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.cloud.hypervisor.vmware.mo.VirtualMachineMO;
 import com.cloud.storage.VolumeApiService;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.VolumeDao;
@@ -146,5 +153,36 @@ public class VMwareGuruTest {
         guru.detachVolume(vmInstanceVO, virtualDisk, backupVO);
         Mockito.verify(volumeService, Mockito.times(1)).detachVolumeFromVM(Mockito.any());
         Mockito.verify(logger, Mockito.times(1)).debug("Volume [uuid: 123] detached with success from VM [uuid: 1234, name: test1], during the backup restore process (as this volume does not exist in the metadata of backup [uuid: 321]).");
+    }
+
+    @Test
+    public void findRestoredVolumeTestNotFindRestoredVolume() throws Exception {
+        VirtualMachineMO vmInstanceVO = Mockito.mock(VirtualMachineMO.class);
+        VolumeInfo volumeInfo = Mockito.mock(Backup.VolumeInfo.class);
+        Mockito.when(volumeInfo.getSize()).thenReturn(52l);
+        Mockito.when(vmInstanceVO.getVirtualDisks()).thenReturn(new ArrayList<>());
+        try {
+            guru.findRestoredVolume(volumeInfo, vmInstanceVO, null, 0);
+        } catch (Exception e) {
+            assertEquals("Volume to restore could not be found", e.getMessage());
+        }
+    }
+
+    @Test
+    public void findRestoredVolumeTestFindRestoredVolume() throws Exception {
+        VolumeInfo volumeInfo = Mockito.mock(Backup.VolumeInfo.class);
+        VirtualMachineMO vmInstanceVO = Mockito.mock(VirtualMachineMO.class);
+        VirtualDisk virtualDisk = Mockito.mock(VirtualDisk.class);
+        VirtualDiskFlatVer2BackingInfo info = Mockito.mock(VirtualDiskFlatVer2BackingInfo.class);
+        ArrayList<VirtualDisk> disks = new ArrayList<>();
+        disks.add(virtualDisk);
+        Mockito.when(volumeInfo.getSize()).thenReturn(52l);
+        Mockito.when(virtualDisk.getCapacityInBytes()).thenReturn(52l);
+        Mockito.when(info.getFileName()).thenReturn("test.vmdk");
+        Mockito.when(virtualDisk.getBacking()).thenReturn(info);
+        Mockito.when(virtualDisk.getUnitNumber()).thenReturn(1);
+        Mockito.when(vmInstanceVO.getVirtualDisks()).thenReturn(disks);
+        VirtualDisk findRestoredVolume = guru.findRestoredVolume(volumeInfo, vmInstanceVO, "test", 1);
+        assertNotNull(findRestoredVolume);
     }
 }

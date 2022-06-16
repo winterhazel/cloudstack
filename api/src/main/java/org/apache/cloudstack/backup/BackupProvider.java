@@ -91,7 +91,7 @@ public interface BackupProvider {
     /**
      * Restore a volume from a backup
      */
-    Pair<Boolean, String> restoreBackedUpVolume(Backup backup, String volumeUuid, String host, String dataStoreUuid);
+    Pair<Boolean, String> restoreBackedUpVolume(Backup backup, String volumeUuid, String host, String dataStore, VirtualMachine vm);
 
     /**
      * Returns backup metrics for a list of VMs in a zone

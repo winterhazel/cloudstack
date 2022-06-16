@@ -36,7 +36,9 @@ import org.apache.cloudstack.backup.veeam.VeeamClient;
 import org.apache.cloudstack.backup.veeam.api.Job;
 import org.apache.cloudstack.framework.config.ConfigKey;
 import org.apache.cloudstack.framework.config.Configurable;
+import org.apache.cloudstack.utils.volume.VirtualMachineDiskInfo;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
@@ -46,6 +48,7 @@ import com.cloud.hypervisor.vmware.VmwareDatacenter;
 import com.cloud.hypervisor.vmware.VmwareDatacenterZoneMap;
 import com.cloud.hypervisor.vmware.dao.VmwareDatacenterDao;
 import com.cloud.hypervisor.vmware.dao.VmwareDatacenterZoneMapDao;
+import com.cloud.serializer.GsonHelper;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.VolumeDao;
 import com.cloud.utils.Pair;
@@ -62,6 +65,7 @@ import com.google.gson.Gson;
 public class VeeamBackupProvider extends AdapterBase implements BackupProvider, Configurable {
 
     private static final Logger LOG = Logger.getLogger(VeeamBackupProvider.class);
+    private static final Gson GSON = GsonHelper.getGson();
     public static final String BACKUP_IDENTIFIER = "-CSBKP-";
 
     public ConfigKey<String> VeeamUrl = new ConfigKey<>("Advanced", String.class,
@@ -242,10 +246,31 @@ public class VeeamBackupProvider extends AdapterBase implements BackupProvider, 
     }
 
     @Override
-    public Pair<Boolean, String> restoreBackedUpVolume(Backup backup, String volumeUuid, String host, String dataStoreUuid) {
+    public Pair<Boolean, String> restoreBackedUpVolume(Backup backup, String volumeUuid, String host, String dataStore, VirtualMachine vm) {
+        Pair<Boolean, String> result = new Pair<>(false, "");
         final Long zoneId = backup.getZoneId();
         final String restorePointId = backup.getExternalId();
-        return getClient(zoneId).restoreVMToDifferentLocation(restorePointId, host, dataStoreUuid);
+
+        VMInstanceVO vmVO = vmInstanceDao.findById(backup.getVmId());
+        VolumeVO volumeVO = volumeDao.findByUuid(volumeUuid);
+        long totalDeviceIds = volumeDao.findByInstance(vm.getId()).stream().mapToLong(VolumeVO::getDeviceId).max().orElse(0L);
+        long newDeviceId = totalDeviceIds + 1;
+        LOG.debug(String.format("VM [%s] has [%s] deviceIds. Trying to restore volume [%s] using restorePoint [%s] and with [%s] as the new deviceId.", vm.getUuid(),
+                totalDeviceIds, volumeUuid, restorePointId, newDeviceId));
+
+        VirtualMachineDiskInfo fromJson = GSON.fromJson(volumeVO.getChainInfo(), VirtualMachineDiskInfo.class);
+        String type = fromJson.getControllerFromDeviceBusName().toUpperCase();
+        String virtualDeviceNode = StringUtils.substringAfter(fromJson.getDiskDeviceBusName(), ":");
+        for (String name : fromJson.getDiskChain()) {
+            String diskName = StringUtils.substringAfter(name, "/");
+            try {
+                result = getClient(zoneId).restoreVolume(volumeUuid, vmVO.getUuid(), restorePointId, host, dataStore, type, virtualDeviceNode, diskName, newDeviceId, vm);
+            } catch (Exception e) {
+                LOG.error(String.format("Failed to restore volume [%s] in VM [%s], with type [%s], node [%s] and disk name [%s], using target host [%s] and datastore [%s] due to [%s].",
+                        volumeUuid, vmVO.getUuid(), type, virtualDeviceNode, diskName, host, dataStore, e.getMessage()), e);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -356,7 +381,7 @@ public class VeeamBackupProvider extends AdapterBase implements BackupProvider, 
             for (VolumeVO vol : vmVolumes) {
                 list.add(new Backup.VolumeInfo(vol.getUuid(), vol.getPath(), vol.getVolumeType(), vol.getSize(), vol.getDeviceId()));
             }
-            return new Gson().toJson(list.toArray(), Backup.VolumeInfo[].class);
+            return GSON.toJson(list.toArray(), Backup.VolumeInfo[].class);
         } catch (Exception e) {
             if (CollectionUtils.isEmpty(vmVolumes) || vmVolumes.get(0).getInstanceId() == null) {
                 LOG.error(String.format("Failed to create VolumeInfo of VM [id: null] volumes due to: [%s].", e.getMessage()), e);
