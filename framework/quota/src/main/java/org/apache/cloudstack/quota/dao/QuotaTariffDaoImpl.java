@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.cloudstack.quota.constant.QuotaTypes;
 import org.apache.cloudstack.quota.vo.QuotaTariffVO;
@@ -167,32 +168,44 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
     @Override
     public Pair<List<QuotaTariffVO>, Integer> listQuotaTariffs(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listAll, boolean listOnlyRemoved,
             Long startIndex, Long pageSize) {
-        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchCriteria(startDate, endDate, usageType, name, uuid, listOnlyRemoved);
+        Set<Integer> types = null;
+        if (usageType != null) {
+            types = Set.of(usageType);
+        }
+
+        return listQuotaTariffs(startDate, endDate, types, name, uuid, listAll, listOnlyRemoved, startIndex, pageSize);
+    }
+
+    @Override
+    public Pair<List<QuotaTariffVO>, Integer> listQuotaTariffs(Date startDate, Date endDate, Set<Integer> usageTypes, String name, String uuid, boolean listAll,
+                                                               boolean listOnlyRemoved, Long startIndex, Long pageSize) {
+        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchCriteria(startDate, endDate, usageTypes, name, uuid, listOnlyRemoved);
         Filter sorter = new Filter(QuotaTariffVO.class, "usageType", false, startIndex, pageSize);
         sorter.addOrderBy(QuotaTariffVO.class, "effectiveOn", false);
         sorter.addOrderBy(QuotaTariffVO.class, "updatedOn", false);
 
-        return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<Pair<List<QuotaTariffVO>, Integer>>() {
-            @Override
-            public Pair<List<QuotaTariffVO>, Integer> doInTransaction(final TransactionStatus status) {
-                return searchAndCount(searchCriteria, sorter, listAll);
-            }
-        });
+        return Transaction.execute(TransactionLegacy.USAGE_DB, (TransactionCallback<Pair<List<QuotaTariffVO>, Integer>>) status -> searchAndCount(searchCriteria, sorter, listAll));
     }
 
-    protected SearchCriteria<QuotaTariffVO> createListQuotaTariffsSearchCriteria(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listOnlyRemoved) {
-        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchBuilder(startDate, endDate, usageType, name, uuid, listOnlyRemoved).create();
+    protected SearchCriteria<QuotaTariffVO> createListQuotaTariffsSearchCriteria(Date startDate, Date endDate, Set<Integer> usageTypes, String name, String uuid,
+                                                                                 boolean listOnlyRemoved) {
+        SearchCriteria<QuotaTariffVO> searchCriteria = createListQuotaTariffsSearchBuilder(startDate, endDate, usageTypes, name, uuid, listOnlyRemoved).create();
 
         searchCriteria.setParametersIfNotNull("start_date", startDate);
         searchCriteria.setParametersIfNotNull("end_date", endDate);
-        searchCriteria.setParametersIfNotNull("usage_type", usageType);
+
+        if (usageTypes != null) {
+            searchCriteria.setParameters("usage_type", usageTypes.toArray());
+        }
+
         searchCriteria.setParametersIfNotNull("name", name);
         searchCriteria.setParametersIfNotNull("uuid", uuid);
 
         return searchCriteria;
     }
 
-    protected SearchBuilder<QuotaTariffVO> createListQuotaTariffsSearchBuilder(Date startDate, Date endDate, Integer usageType, String name, String uuid, boolean listOnlyRemoved) {
+    protected SearchBuilder<QuotaTariffVO> createListQuotaTariffsSearchBuilder(Date startDate, Date endDate, Set<Integer> usageTypes, String name, String uuid,
+                                                                               boolean listOnlyRemoved) {
         SearchBuilder<QuotaTariffVO> searchBuilder = createSearchBuilder();
 
         if (startDate != null) {
@@ -203,8 +216,8 @@ public class QuotaTariffDaoImpl extends GenericDaoBase<QuotaTariffVO, Long> impl
             searchBuilder.and("end_date", searchBuilder.entity().getEndDate(), SearchCriteria.Op.LTEQ);
         }
 
-        if (usageType != null) {
-            searchBuilder.and("usage_type", searchBuilder.entity().getUsageType(), SearchCriteria.Op.EQ);
+        if (usageTypes != null) {
+            searchBuilder.and("usage_type", searchBuilder.entity().getUsageType(), SearchCriteria.Op.IN);
         }
 
         if (name != null) {
