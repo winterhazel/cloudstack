@@ -117,14 +117,18 @@ import com.cloud.storage.Storage;
 import com.cloud.storage.Storage.ImageFormat;
 import com.cloud.storage.StorageManager;
 import com.cloud.storage.StoragePool;
+import com.cloud.storage.VMTemplateStoragePoolVO;
 import com.cloud.storage.VMTemplateStorageResourceAssoc;
+import com.cloud.storage.VMTemplateVO;
 import com.cloud.storage.Volume;
 import com.cloud.storage.Volume.Type;
 import com.cloud.storage.VolumeApiService;
 import com.cloud.storage.VolumeDetailVO;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.SnapshotDao;
+import com.cloud.storage.dao.VMTemplateDao;
 import com.cloud.storage.dao.VMTemplateDetailsDao;
+import com.cloud.storage.dao.VMTemplatePoolDao;
 import com.cloud.storage.dao.VolumeDao;
 import com.cloud.storage.dao.VolumeDetailsDao;
 import com.cloud.template.TemplateManager;
@@ -167,7 +171,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         full, linked
     }
 
-    private static final Logger s_logger = Logger.getLogger(VolumeOrchestrator.class);
+    protected static Logger s_logger = Logger.getLogger(VolumeOrchestrator.class);
 
     @Inject
     EntityManager _entityMgr;
@@ -229,6 +233,10 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     private SecondaryStorageVmDao secondaryStorageVmDao;
     @Inject
     VolumeApiService _volumeApiService;
+    @Inject
+    VMTemplatePoolDao templateStoragePoolDao;
+    @Inject
+    VMTemplateDao tmpltDao;
 
     @Inject
     protected SnapshotHelper snapshotHelper;
@@ -1233,6 +1241,9 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 }
                 throw new StorageUnavailableException(msg, destPool.getId());
             } else {
+                if (vol.getTemplateId() != null) {
+                    copyTemplateOfVolumeToNewStoragePool(destPool, vol, dataStoreTarget);
+                }
                 // update the volumeId for snapshots on secondary
                 if (!_snapshotDao.listByVolumeId(vol.getId()).isEmpty()) {
                     _snapshotDao.updateVolumeIds(vol.getId(), result.getVolume().getId());
@@ -1245,6 +1256,21 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             s_logger.error(msg, e);
             throw new CloudRuntimeException(msg, e);
         }
+    }
+
+    protected void copyTemplateOfVolumeToNewStoragePool(StoragePool destPool, VolumeInfo vol, DataStore dataStoreTarget) {
+       VMTemplateStoragePoolVO templateInDestPool = templateStoragePoolDao.findByPoolTemplate(destPool.getId(), vol.getTemplateId(), null);
+       if (templateInDestPool != null) {
+           s_logger.trace(String.format("Tempalte [%s] used by volume [%s] already exist in storage pool [%s]. We do not need to copy it.", vol.getTemplateId(), vol.getUuid(), destPool.getUuid()));
+           return;
+       }
+       VMTemplateVO templateToCopy = tmpltDao.findById(vol.getTemplateId());
+       try {
+           s_logger.debug(String.format("Template [%s] used by volume [%s] does not exist in storage pool [%s]. Copying it to this storage.", vol.getTemplateId(), vol.getUuid(), destPool.getUuid()));
+           _tmpltMgr.prepareTemplateForCreate(templateToCopy, (StoragePool) dataStoreTarget);
+       } catch (Exception e) {
+           s_logger.error(String.format("Failed to copy template [%s], used by volume [%s], to storage pool [%s] due to [%s].", templateToCopy.getUuid(), vol.getUuid(), destPool.getUuid(), e.getMessage()), e);
+       }
     }
 
     @Override
