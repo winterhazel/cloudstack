@@ -17,6 +17,7 @@
 
 package org.apache.cloudstack.backup;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.cloudstack.acl.ControlledEntity;
@@ -60,11 +61,11 @@ public interface Backup extends ControlledEntity, InternalIdentity, Identity {
 
     class RestorePoint {
         private String id;
-        private String created;
+        private Date created;
         private String type;
         private List<String> paths;
 
-        public RestorePoint(String id, String created, String type, List<String> paths) {
+        public RestorePoint(String id, Date created, String type, List<String> paths) {
             this.id = id;
             this.created = created;
             this.type = type;
@@ -79,11 +80,11 @@ public interface Backup extends ControlledEntity, InternalIdentity, Identity {
             this.id = id;
         }
 
-        public String getCreated() {
-            return created;
+        public Date getCreated() {
+            return this.created;
         }
 
-        public void setCreated(String created) {
+        public void setCreated(Date created) {
             this.created = created;
         }
 
@@ -156,7 +157,7 @@ public interface Backup extends ControlledEntity, InternalIdentity, Identity {
     long getVmId();
     String getExternalId();
     String getType();
-    String getDate();
+    Date getDate();
     Backup.Status getStatus();
     Long getSize();
     Long getProtectedSize();

@@ -28,6 +28,11 @@ WHERE so.default_use = 1 AND so.vm_type IN ('domainrouter', 'secondarystoragevm'
 ALTER TABLE `cloud`.`load_balancing_rules`
     ADD cidr_list VARCHAR(4096);
 
+-- Drop all backup records and change date column type to DATETIME. The data will be resynchronized automatically later;
+DELETE FROM `cloud`.`backups`
+WHERE 1;
 
+ALTER TABLE `cloud`.`backups`
+MODIFY COLUMN `date` DATETIME;
 
 
