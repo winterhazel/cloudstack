@@ -28,11 +28,13 @@ import org.apache.cloudstack.api.command.QuotaTariffUpdateCmd;
 import org.apache.cloudstack.quota.vo.QuotaBalanceVO;
 import org.apache.cloudstack.quota.vo.QuotaTariffVO;
 import org.apache.cloudstack.quota.vo.QuotaUsageVO;
+import org.apache.cloudstack.quota.vo.ResourcesToQuoteVo;
 
 import java.util.Date;
 import java.util.List;
 
 import com.cloud.utils.Pair;
+import org.apache.cloudstack.quota.vo.ResourcesQuotingResultResponse;
 
 public interface QuotaResponseBuilder {
 
@@ -67,4 +69,12 @@ public interface QuotaResponseBuilder {
     boolean deleteQuotaTariff(String quotaTariffUuid);
 
     Pair<List<QuotaCreditsResponse>, Integer> createQuotaCreditsListResponse(QuotaCreditsListCmd cmd);
+
+    /**
+     * Quotes the resources based in the current valid Quota tariffs.
+     * @param resourcesToQuoteAsJson String containing the resources to be quoted. This string will be converted to a list of
+     * {@link ResourcesToQuoteVo} with Gson.
+     * @return a list of {@link ResourcesQuotingResultResponse}, containing the total of each quoting.
+     */
+    List<ResourcesQuotingResultResponse> quoteResources(String resourcesToQuoteAsJson);
 }

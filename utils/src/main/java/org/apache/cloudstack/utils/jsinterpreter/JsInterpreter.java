@@ -70,7 +70,7 @@ public class JsInterpreter implements Closeable {
         try {
             interpreter = future.get(this.timeout, defaultTimeUnit);
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
-            String message = String.format("Unable to instantiate JS interpreter [%s] due to [%s]", interpreterName, e.getMessage());
+            String message = String.format("Unable to instantiate JS interpreter [%s] due to [%s].", interpreterName, e.getMessage());
 
             if (e instanceof TimeoutException) {
                 message = String.format("Instantiation of JS interpreter [%s] took too long and timed out. %s", interpreterName, timeoutDefaultMessage);
@@ -175,16 +175,25 @@ public class JsInterpreter implements Closeable {
      * @return The result of the executed code.
      */
     public Object executeScript(String script) {
-        logger.trace(String.format("Adding JSON convertions [%s] before executing user's script [%s].", valuesToConvertToJsonBeforeExecutingTheCode, script));
+        logger.trace(String.format("Adding JSON conversions [%s] before executing user's script [%s].", valuesToConvertToJsonBeforeExecutingTheCode, script));
 
         script = String.format("%s %s", valuesToConvertToJsonBeforeExecutingTheCode, script);
         valuesToConvertToJsonBeforeExecutingTheCode = "";
 
-        logger.debug(String.format("Executing script [%s].", script));
+        if (logger.isTraceEnabled()) {
+            logger.trace(String.format("Executing user's JS script [%s].", script));
+        } else {
+            logger.debug("Executing user's JS script.");
+        }
 
         Object result = executeScriptInThread(script);
 
-        logger.debug(String.format("The script [%s] had the following result: [%s].", script, result));
+        if (logger.isTraceEnabled()) {
+            logger.debug(String.format("The script [%s] had the following result: [%s].", script, result));
+        } else {
+            logger.debug(String.format("The script had the following result: [%s].", result));
+        }
+
         return result;
     }
 
@@ -202,7 +211,7 @@ public class JsInterpreter implements Closeable {
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             interpreter.terminateExecution();
 
-            String message = String.format("Unable to execute script [%s] due to [%s]", script, e.getMessage());
+            String message = String.format("Failed to execute script [%s] due to [%s]", script, e.getMessage());
 
             if (e instanceof TimeoutException) {
                 message = String.format("Execution of script [%s] took too long and timed out. %s", script, timeoutDefaultMessage);

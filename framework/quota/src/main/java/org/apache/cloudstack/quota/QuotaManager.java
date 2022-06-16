@@ -18,6 +18,11 @@ package org.apache.cloudstack.quota;
 
 import com.cloud.user.AccountVO;
 import com.cloud.utils.component.Manager;
+import org.apache.cloudstack.quota.vo.ResourcesQuotingResultResponse;
+import org.apache.cloudstack.quota.vo.ResourcesToQuoteVo;
+
+import java.util.List;
+import java.util.Set;
 
 public interface QuotaManager extends Manager {
 
@@ -25,4 +30,5 @@ public interface QuotaManager extends Manager {
 
     boolean isLockable(AccountVO account);
 
+    List<ResourcesQuotingResultResponse> quoteResources(List<ResourcesToQuoteVo> resourcesToQuote, Set<Integer> usageTypes);
 }

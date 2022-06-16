@@ -260,6 +260,6 @@ public class QuotaTariffVO implements InternalIdentity {
     }
 
     public String toString() {
-        return ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "uuid", "name", "effectiveOn", "endDate");
+        return ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "uuid", "name", "usageName", "effectiveOn", "endDate");
     };
 }
