@@ -65,6 +65,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.NDC;
 import org.joda.time.Duration;
@@ -778,6 +779,8 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
         boolean managed = cmd.isManaged();
         String poolUUID = cmd.getPoolUuid();
         String chainInfo = cmd.getChainInfo();
+        Long newMinIops = cmd.getNewMinIops();
+        Long newMaxIops = cmd.getNewMaxIops();
         boolean useWorkerVm = false;
 
         VmwareContext context = getServiceContext();
@@ -792,7 +795,7 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                         oldSize / Float.valueOf(ResourceType.bytesToMiB), newSize / Float.valueOf(ResourceType.bytesToMiB), vmName);
                 s_logger.error(errorMsg);
                 throw new Exception(errorMsg);
-            } else if (newSize == oldSize) {
+            } else if (newSize == oldSize && ObjectUtils.allNull(newMaxIops, newMinIops)) {
                 return new ResizeVolumeAnswer(cmd, true, "success", newSize * ResourceType.bytesToKiB);
             }
 
@@ -879,6 +882,14 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
             boolean datastoreChangeObserved = false;
 
             StorageIOAllocationInfo limitIops = vdisk.first().getStorageIOAllocation();
+            if (ObjectUtils.allNotNull(newMinIops, newMaxIops)) {
+                Long iops = newMinIops + newMaxIops;
+                s_logger.debug(LogUtils.logGsonWithoutException("Adding [%s] as the new IOPS limit of disk [%s].", iops, vdisk.first()));
+                StorageIOAllocationInfo newIops = new StorageIOAllocationInfo();
+                newIops.setLimit(iops);
+                limitIops = newIops;
+            }
+
             Pair<String, String> pathAndChainInfo = getNewPathAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
             Pair<String, String> poolUUIDandChainInfo = getNewPoolUUIDAndChainInfoInDatastoreCluster(vmMo, path, chainInfo, managed, cmd.get_iScsiName(), poolUUID, cmd.getContextParam(DiskTO.PROTOCOL_TYPE));
 
@@ -4880,6 +4891,28 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 VirtualDisk[] disks = vmMo.getAllDiskDevice();
                 for (VirtualDisk disk : disks)
                     if (disk.getKey() == diskId) {
+                        if (cmd.getNewIops() != null) {
+                            String vmwareDocumentation = "https://kb.vmware.com/s/article/68164";
+                            Long newIops = cmd.getNewIops();
+                            try {
+                                s_logger.debug(LogUtils.logGsonWithoutException("Trying to change disk [%s] IOPS to [%s].", disk, newIops));
+                                VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
+                                VirtualDeviceConfigSpec deviceConfigSpec = new VirtualDeviceConfigSpec();
+
+                                StorageIOAllocationInfo storageIOAllocation = new StorageIOAllocationInfo();
+                                storageIOAllocation.setLimit(newIops);
+                                disk.setStorageIOAllocation(storageIOAllocation);
+
+                                deviceConfigSpec.setDevice(disk);
+                                deviceConfigSpec.setOperation(VirtualDeviceConfigSpecOperation.EDIT);
+                                vmConfigSpec.getDeviceChange().add(deviceConfigSpec);
+                                vmMo.configureVm(vmConfigSpec);
+                            } catch (Exception e) {
+                                s_logger.error(LogUtils.logGsonWithoutException("Failed to change disk [%s] IOPS to [%s] due to [%s]. This happens "
+                                        + "when the disk controller is IDE. Please read this documentation for more information: [%s]. ", disk, newIops,
+                                        e.getMessage(), vmwareDocumentation), e);
+                            }
+                        }
                         volumePath = vmMo.getVmdkFileBaseName(disk);
                     }
             }
