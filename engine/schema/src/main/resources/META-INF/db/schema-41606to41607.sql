@@ -16,7 +16,7 @@
 -- under the License.
 
 --;
--- Schema upgrade from 4.16.0.5 to 4.16.0.6
+-- Schema upgrade from 4.16.0.6 to 4.16.0.7
 --;
 
 -- Enable CPU cap for default system offerings;
