@@ -2110,6 +2110,10 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
 
         setIdsListToSearchCriteria(sc, ids);
 
+        if (!_accountMgr.isRootAdmin(caller.getId())) {
+            sc.setParameters("systemUse", 1);
+        }
+
         if (tags != null && !tags.isEmpty()) {
             SearchCriteria<VolumeJoinVO> tagSc = _volumeJoinDao.createSearchCriteria();
             for (String key : tags.keySet()) {
@@ -2160,7 +2164,6 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
         if (state != null) {
             sc.setParameters("state", state);
         } else if (!_accountMgr.isAdmin(caller.getId())) {
-            sc.setParameters("systemUse", 1);
             sc.setParameters("stateNEQ", Volume.State.Expunged);
         }
 
