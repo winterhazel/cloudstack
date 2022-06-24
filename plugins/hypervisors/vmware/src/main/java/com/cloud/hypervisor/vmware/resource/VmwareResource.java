@@ -4891,30 +4891,31 @@ public class VmwareResource implements StoragePoolResource, ServerResource, Vmwa
                 VirtualDisk[] disks = vmMo.getAllDiskDevice();
                 for (VirtualDisk disk : disks)
                     if (disk.getKey() == diskId) {
-                        if (cmd.getNewIops() != null) {
-                            String vmwareDocumentation = "https://kb.vmware.com/s/article/68164";
-                            Long newIops = cmd.getNewIops();
-                            try {
-                                s_logger.debug(LogUtils.logGsonWithoutException("Trying to change disk [%s] IOPS to [%s].", disk, newIops));
-                                VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
-                                VirtualDeviceConfigSpec deviceConfigSpec = new VirtualDeviceConfigSpec();
-
-                                StorageIOAllocationInfo storageIOAllocation = new StorageIOAllocationInfo();
-                                storageIOAllocation.setLimit(newIops);
-                                disk.setStorageIOAllocation(storageIOAllocation);
-
-                                deviceConfigSpec.setDevice(disk);
-                                deviceConfigSpec.setOperation(VirtualDeviceConfigSpecOperation.EDIT);
-                                vmConfigSpec.getDeviceChange().add(deviceConfigSpec);
-                                vmMo.configureVm(vmConfigSpec);
-                            } catch (Exception e) {
-                                s_logger.error(LogUtils.logGsonWithoutException("Failed to change disk [%s] IOPS to [%s] due to [%s]. This happens "
-                                        + "when the disk controller is IDE. Please read this documentation for more information: [%s]. ", disk, newIops,
-                                        e.getMessage(), vmwareDocumentation), e);
-                            }
-                        }
                         volumePath = vmMo.getVmdkFileBaseName(disk);
                     }
+            }
+            if (cmd.getNewIops() != null) {
+                String vmwareDocumentation = "https://kb.vmware.com/s/article/68164";
+                Long newIops = cmd.getNewIops();
+                VirtualDisk disk = vmMo.getDiskDevice(volumePath, true).first();
+                try {
+                    s_logger.debug(LogUtils.logGsonWithoutException("Trying to change disk [%s] IOPS to [%s].", disk, newIops));
+                    VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
+                    VirtualDeviceConfigSpec deviceConfigSpec = new VirtualDeviceConfigSpec();
+
+                    StorageIOAllocationInfo storageIOAllocation = new StorageIOAllocationInfo();
+                    storageIOAllocation.setLimit(newIops);
+                    disk.setStorageIOAllocation(storageIOAllocation);
+
+                    deviceConfigSpec.setDevice(disk);
+                    deviceConfigSpec.setOperation(VirtualDeviceConfigSpecOperation.EDIT);
+                    vmConfigSpec.getDeviceChange().add(deviceConfigSpec);
+                    vmMo.configureVm(vmConfigSpec);
+                } catch (Exception e) {
+                    s_logger.error(LogUtils.logGsonWithoutException("Failed to change disk [%s] IOPS to [%s] due to [%s]. This happens "
+                            + "when the disk controller is IDE. Please read this documentation for more information: [%s]. ", disk, newIops,
+                            e.getMessage(), vmwareDocumentation), e);
+                }
             }
             VirtualMachineDiskInfoBuilder diskInfoBuilder = vmMo.getDiskInfoBuilder();
             chainInfo = _gson.toJson(diskInfoBuilder.getDiskInfoByBackingFileBaseName(volumePath, targetDsMo.getName()));
