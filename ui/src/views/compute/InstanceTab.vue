@@ -33,31 +33,8 @@
         <router-link :to="{ path: '/iso/' + vm.isoid }">{{ vm.isoname }}</router-link> <br/>
         <a-icon type="barcode"/> {{ vm.isoid }}
       </a-tab-pane>
-      <a-tab-pane :tab="$t('label.volumes')" key="volumes" v-if="'listVolumes' in $store.getters.apis">
-        <a-table
-          class="table"
-          size="small"
-          :columns="volumeColumns"
-          :dataSource="volumes"
-          :rowKey="item => item.id"
-          :pagination="false"
-        >
-          <template slot="name" slot-scope="text, item">
-            <a-icon type="hdd" />
-            <router-link :to="{ path: '/volume/' + item.id }">
-              {{ text }}
-            </router-link>
-            <a-tag v-if="item.provisioningtype">
-              {{ item.provisioningtype }}
-            </a-tag>
-          </template>
-          <template slot="state" slot-scope="text">
-            <status :text="text ? text : ''" />{{ text }}
-          </template>
-          <template slot="size" slot-scope="text, item">
-            {{ parseFloat(item.size / (1024.0 * 1024.0 * 1024.0)).toFixed(2) }} GB
-          </template>
-        </a-table>
+      <a-tab-pane :tab="$t('label.volumes')" key="volumes">
+        <VolumesTab :resource="vm" :items="volumes" :loading="loading" />
       </a-tab-pane>
       <a-tab-pane :tab="$t('label.nics')" key="nics" v-if="'listNics' in $store.getters.apis">
         <a-button
@@ -304,7 +281,6 @@
 import { api } from '@/api'
 import { mixinDevice } from '@/utils/mixin.js'
 import ResourceLayout from '@/layouts/ResourceLayout'
-import Status from '@/components/widgets/Status'
 import DetailsTab from '@/components/view/DetailsTab'
 import StatsTab from '@/components/view/StatsTab'
 import DetailSettings from '@/components/view/DetailSettings'
@@ -313,6 +289,7 @@ import ListResourceTable from '@/components/view/ListResourceTable'
 import TooltipButton from '@/components/widgets/TooltipButton'
 import ResourceIcon from '@/components/view/ResourceIcon'
 import AnnotationsTab from '@/components/view/AnnotationsTab'
+import VolumesTab from '@/components/view/VolumesTab.vue'
 
 export default {
   name: 'InstanceTab',
@@ -322,11 +299,11 @@ export default {
     StatsTab,
     DetailSettings,
     NicsTable,
-    Status,
     ListResourceTable,
     TooltipButton,
     ResourceIcon,
-    AnnotationsTab
+    AnnotationsTab,
+    VolumesTab
   },
   mixins: [mixinDevice],
   props: {
@@ -361,27 +338,6 @@ export default {
       secondaryIPs: [],
       selectedNicId: '',
       newSecondaryIp: '',
-      volumeColumns: [
-        {
-          title: this.$t('label.name'),
-          dataIndex: 'name',
-          scopedSlots: { customRender: 'name' }
-        },
-        {
-          title: this.$t('label.state'),
-          dataIndex: 'state',
-          scopedSlots: { customRender: 'state' }
-        },
-        {
-          title: this.$t('label.type'),
-          dataIndex: 'type'
-        },
-        {
-          title: this.$t('label.size'),
-          dataIndex: 'size',
-          scopedSlots: { customRender: 'size' }
-        }
-      ],
       editNicResource: {},
       listIps: {
         loading: false,

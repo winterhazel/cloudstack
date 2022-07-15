@@ -159,7 +159,7 @@
       {{ text }}
     </span>
     <a slot="vmname" slot-scope="text, record" href="javascript:;">
-      <router-link :to="{ path: '/vm/' + record.virtualmachineid }">{{ text }}</router-link>
+      <router-link :to="{ path: createPathBasedOnVmType(record.vmtype, record.virtualmachineid) }">{{ text }}</router-link>
     </a>
     <a slot="virtualmachinename" slot-scope="text, record" href="javascript:;">
       <router-link :to="{ path: '/vm/' + record.virtualmachineid }">{{ text }}</router-link>
@@ -376,6 +376,7 @@ import InfoCard from '@/components/view/InfoCard'
 import QuickView from '@/components/view/QuickView'
 import TooltipButton from '@/components/widgets/TooltipButton'
 import ResourceIcon from '@/components/view/ResourceIcon'
+import { createPathBasedOnVmType } from '@/utils/path'
 
 export default {
   name: 'ListView',
@@ -463,6 +464,7 @@ export default {
     }
   },
   methods: {
+    createPathBasedOnVmType: createPathBasedOnVmType,
     quickViewEnabled () {
       return new RegExp(['/vm', '/kubernetes', '/ssh', '/vmgroup', '/affinitygroup',
         '/volume', '/snapshot', '/vmsnapshot', '/backup',

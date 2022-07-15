@@ -372,7 +372,7 @@
           <div class="resource-detail-item__label">{{ $t('label.vmname') }}</div>
           <div class="resource-detail-item__details">
             <a-icon type="desktop" />
-            <router-link :to="{ path: '/vm/' + resource.virtualmachineid }">{{ resource.vmname || resource.vm || resource.virtualmachinename || resource.virtualmachineid }} </router-link>
+            <router-link :to="{ path: createPathBasedOnVmType(resource.vmtype, resource.virtualmachineid) }">{{ resource.vmname || resource.vm || resource.virtualmachinename || resource.virtualmachineid }} </router-link>
             <status class="status status--end" :text="resource.vmstate" v-if="resource.vmstate"/>
           </div>
         </div>
@@ -708,6 +708,7 @@ import TooltipButton from '@/components/widgets/TooltipButton'
 import UploadResourceIcon from '@/components/view/UploadResourceIcon'
 import eventBus from '@/config/eventBus'
 import ResourceIcon from '@/components/view/ResourceIcon'
+import { createPathBasedOnVmType } from '@/utils/path'
 
 export default {
   name: 'InfoCard',
@@ -823,6 +824,7 @@ export default {
     this.getIcons()
   },
   methods: {
+    createPathBasedOnVmType: createPathBasedOnVmType,
     showUploadModal (show) {
       if (show) {
         if (this.$showIcon()) {

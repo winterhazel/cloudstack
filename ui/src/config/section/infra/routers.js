@@ -37,6 +37,9 @@ export default {
     show: (record, route, user) => { return ['Running'].includes(record.state) && ['Admin'].includes(user.roletype) },
     component: () => import('@views/infra/routers/RouterHealthCheck.vue')
   }, {
+    name: 'volume',
+    component: () => import('@/components/view/VolumesTab.vue')
+  }, {
     name: 'comments',
     component: () => import('@/components/view/AnnotationsTab.vue')
   }],
