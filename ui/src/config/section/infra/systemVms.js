@@ -30,6 +30,10 @@ export default {
       component: () => import('@/components/view/DetailsTab.vue')
     },
     {
+      name: 'volume',
+      component: () => import('@/components/view/VolumesTab.vue')
+    },
+    {
       name: 'comments',
       component: () => import('@/components/view/AnnotationsTab.vue')
     }
