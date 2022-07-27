@@ -210,18 +210,14 @@
             </a-list>
           </div>
         </a-form-item>
-        <a-form-item v-if="isVirtualRouterForAtLeastOneService">
+        <a-form-item>
+          <a-alert v-if="!isVirtualRouterForAtLeastOneService" type="warning" style="margin-bottom: 10px">
+            <span v-if="guestType === 'l2'" slot="message" v-html="$t('message.vr.alert.upon.network.offering.creation.l2')" />
+            <span v-else slot="message" v-html="$t('message.vr.alert.upon.network.offering.creation.others')" />
+          </a-alert>
           <tooltip-label slot="label" :title="$t('label.serviceofferingid')" :tooltip="apiParams.serviceofferingid.description"/>
           <a-select
-            v-decorator="['serviceofferingid', {
-              rules: [
-                {
-                  required: true,
-                  message: $t('message.error.select')
-                }
-              ],
-              initialValue: serviceOfferings.length > 0 ? serviceOfferings[0].id : ''
-            }]"
+            v-decorator="['serviceofferingid']"
             showSearch
             optionFilterProp="children"
             :filterOption="(input, option) => {
@@ -529,6 +525,7 @@ export default {
       })
     },
     handleGuestTypeChange (val) {
+      this.isVirtualRouterForAtLeastOneService = false
       this.guestType = val
     },
     fetchSupportedServiceData () {
