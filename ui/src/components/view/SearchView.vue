@@ -360,7 +360,7 @@ export default {
     },
     fetchZones () {
       return new Promise((resolve, reject) => {
-        api('listZones', { listAll: true, showicon: true }).then(json => {
+        api('listZones', { showicon: true }).then(json => {
           const zones = json.listzonesresponse.zone
           resolve({
             type: 'zoneid',
@@ -386,7 +386,7 @@ export default {
     },
     fetchPods () {
       return new Promise((resolve, reject) => {
-        api('listPods', { listAll: true }).then(json => {
+        api('listPods').then(json => {
           const pods = json.listpodsresponse.pod
           resolve({
             type: 'podid',
@@ -399,7 +399,7 @@ export default {
     },
     fetchClusters () {
       return new Promise((resolve, reject) => {
-        api('listClusters', { listAll: true }).then(json => {
+        api('listClusters').then(json => {
           const clusters = json.listclustersresponse.cluster
           resolve({
             type: 'clusterid',

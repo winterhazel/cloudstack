@@ -514,7 +514,6 @@ export default {
     },
     fetchZoneData () {
       const params = {}
-      params.listAll = true
       params.showicon = true
       this.zoneLoading = true
       api('listZones', params).then(json => {
@@ -530,7 +529,6 @@ export default {
     },
     fetchSupportedServiceData () {
       const params = {}
-      params.listAll = true
       this.supportedServiceLoading = true
       this.supportedServices = []
       api('listSupportedNetworkServices', params).then(json => {
