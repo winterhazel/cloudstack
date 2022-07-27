@@ -209,7 +209,7 @@ const user = {
           })
         } else {
           const hide = message.loading(i18n.t('message.discovering.feature'), 0)
-          api('listZones', { listall: true }).then(json => {
+          api('listZones').then(json => {
             const zones = json.listzonesresponse.zone || []
             commit('SET_ZONES', zones)
           }).catch(error => {

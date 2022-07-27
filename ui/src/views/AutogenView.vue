@@ -846,6 +846,14 @@ export default {
         params.showIcon = true
       }
 
+      if (['listAnnotations', 'listRoles', 'listZonesMetrics', 'listPods',
+        'listClustersMetrics', 'listHostsMetrics', 'listStoragePoolsMetrics',
+        'listImageStores', 'listSystemVms', 'listManagementServers',
+        'listConfigurations', 'listHypervisorCapabilities',
+        'listAlerts', 'listNetworkOfferings', 'listVPCOfferings'].includes(this.apiName)) {
+        delete params.listall
+      }
+
       if (this.apiName === 'quotaTariffList') {
         params.uuid = params.id
         delete params.id
