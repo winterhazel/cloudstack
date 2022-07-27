@@ -139,14 +139,14 @@ public class BackupManagerTest {
         String volumeUuid = "5f4ed903-ac23-4f8a-b595-69c73c40593f";
 
         Mockito.when(backupProvider.restoreBackedUpVolume(Mockito.any(), Mockito.eq(volumeUuid),
-                Mockito.eq("127.0.0.1"), Mockito.eq("e9804933-8609-4de3-bccc-6278072a496c"), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success"));
-        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null);
+                Mockito.eq("127.0.0.1"), Mockito.eq("e9804933-8609-4de3-bccc-6278072a496c"), Mockito.any(), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success"));
+        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null, false);
 
         assertEquals(Boolean.TRUE, restoreBackedUpVolume.first());
         assertEquals("Success", restoreBackedUpVolume.second());
 
         Mockito.verify(backupProvider, times(1)).restoreBackedUpVolume(Mockito.any(), Mockito.anyString(),
-                Mockito.anyString(), Mockito.anyString(), Mockito.any());
+                Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -155,14 +155,14 @@ public class BackupManagerTest {
         String volumeUuid = "5f4ed903-ac23-4f8a-b595-69c73c40593f";
 
         Mockito.when(backupProvider.restoreBackedUpVolume(Mockito.any(), Mockito.eq(volumeUuid),
-                Mockito.eq("127.0.0.1"), Mockito.eq("datastore-name"), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success2"));
-        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null);
+                Mockito.eq("127.0.0.1"), Mockito.eq("datastore-name"), Mockito.any(), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success2"));
+        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null, false);
 
         assertEquals(Boolean.TRUE, restoreBackedUpVolume.first());
         assertEquals("Success2", restoreBackedUpVolume.second());
 
         Mockito.verify(backupProvider, times(2)).restoreBackedUpVolume(Mockito.any(), Mockito.anyString(),
-                Mockito.anyString(), Mockito.anyString(), Mockito.any());
+                Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -171,14 +171,14 @@ public class BackupManagerTest {
         String volumeUuid = "5f4ed903-ac23-4f8a-b595-69c73c40593f";
 
         Mockito.when(backupProvider.restoreBackedUpVolume(Mockito.any(), Mockito.eq(volumeUuid),
-                Mockito.eq("hostname"), Mockito.eq("e9804933-8609-4de3-bccc-6278072a496c"), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success3"));
-        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null);
+                Mockito.eq("hostname"), Mockito.eq("e9804933-8609-4de3-bccc-6278072a496c"), Mockito.any(), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success3"));
+        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null, true);
 
         assertEquals(Boolean.TRUE, restoreBackedUpVolume.first());
         assertEquals("Success3", restoreBackedUpVolume.second());
 
         Mockito.verify(backupProvider, times(3)).restoreBackedUpVolume(Mockito.any(), Mockito.anyString(),
-                Mockito.anyString(), Mockito.anyString(), Mockito.any());
+                Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -187,13 +187,13 @@ public class BackupManagerTest {
         String volumeUuid = "5f4ed903-ac23-4f8a-b595-69c73c40593f";
 
         Mockito.when(backupProvider.restoreBackedUpVolume(Mockito.any(), Mockito.eq(volumeUuid),
-                Mockito.eq("hostname"), Mockito.eq("datastore-name"), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success4"));
-        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null);
+                Mockito.eq("hostname"), Mockito.eq("datastore-name"), Mockito.any(), Mockito.any())).thenReturn(new Pair<Boolean, String>(Boolean.TRUE, "Success4"));
+        Pair<Boolean,String> restoreBackedUpVolume = backupManager.restoreBackedUpVolume(volumeUuid, backupVO, backupProvider, hostPossibleValues, datastoresPossibleValues, null, true);
 
         assertEquals(Boolean.TRUE, restoreBackedUpVolume.first());
         assertEquals("Success4", restoreBackedUpVolume.second());
 
         Mockito.verify(backupProvider, times(4)).restoreBackedUpVolume(Mockito.any(), Mockito.anyString(),
-                Mockito.anyString(), Mockito.anyString(), Mockito.any());
+                Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any());
     }
 }

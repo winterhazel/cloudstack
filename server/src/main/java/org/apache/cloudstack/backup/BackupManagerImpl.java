@@ -590,7 +590,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
 
     @Override
     @ActionEvent(eventType = EventTypes.EVENT_VM_BACKUP_RESTORE, eventDescription = "restoring VM from backup", async = true)
-    public boolean restoreBackupVolumeAndAttachToVM(final String backedUpVolumeUuid, final Long backupId, final Long vmId) throws Exception {
+    public boolean restoreBackupVolumeAndAttachToVM(final String backedUpVolumeUuid, final Long backupId, final Long vmId, final Boolean startVm) throws Exception {
         if (Strings.isNullOrEmpty(backedUpVolumeUuid)) {
             throw new CloudRuntimeException("Invalid volume ID passed");
         }
@@ -638,7 +638,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         String[] hostPossibleValues = {host.getPrivateIpAddress(), host.getName()};
         String[] datastoresPossibleValues = {datastore.getUuid(), datastore.getName(), StringUtils.substringAfterLast(datastore.getPath(), "/")};
 
-        Pair<Boolean, String> result = restoreBackedUpVolume(backedUpVolumeUuid, backup, backupProvider, hostPossibleValues, datastoresPossibleValues, vm);
+        Pair<Boolean, String> result = restoreBackedUpVolume(backedUpVolumeUuid, backup, backupProvider, hostPossibleValues, datastoresPossibleValues, vm, startVm);
 
         if (BooleanUtils.isFalse(result.first())) {
             throw new CloudRuntimeException(String.format("Error restoring volume [%s] of VM [%s] using backup provider [%s].",
@@ -652,7 +652,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
     }
 
     protected Pair<Boolean, String> restoreBackedUpVolume(final String backedUpVolumeUuid, final BackupVO backup, BackupProvider backupProvider, String[] hostPossibleValues,
-            String[] datastoresPossibleValues, VMInstanceVO vm) {
+            String[] datastoresPossibleValues, VMInstanceVO vm, Boolean startVm) {
         Pair<Boolean, String> result = new  Pair<>(false, "");
         for (String hostData : hostPossibleValues) {
             for (String datastoreData : datastoresPossibleValues) {
@@ -660,7 +660,7 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
                         backedUpVolumeUuid, hostData, datastoreData));
 
                 try {
-                    result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, hostData, datastoreData, vm);
+                    result = backupProvider.restoreBackedUpVolume(backup, backedUpVolumeUuid, hostData, datastoreData, vm, startVm);
 
                     if (BooleanUtils.isTrue(result.first())) {
                         return result;
