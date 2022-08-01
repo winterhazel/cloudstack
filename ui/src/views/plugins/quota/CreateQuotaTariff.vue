@@ -35,7 +35,7 @@
       </a-form-item>
       <a-form-item>
         <tooltip-label slot="label" :title="$t('label.description')" :tooltip="apiParams.description.description"/>
-        <a-input v-decorator="['description', {}]" :placeholder="$t('placeholder.quota.tariff.description')" max-length="65535" />
+        <a-textarea v-decorator="['description', {}]" :placeholder="$t('placeholder.quota.tariff.description')" auto-size max-length="65535" />
       </a-form-item>
       <a-form-item>
         <tooltip-label slot="label" :title="$t('label.quota.type.name')" :tooltip="apiParams.usagetype.description"/>

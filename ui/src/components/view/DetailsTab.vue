@@ -45,6 +45,7 @@
         <div v-else-if="['created', 'sent', 'lastannotated', 'endDate', 'removed', 'effectiveDate'].includes(item)">
           {{ $toLocaleDate(resource[item]) }}
         </div>
+        <div style="white-space: pre;" v-else-if="$route.meta.name === 'quotatariff' && item === 'description'">{{ resource[item] }} </div>
         <vue-code-highlight language="javascript" v-else-if="['activationRule'].includes(item)">{{ resource[item] }}</vue-code-highlight>
         <div v-else>{{ resource[item] }} </div>
       </div>
