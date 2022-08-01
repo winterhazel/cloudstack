@@ -251,6 +251,7 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             response.setAccountRemoved(summary.getAccountRemoved() != null);
             response.setCurrency(QuotaConfig.QuotaCurrencySymbol.value());
             response.setObjectName("summary");
+            response.setQuotaEnabled(QuotaConfig.QuotaAccountEnabled.valueIn(summary.getAccountId()));
 
             return response;
         }).collect(Collectors.toList());
