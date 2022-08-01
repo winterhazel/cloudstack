@@ -18,7 +18,7 @@
 <template>
   <a-form class="form" :form="form" layout="vertical" @submit="submitTariff">
     <a-form-item :label="$t('label.description')">
-      <a-input auto-focus v-decorator="['description', { initialValue: resource.description }]" max-length="65535" />
+      <a-textarea auto-focus v-decorator="['description', { initialValue: resource.description }]" auto-size max-length="65535" />
     </a-form-item>
     <a-form-item :label="$t('label.quota.tariff.value')">
       <a-input-number v-decorator="['value', { initialValue: resource.tariffValue }]" />
