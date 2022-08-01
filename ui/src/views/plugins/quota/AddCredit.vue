@@ -62,9 +62,7 @@
       <a-form-item>
         <tooltip-label slot="label" :title="$t('label.min_balance')" :tooltip="apiParams.min_balance.description"/>
         <a-input-number
-          v-decorator="['min_balance', {
-            rules: [{ required: true, message: $t('message.action.quota.credit.add.error.minbalancerequired') }]
-          }]"
+          v-decorator="['min_balance', {}]"
           :placeholder="$t('placeholder.quota.credit.add.min_balance')" />
       </a-form-item>
       <a-form-item>
