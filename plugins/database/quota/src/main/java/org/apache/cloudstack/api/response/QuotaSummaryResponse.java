@@ -64,6 +64,10 @@ public class QuotaSummaryResponse extends BaseResponse {
     @Param(description = "currency")
     private String currency;
 
+    @SerializedName("quotaenabled")
+    @Param(description = "if the account has the quota config enabled")
+    private boolean quotaEnabled;
+
     public QuotaSummaryResponse() {
         super();
     }
@@ -139,5 +143,11 @@ public class QuotaSummaryResponse extends BaseResponse {
     public void setAccountRemoved(boolean accountRemoved) {
         this.accountRemoved = accountRemoved;
     }
+    public boolean getQuotaEnabled() {
+        return quotaEnabled;
+    }
 
+    public void setQuotaEnabled(boolean quotaEnabled) {
+        this.quotaEnabled = quotaEnabled;
+    }
 }
