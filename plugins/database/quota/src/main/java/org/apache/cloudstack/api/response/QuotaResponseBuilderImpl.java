@@ -50,6 +50,7 @@ import org.apache.cloudstack.api.command.QuotaTariffCreateCmd;
 import org.apache.cloudstack.api.command.QuotaTariffListCmd;
 import org.apache.cloudstack.api.command.QuotaTariffUpdateCmd;
 import org.apache.cloudstack.context.CallContext;
+import org.apache.cloudstack.discovery.ApiDiscoveryService;
 import org.apache.cloudstack.quota.QuotaManager;
 import org.apache.cloudstack.quota.QuotaService;
 import org.apache.cloudstack.quota.activationrule.presetvariables.GenericPresetVariable;
@@ -136,13 +137,16 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     @Inject
     private IPAddressDao ipAddressDao;
 
+    @Inject
+    private ApiDiscoveryService apiDiscoveryService;
+
     private Set<Account.Type> accountTypesThatCanListAllQuotaSummaries = Sets.newHashSet(Account.Type.ADMIN, Account.Type.DOMAIN_ADMIN);
 
     private final Type linkedListOfResourcesToQuoteType = new TypeToken<LinkedList<ResourcesToQuoteVo>>() {
     }.getType();
 
     @Override
-    public QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO tariff) {
+    public QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO tariff, boolean returnActivationRule) {
         final QuotaTariffResponse response = new QuotaTariffResponse();
         response.setUsageType(tariff.getUsageType());
         response.setUsageName(tariff.getUsageName());
@@ -152,7 +156,9 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         response.setEffectiveOn(tariff.getEffectiveOn());
         response.setUsageTypeDescription(tariff.getUsageTypeDescription());
         response.setCurrency(QuotaConfig.QuotaCurrencySymbol.value());
-        response.setActivationRule(tariff.getActivationRule());
+        if (returnActivationRule) {
+            response.setActivationRule(tariff.getActivationRule());
+        }
         response.setName(tariff.getName());
         response.setEndDate(tariff.getEndDate());
         response.setDescription(tariff.getDescription());
@@ -875,6 +881,11 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             return genericPresetVariable.getId();
         }
         return null;
+    }
+
+    public boolean isUserAllowedToSeeActivationRules(User user) {
+        List<ApiDiscoveryResponse> apiList = (List<ApiDiscoveryResponse>)apiDiscoveryService.listApis(user, null).getResponses();
+        return apiList.stream().anyMatch(response -> StringUtils.equalsAny(response.getName(), "quotaTariffCreate", "quotaTariffUpdate"));
     }
 
 }

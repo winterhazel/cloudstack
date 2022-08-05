@@ -41,6 +41,7 @@ import javax.ws.rs.InternalServerErrorException;
 
 import com.cloud.exception.PermissionDeniedException;
 import com.cloud.serializer.GsonHelper;
+import com.cloud.user.User;
 import com.cloud.utils.exception.CloudRuntimeException;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -51,6 +52,7 @@ import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaSummaryCmd;
 import org.apache.cloudstack.context.CallContext;
+import org.apache.cloudstack.discovery.ApiDiscoveryService;
 import org.apache.cloudstack.quota.QuotaManager;
 import org.apache.cloudstack.quota.QuotaService;
 import org.apache.cloudstack.quota.activationrule.presetvariables.GenericPresetVariable;
@@ -135,6 +137,9 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     @Mock
     UsageDao usageDaoMock;
 
+    @Mock
+    ApiDiscoveryService apiDiscoveryServiceMock;
+
     @InjectMocks
     QuotaResponseBuilderImpl quotaResponseBuilderImplSpy = Mockito.spy(QuotaResponseBuilderImpl.class);
 
@@ -186,6 +191,9 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     @Mock
     QuotaManager quotaManagerMock;
 
+    @Mock
+    User userMock;
+
     LinkedList<ResourcesToQuoteVo> linkedListResourcesToQuoteVo = new LinkedList<>(Arrays.asList(new ResourcesToQuoteVo(), new ResourcesToQuoteVo(), new ResourcesToQuoteVo()));
 
     Date date = new Date();
@@ -208,9 +216,25 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     @Test
     public void testQuotaResponse() {
         QuotaTariffVO tariffVO = makeTariffTestData();
-        QuotaTariffResponse response = quotaResponseBuilderImplSpy.createQuotaTariffResponse(tariffVO);
+        QuotaTariffResponse response = quotaResponseBuilderImplSpy.createQuotaTariffResponse(tariffVO, true);
         assertTrue(tariffVO.getUsageType() == response.getUsageType());
         assertTrue(tariffVO.getCurrencyValue().equals(response.getTariffValue()));
+    }
+
+    @Test
+    public void createQuotaTariffResponseTestIfReturnsActivationRuleWithPermission() {
+        QuotaTariffVO tariffVO = makeTariffTestData();
+        tariffVO.setActivationRule("a = 10;");
+        QuotaTariffResponse response = quotaResponseBuilderImplSpy.createQuotaTariffResponse(tariffVO, true);
+        assertEquals("a = 10;", response.getActivationRule());
+    }
+
+    @Test
+    public void createQuotaTariffResponseTestIfReturnsActivationRuleWithoutPermission() {
+        QuotaTariffVO tariffVO = makeTariffTestData();
+        tariffVO.setActivationRule("a = 10;");
+        QuotaTariffResponse response = quotaResponseBuilderImplSpy.createQuotaTariffResponse(tariffVO, false);
+        assertNull(response.getActivationRule());
     }
 
     @Test
@@ -1306,4 +1330,52 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
         quotaResponseBuilderImplSpy.validateCallerAccessToDomainSetInQuotingMetadata(accountMock, new PresetVariables(), 0);
     }
+
+    @Test
+    public void checkIfUserHasPermissionToSeeActivationRulesTestWithPermissionToCreateTariff() {
+        ApiDiscoveryResponse response = new ApiDiscoveryResponse();
+        response.setName("quotaTariffCreate");
+        List<ApiDiscoveryResponse> cmdList = new ArrayList<>();
+        cmdList.add(response);
+
+        ListResponse<ApiDiscoveryResponse> responseList =  new ListResponse();
+        responseList.setResponses(cmdList);
+
+        Mockito.doReturn(responseList).when(apiDiscoveryServiceMock).listApis(userMock, null);
+
+        assertTrue(quotaResponseBuilderImplSpy.isUserAllowedToSeeActivationRules(userMock));
+    }
+
+    @Test
+    public void checkIfUserHasPermissionToSeeActivationRulesTestWithPermissionToUpdateTariff() {
+        ApiDiscoveryResponse response = new ApiDiscoveryResponse();
+        response.setName("quotaTariffUpdate");
+
+        List<ApiDiscoveryResponse> cmdList = new ArrayList<>();
+        cmdList.add(response);
+
+        ListResponse<ApiDiscoveryResponse> responseList =  new ListResponse();
+        responseList.setResponses(cmdList);
+
+        Mockito.doReturn(responseList).when(apiDiscoveryServiceMock).listApis(userMock, null);
+
+        assertTrue(quotaResponseBuilderImplSpy.isUserAllowedToSeeActivationRules(userMock));
+    }
+
+    @Test
+    public void checkIfUserHasPermissionToSeeActivationRulesTestWithNoPermission() {
+        ApiDiscoveryResponse response = new ApiDiscoveryResponse();
+        response.setName("testCmd");
+
+        List<ApiDiscoveryResponse> cmdList = new ArrayList<>();
+        cmdList.add(response);
+
+        ListResponse<ApiDiscoveryResponse> responseList =  new ListResponse();
+        responseList.setResponses(cmdList);
+
+        Mockito.doReturn(responseList).when(apiDiscoveryServiceMock).listApis(userMock, null);
+
+        assertFalse(quotaResponseBuilderImplSpy.isUserAllowedToSeeActivationRules(userMock));
+    }
+
 }
