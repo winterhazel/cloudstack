@@ -82,7 +82,7 @@ public class QuotaTariffCreateCmd extends BaseCmd {
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to create new quota tariff.");
         }
 
-        QuotaTariffResponse response = responseBuilder.createQuotaTariffResponse(result);
+        QuotaTariffResponse response = responseBuilder.createQuotaTariffResponse(result, true);
         response.setResponseName(getCommandName());
         setResponseObject(response);
     }

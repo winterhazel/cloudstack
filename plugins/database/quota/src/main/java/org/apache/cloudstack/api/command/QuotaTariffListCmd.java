@@ -17,6 +17,7 @@
 package org.apache.cloudstack.api.command;
 
 import com.cloud.user.Account;
+import com.cloud.user.User;
 import com.cloud.utils.Pair;
 
 import org.apache.cloudstack.api.APICommand;
@@ -28,6 +29,7 @@ import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.response.ListResponse;
 import org.apache.cloudstack.api.response.QuotaResponseBuilder;
 import org.apache.cloudstack.api.response.QuotaTariffResponse;
+import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.quota.vo.QuotaTariffVO;
 import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 import org.apache.log4j.Logger;
@@ -80,11 +82,16 @@ public class QuotaTariffListCmd extends BaseListCmd {
     public void execute() {
         final Pair<List<QuotaTariffVO>, Integer> result = _responseBuilder.listQuotaTariffPlans(this);
 
+        User user = CallContext.current().getCallingUser();
+        boolean returnActivationRules = _responseBuilder.isUserAllowedToSeeActivationRules(user);
+        if (!returnActivationRules) {
+            s_logger.debug(String.format("User [%s] does not have permission to create or update quota tariffs, therefore we will not return the activation rules.", user.getUuid()));
+        }
         final List<QuotaTariffResponse> responses = new ArrayList<QuotaTariffResponse>();
 
         s_logger.trace(String.format("Adding quota tariffs [%s] to response of API quotaTariffList.", ReflectionToStringBuilderUtils.reflectCollection(responses)));
         for (final QuotaTariffVO resource : result.first()) {
-            responses.add(_responseBuilder.createQuotaTariffResponse(resource));
+            responses.add(_responseBuilder.createQuotaTariffResponse(resource, returnActivationRules));
         }
 
         final ListResponse<QuotaTariffResponse> response = new ListResponse<QuotaTariffResponse>();

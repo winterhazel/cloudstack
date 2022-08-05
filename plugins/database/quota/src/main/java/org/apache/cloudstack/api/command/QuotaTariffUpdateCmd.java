@@ -120,7 +120,7 @@ public class QuotaTariffUpdateCmd extends BaseCmd {
         if (result == null) {
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to update quota tariff plan");
         }
-        final QuotaTariffResponse response = _responseBuilder.createQuotaTariffResponse(result);
+        final QuotaTariffResponse response = _responseBuilder.createQuotaTariffResponse(result, true);
         response.setResponseName(getCommandName());
         setResponseObject(response);
     }

@@ -16,6 +16,7 @@
 //under the License.
 package org.apache.cloudstack.api.response;
 
+import com.cloud.user.User;
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
@@ -44,7 +45,7 @@ public interface QuotaResponseBuilder {
 
     Pair<List<QuotaTariffVO>, Integer> listQuotaTariffPlans(QuotaTariffListCmd cmd);
 
-    QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO configuration);
+    QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO configuration, boolean returnActivationRule);
 
     QuotaStatementResponse createQuotaStatementResponse(List<QuotaUsageVO> quotaUsage, QuotaStatementCmd cmd);
 
@@ -77,4 +78,6 @@ public interface QuotaResponseBuilder {
      * @return a list of {@link ResourcesQuotingResultResponse}, containing the total of each quoting.
      */
     List<ResourcesQuotingResultResponse> quoteResources(String resourcesToQuoteAsJson);
+
+    boolean isUserAllowedToSeeActivationRules(User user);
 }

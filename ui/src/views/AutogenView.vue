@@ -900,8 +900,14 @@ export default {
           this.items = [...new Map(this.items.map(x => [x.id, x])).values()]
         }
 
-        if (this.apiName === 'quotaTariffList' && this.$route.query.filter === 'removed') {
-          this.items = this.items.filter(item => item.removed)
+        if (this.apiName === 'quotaTariffList') {
+          if (this.$route.query.filter === 'removed') {
+            this.items = this.items.filter(item => item.removed)
+          }
+          if (this.items.length === this.items.filter(item => !item.activationRule).length) {
+            const index = this.columns.findIndex(col => col.dataIndex === 'hasActivationRule')
+            this.columns.splice(index, 1)
+          }
         }
 
         if (this.apiName === 'listProjects' && this.items.length > 0) {
