@@ -709,6 +709,7 @@ import NetworkConfiguration from '@views/compute/wizard/NetworkConfiguration'
 import SshKeyPairSelection from '@views/compute/wizard/SshKeyPairSelection'
 import SecurityGroupSelection from '@views/compute/wizard/SecurityGroupSelection'
 import TooltipLabel from '@/components/widgets/TooltipLabel'
+import { sanitizeReverse } from '@/utils/util'
 
 export default {
   name: 'Wizard',
@@ -1537,7 +1538,7 @@ export default {
         deployVmData.bootmode = values.bootmode
         deployVmData.dynamicscalingenabled = values.dynamicscalingenabled
         if (values.userdata && values.userdata.length > 0) {
-          deployVmData.userdata = encodeURIComponent(btoa(this.sanitizeReverse(values.userdata)))
+          deployVmData.userdata = encodeURIComponent(btoa(sanitizeReverse(values.userdata)))
         }
         // step 2: select template/iso
         if (this.tabKey === 'templateid') {
