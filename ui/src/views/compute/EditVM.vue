@@ -74,6 +74,12 @@
           }"
           :dataSource="groups.opts" />
       </a-form-item>
+      <a-form-item>
+        <tooltip-label slot="label" :title="$t('label.userdata')" :tooltip="apiParams.userdata.description"/>
+        <a-textarea
+          v-decorator="['userdata', { initialValue: resource.userdata || '' }]">
+        </a-textarea>
+      </a-form-item>
 
       <div :span="24" class="action-button">
         <a-button :loading="loading" @click="onCloseAction">{{ this.$t('label.cancel') }}</a-button>
@@ -86,6 +92,7 @@
 <script>
 import { api } from '@/api'
 import TooltipLabel from '@/components/widgets/TooltipLabel'
+import { sanitizeReverse } from '@/utils/util'
 
 export default {
   name: 'EditVM',
@@ -132,6 +139,7 @@ export default {
       this.fetchServiceOfferingData()
       this.fetchTemplateData()
       this.fetchDynamicScalingVmConfig()
+      this.fetchUserData()
     },
     fetchServiceOfferingData () {
       const params = {}
@@ -145,7 +153,6 @@ export default {
     },
     fetchTemplateData () {
       const params = {}
-      console.log('templateid ' + this.resource.templateid)
       params.id = this.resource.templateid
       params.isrecursive = true
       params.templatefilter = 'all'
@@ -198,6 +205,16 @@ export default {
         this.$notifyError(error)
       }).finally(() => { this.groups.loading = false })
     },
+    fetchUserData () {
+      const params = {
+        id: this.resource.virtualmachineid,
+        userdata: true
+      }
+
+      api('listVirtualMachines', params).then(json => {
+        this.resource.userdata = atob(json.listvirtualmachinesresponse.virtualmachine[0].userdata || '')
+      })
+    },
     handleSubmit (e) {
       e.preventDefault()
       this.form.validateFields((err, values) => {
@@ -214,10 +231,15 @@ export default {
         if (values.haenable !== undefined) {
           params.haenable = values.haenable
         }
-        params.group = values.group
+        if (values.group && values.group.length > 0) {
+          params.group = values.group
+        }
+        if (values.userdata && values.userdata.length > 0) {
+          params.userdata = encodeURIComponent(btoa(sanitizeReverse(values.userdata)))
+        }
         this.loading = true
 
-        api('updateVirtualMachine', params).then(json => {
+        api('updateVirtualMachine', {}, 'POST', params).then(json => {
           this.$message.success({
             content: `${this.$t('label.action.edit.instance')} - ${values.name}`,
             duration: 2
