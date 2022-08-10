@@ -63,6 +63,7 @@ import org.apache.cloudstack.poll.BackgroundPollTask;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -1055,32 +1056,39 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
                         continue;
                     }
 
-                    List<VMInstanceVO> vms = vmInstanceDao.listByZoneWithBackups(dataCenter.getId(), null);
-                    if (vms == null || vms.isEmpty()) {
-                        LOG.debug(String.format("Can't find any VM to sync backups in zone [id: %s].", dataCenter.getId()));
-                        continue;
+                    List<VMInstanceVO> vms = new ArrayList<>();
+                    if (!backupProvider.getName().equals("veeam")) {
+                        vms = vmInstanceDao.listByZoneWithBackups(dataCenter.getId(), null);
+                        if (CollectionUtils.isEmpty(vms)) {
+                            LOG.debug(String.format("Cannot find any VM to sync backups in zone [%s].", dataCenter.getUuid()));
+                            continue;
+                        }
                     }
 
                     final Map<VirtualMachine, Backup.Metric> metrics = backupProvider.getBackupMetrics(dataCenter.getId(), new ArrayList<>(vms));
-                    try {
-                        for (final VirtualMachine vm : metrics.keySet()) {
-                            final Backup.Metric metric = metrics.get(vm);
-                            if (metric != null) {
-                                // Sync out-of-band backups
-                                backupProvider.syncBackups(vm, metric);
-                                // Emit a usage event, update usage metric for the VM by the usage server
-                                UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_BACKUP_USAGE_METRIC, vm.getAccountId(),
-                                        vm.getDataCenterId(), vm.getId(), "Backup-" + vm.getHostName() + "-" + vm.getUuid(),
-                                        vm.getBackupOfferingId(), null, metric.getBackupSize(), metric.getDataSize(),
-                                        Backup.class.getSimpleName(), vm.getUuid());
-                            }
-                        }
-                    } catch (final Throwable e) {
-                        LOG.error(String.format("Failed to sync backup usage metrics and out-of-band backups due to: [%s].", e.getMessage()), e);
-                    }
+                    syncBackupMetrics(backupProvider, metrics);
                 }
             } catch (final Throwable t) {
                 LOG.error(String.format("Error trying to run backup-sync background task due to: [%s].", t.getMessage()), t);
+            }
+        }
+
+        private void syncBackupMetrics(final BackupProvider backupProvider, final Map<VirtualMachine, Backup.Metric> metrics) {
+            try {
+                for (final VirtualMachine vm : metrics.keySet()) {
+                    final Backup.Metric metric = metrics.get(vm);
+                    if (metric != null) {
+                        // Sync out-of-band backups
+                        backupProvider.syncBackups(vm, metric);
+                        // Emit a usage event, update usage metric for the VM by the usage server
+                        UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_BACKUP_USAGE_METRIC, vm.getAccountId(),
+                                vm.getDataCenterId(), vm.getId(), "Backup-" + vm.getHostName() + "-" + vm.getUuid(),
+                                vm.getBackupOfferingId(), null, metric.getBackupSize(), metric.getDataSize(),
+                                Backup.class.getSimpleName(), vm.getUuid());
+                    }
+                }
+            } catch (final Throwable e) {
+                LOG.error(String.format("Failed to sync backup usage metrics and out-of-band backups due to: [%s].", e.getMessage()), e);
             }
         }
 
