@@ -512,14 +512,22 @@ public class QuotaResponseBuilderImplTest extends TestCase {
     public void createStatementItemTestReturnItem() {
         List<QuotaUsageVO> quotaUsages = getQuotaUsagesForTest();
         Mockito.doNothing().when(quotaResponseBuilderImplSpy).setStatementItemDetails(Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+        Mockito.doReturn(accountVoMock).when(accountDaoMock).findByIdIncludingRemoved(Mockito.any());
+        Mockito.doReturn(domainVoMock).when(domainDaoMock).findByIdIncludingRemoved(Mockito.any());
+
+        String testAccountUuid = "test-account-uuid";
+        String testDomainUuid = "test-domain-uuid";
+
+        Mockito.doReturn(testAccountUuid).when(accountVoMock).getUuid();
+        Mockito.doReturn(testDomainUuid).when(domainVoMock).getUuid();
 
         QuotaStatementItemResponse result = quotaResponseBuilderImplSpy.createStatementItem(quotaUsages, false);
 
         QuotaUsageVO expected = quotaUsages.get(0);
         QuotaTypes quotaTypeExpected = QuotaTypes.listQuotaTypes().get(expected.getUsageType());
         Assert.assertEquals(BigDecimal.valueOf(15).setScale(2, RoundingMode.HALF_EVEN), result.getQuotaUsed());
-        Assert.assertEquals(expected.getAccountId(), result.getAccountId());
-        Assert.assertEquals(expected.getDomainId(), result.getDomainId());
+        Assert.assertEquals(testAccountUuid, result.getAccountUuid());
+        Assert.assertEquals(testDomainUuid, result.getDomainUuid());
         Assert.assertEquals(quotaTypeExpected.getQuotaUnit(), result.getUsageUnit());
         Assert.assertEquals(quotaTypeExpected.getQuotaName(), result.getUsageName());
     }
@@ -540,6 +548,15 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
         Mockito.doReturn(quotaStatementItemDetailResourceResponseMock).when(quotaResponseBuilderImplSpy).getQuotaStatementItemDetailResourceResponse(Mockito.any());
 
+        Mockito.doReturn(accountVoMock).when(accountDaoMock).findByIdIncludingRemoved(Mockito.any());
+        Mockito.doReturn(domainVoMock).when(domainDaoMock).findByIdIncludingRemoved(Mockito.any());
+
+        String testAccountUuid = "test-account-uuid";
+        String testDomainUuid = "test-domain-uuid";
+
+        Mockito.doReturn(testAccountUuid).when(accountVoMock).getUuid();
+        Mockito.doReturn(testDomainUuid).when(domainVoMock).getUuid();
+
         quotaResponseBuilderImplSpy.setStatementItemDetails(item, expecteds, true);
 
         expecteds = expecteds.stream().filter(detail -> detail.getQuotaUsed() != null && detail.getQuotaUsed().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
@@ -547,8 +564,8 @@ public class QuotaResponseBuilderImplTest extends TestCase {
             QuotaUsageVO expected = expecteds.get(i);
             QuotaStatementItemDetailResponse result = item.getDetails().get(i);
 
-            Assert.assertEquals(expected.getAccountId(), result.getAccountId());
-            Assert.assertEquals(expected.getDomainId(), result.getDomainId());
+            Assert.assertEquals(testAccountUuid, result.getAccountUuid());
+            Assert.assertEquals(testDomainUuid, result.getDomainUuid());
             Assert.assertEquals(expected.getQuotaUsed(), result.getQuotaUsed());
             Assert.assertEquals(expected.getStartDate(), result.getStartDate());
             Assert.assertEquals(expected.getEndDate(), result.getEndDate());

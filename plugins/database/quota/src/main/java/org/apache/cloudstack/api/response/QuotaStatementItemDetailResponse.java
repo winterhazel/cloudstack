@@ -31,11 +31,11 @@ public class QuotaStatementItemDetailResponse extends BaseResponse {
 
     @SerializedName("accountid")
     @Param(description = "Account's id.")
-    private Long accountId;
+    private String accountUuid;
 
     @SerializedName("domainid")
     @Param(description = "Domain's id.")
-    private Long domainId;
+    private String domainUuid;
 
     @SerializedName("quotaconsumed")
     @Param(description = "Quota consumed.")
@@ -57,20 +57,20 @@ public class QuotaStatementItemDetailResponse extends BaseResponse {
         this.quotaUsed = quotaUsed.setScale(2, RoundingMode.HALF_EVEN);
     }
 
-    public Long getAccountId() {
-        return accountId;
+    public String getAccountUuid() {
+        return accountUuid;
     }
 
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
+    public void setAccountUuid(String accountUuid) {
+        this.accountUuid = accountUuid;
     }
 
-    public Long getDomainId() {
-        return domainId;
+    public String getDomainUuid() {
+        return domainUuid;
     }
 
-    public void setDomainId(Long domainId) {
-        this.domainId = domainId;
+    public void setDomainUuid(String domainUuid) {
+        this.domainUuid = domainUuid;
     }
 
     public Date getStartDate() {
