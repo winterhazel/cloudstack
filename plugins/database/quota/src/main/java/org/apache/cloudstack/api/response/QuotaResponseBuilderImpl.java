@@ -332,8 +332,10 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             }
 
             QuotaStatementItemDetailResponse detail = new QuotaStatementItemDetailResponse();
-            detail.setAccountId(quotaUsage.getAccountId());
-            detail.setDomainId(quotaUsage.getDomainId());
+            AccountVO account = _accountDao.findByIdIncludingRemoved(quotaUsage.getAccountId());
+            DomainVO domain = domainDao.findByIdIncludingRemoved(quotaUsage.getDomainId());
+            detail.setAccountUuid(account.getUuid());
+            detail.setDomainUuid(domain.getUuid());
             detail.setQuotaUsed(quotaUsed);
             detail.setStartDate(quotaUsage.getStartDate());
             detail.setEndDate(quotaUsage.getEndDate());
@@ -374,8 +376,10 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
 
         QuotaStatementItemResponse item = new QuotaStatementItemResponse(type);
         item.setQuotaUsed(usageRecords.stream().map(record -> record.getQuotaUsed() == null ? BigDecimal.ZERO : record.getQuotaUsed()).reduce(BigDecimal.ZERO, BigDecimal::add));
-        item.setAccountId(firstRecord.getAccountId());
-        item.setDomainId(firstRecord.getDomainId());
+        AccountVO account = _accountDao.findByIdIncludingRemoved(firstRecord.getAccountId());
+        DomainVO domain = domainDao.findByIdIncludingRemoved(firstRecord.getDomainId());
+        item.setAccountUuid(account.getUuid());
+        item.setDomainUuid(domain.getUuid());
         item.setUsageUnit(quotaType.getQuotaUnit());
         item.setUsageName(quotaType.getQuotaName());
         item.setObjectName("quotausage");

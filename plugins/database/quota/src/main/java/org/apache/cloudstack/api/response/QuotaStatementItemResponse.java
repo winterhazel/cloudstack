@@ -35,7 +35,7 @@ public class QuotaStatementItemResponse extends BaseResponse {
 
     @SerializedName("accountid")
     @Param(description = "account id")
-    private Long accountId;
+    private String accountUuid;
 
     @SerializedName("account")
     @Param(description = "account name")
@@ -43,7 +43,7 @@ public class QuotaStatementItemResponse extends BaseResponse {
 
     @SerializedName("domain")
     @Param(description = "domain id")
-    private Long domainId;
+    private String domainUuid;
 
     @SerializedName("name")
     @Param(description = "usage type name")
@@ -65,12 +65,12 @@ public class QuotaStatementItemResponse extends BaseResponse {
         this.usageType = usageType;
     }
 
-    public Long getAccountId() {
-        return accountId;
+    public String getAccountUuid() {
+        return accountUuid;
     }
 
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
+    public void setAccountUuid(String accountUuid) {
+        this.accountUuid = accountUuid;
     }
 
     public String getAccountName() {
@@ -81,12 +81,12 @@ public class QuotaStatementItemResponse extends BaseResponse {
         this.accountName = accountName;
     }
 
-    public Long getDomainId() {
-        return domainId;
+    public String getDomainUuid() {
+        return domainUuid;
     }
 
-    public void setDomainId(Long domainId) {
-        this.domainId = domainId;
+    public void setDomainUuid(String domainUuid) {
+        this.domainUuid = domainUuid;
     }
 
     public String getUsageName() {
