@@ -36,6 +36,7 @@ import com.cloud.dc.DataCenter;
 import com.cloud.dc.DataCenterVO;
 import com.cloud.dc.dao.DataCenterDao;
 import com.cloud.exception.InvalidParameterValueException;
+import com.cloud.exception.PermissionDeniedException;
 import com.cloud.network.dao.PhysicalNetworkDao;
 import com.cloud.network.dao.PhysicalNetworkServiceProviderDao;
 import com.cloud.network.dao.PhysicalNetworkServiceProviderVO;
@@ -47,9 +48,14 @@ import org.junit.Test;
 
 import com.cloud.dc.VlanVO;
 import com.cloud.dc.dao.VlanDao;
+import com.cloud.domain.dao.DomainDao;
 import com.cloud.network.dao.IPAddressDao;
 import com.cloud.network.dao.IPAddressVO;
+import com.cloud.network.dao.NetworkDao;
+import com.cloud.network.dao.NetworkVO;
 import com.cloud.user.Account;
+import com.cloud.user.AccountVO;
+import com.cloud.user.dao.AccountDao;
 import com.cloud.utils.db.Filter;
 import com.cloud.utils.db.SearchBuilder;
 import com.cloud.utils.db.SearchCriteria;
@@ -57,6 +63,7 @@ import com.cloud.utils.net.Ip;
 import com.cloud.network.Network.Provider;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
@@ -85,6 +92,12 @@ public class NetworkModelTest {
     private PhysicalNetworkVO physicalNetworkZone2;
     @Mock
     private PhysicalNetworkServiceProviderVO providerVO;
+    @Mock
+    private DomainDao domainDao;
+    @Mock
+    private NetworkDao networkDao;
+    @Mock
+    private AccountDao accountDao;
 
     private static final long ZONE_1_ID = 1L;
     private static final long ZONE_2_ID = 2L;
@@ -263,4 +276,74 @@ public class NetworkModelTest {
         networkModel.checkIp6Parameters(null, null, IPV6_GATEWAY,IPV6_CIDR);
     }
 
+    @Test
+    public void checkAccountAccessToNetworkTestAccountRootAdmin() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.ADMIN);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getAccountId()).thenReturn(2l);
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
+
+    @Test
+    public void checkAccountAccessToNetworkTestAccountIsTheSameInNetwork() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.NORMAL);
+        accountVO.setId(1l);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getAccountId()).thenReturn(1l);
+
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
+
+    @Test
+    public void checkAccountAccessToNetworkTestAccountIsDomainAdminOfTheNetwork() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.DOMAIN_ADMIN);
+        accountVO.setId(1l);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getAccountId()).thenReturn(2l);
+        Mockito.when(domainDao.isChildDomain(1l, 2l)).thenReturn(true);
+        Mockito.when(accountDao.findById(2l)).thenReturn(new AccountVO());
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void checkAccountAccessToNetworkTestAccountIsDomainAdminButDoesNotHaveAccessToNetwork() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.DOMAIN_ADMIN);
+        accountVO.setId(1l);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getAccountId()).thenReturn(2l);
+        Mockito.when(domainDao.isChildDomain(1l, 2l)).thenReturn(false);
+        Mockito.when(networkDao.listBy(1l, 2l)).thenReturn(null);
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void checkAccountAccessToNetworkTestAccountDoesNotHaveAccessToNetwork() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.NORMAL);
+        accountVO.setId(1l);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getAccountId()).thenReturn(2l);
+        Mockito.when(domainDao.isChildDomain(1l, 2l)).thenReturn(false);
+        Mockito.when(networkDao.listBy(1l, 2l)).thenReturn(null);
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
+
+    @Test
+    public void checkAccountAccessToNetworkTestAccountHaveAccessToNetwork() {
+        AccountVO accountVO = new AccountVO();
+        accountVO.setType(Account.Type.NORMAL);
+        accountVO.setId(1l);
+        NetworkVO networkVO = Mockito.mock(NetworkVO.class);
+        Mockito.when(networkVO.getId()).thenReturn(3l);
+        Mockito.when(networkVO.getAccountId()).thenReturn(2l);
+        List<NetworkVO> list = new ArrayList<>();
+        list.add(networkVO);
+        Mockito.when(domainDao.isChildDomain(1l, 2l)).thenReturn(false);
+        Mockito.when(networkDao.listBy(1l, 3l)).thenReturn(list);
+        networkModel.checkAccountAccessToNetwork(accountVO, networkVO);
+    }
 }

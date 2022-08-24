@@ -1658,6 +1658,7 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
         if (network == null) {
             throw new CloudRuntimeException("cannot check permissions on (Network) <null>");
         }
+
         // Perform account permission check
         if ((network.getGuestType() != GuestType.Shared && network.getGuestType() != GuestType.L2) ||
                 (network.getGuestType() == GuestType.Shared && network.getAclType() == ACLType.Account)) {
@@ -1684,11 +1685,7 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
                     }
                 }
             } else {
-                List<NetworkVO> networkMap = _networksDao.listBy(owner.getId(), network.getId());
-                if (networkMap == null || networkMap.isEmpty()) {
-                    throw new PermissionDeniedException("Unable to use network with id= " + ((NetworkVO)network).getUuid() +
-                        ", permission denied");
-                }
+                checkAccountAccessToNetwork(owner, network);
             }
 
         } else {
@@ -1700,6 +1697,29 @@ public class NetworkModelImpl extends ManagerBase implements NetworkModel, Confi
                 throw new PermissionDeniedException("Shared network id=" + ((NetworkVO)network).getUuid() + " is not available in domain id=" +
                         ownerDomain.getUuid());
             }
+        }
+    }
+
+    protected void checkAccountAccessToNetwork(Account owner, Network network) {
+        if (owner.getType().equals(Account.Type.ADMIN)) {
+            s_logger.debug(String.format("Account [%s] is ROOT ADMIN. No need to check access permissions to network [%s].", owner.getUuid(), network.getUuid()));
+            return;
+        }
+
+        if (owner.getId() == network.getAccountId()) {
+            s_logger.debug(String.format("Account [%s] is the owner of network [%s]. No need to check access permissions to this network.", owner.getUuid(), network.getUuid()));
+            return;
+        }
+
+        if (owner.getType().equals(Account.Type.DOMAIN_ADMIN) && _domainDao.isChildDomain(owner.getId(), network.getAccountId())) {
+                s_logger.debug(String.format("Account [%s] is the DOMAIN ADMIN of child account [%s]. No need to check access permissions to network [%s].",
+                        owner.getUuid(), _accountDao.findById(network.getAccountId()).getUuid(), network.getUuid()));
+                return;
+        }
+
+        List<NetworkVO> networkMap = _networksDao.listBy(owner.getId(), network.getId());
+        if (networkMap == null || networkMap.isEmpty()) {
+            throw new PermissionDeniedException(String.format("Unable to use network with id [%s], permission denied.", ((NetworkVO)network).getUuid()));
         }
     }
 
