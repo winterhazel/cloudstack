@@ -167,7 +167,7 @@
                 :maxMemory="getMaxMemory()"
                 @update-iops-value="updateFieldValue"
                 @update-compute-cpunumber="updateFieldValue"
-                @update-compute-cpuspeed="updateFieldValue"
+                @update-compute-cpuspeed="updateCpuSpeed"
                 @update-compute-memory="updateFieldValue" />
               <div v-if="resource.disk && resource.disk.length > 1">
                 <a-form-item>
@@ -562,6 +562,15 @@ export default {
         this.computeOfferingLoading = false
         this.selectMatchingComputeOffering()
       })
+    },
+    updateCpuSpeed (name, value) {
+      if (this.computeOffering.iscustomized) {
+        if (this.computeOffering.serviceofferingdetails) {
+          this.updateFieldValue(this.cpuSpeedKey, this.computeOffering.cpuspeed)
+        } else {
+          this.updateFieldValue(this.cpuSpeedKey, value)
+        }
+      }
     },
     updateFieldValue (name, value) {
       this.form.setFieldsValue({
