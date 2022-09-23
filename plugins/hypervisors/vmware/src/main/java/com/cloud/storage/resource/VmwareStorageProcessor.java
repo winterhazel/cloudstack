@@ -1799,7 +1799,6 @@ public class VmwareStorageProcessor implements StorageProcessor {
             s_logger.debug(LogUtils.logGsonWithoutException("Exporting volume to export path [%s], with VM config [%s].", exportPath, vmMo));
             vmMo.exportVm(exportPath, exportName, false, false);
 
-            vmMo.exportVm(exportPath, exportName, false, false);
             return new Pair<>(diskDevice, disks);
         } finally {
             if (clonedVm != null) {
