@@ -233,10 +233,6 @@ public class DomainRouterResponse extends BaseResponseWithAnnotations implements
     @Param(description = "Last executed health check result for the router", responseObject = RouterHealthCheckResultResponse.class, since = "4.14")
     List<RouterHealthCheckResultResponse> healthCheckResults;
 
-    @SerializedName("rootvolumeid")
-    @Param(description = "the router's ROOT volume ID")
-    private String rootVolumeID;
-
     public DomainRouterResponse() {
         nics = new LinkedHashSet<NicResponse>();
     }
@@ -493,13 +489,5 @@ public class DomainRouterResponse extends BaseResponseWithAnnotations implements
 
     public void setHealthCheckResults(List<RouterHealthCheckResultResponse> healthCheckResults) {
         this.healthCheckResults = healthCheckResults;
-    }
-
-    public String getRootVolumeID() {
-        return rootVolumeID;
-    }
-
-    public void setRootVolumeID(String rootVolumeID) {
-        this.rootVolumeID = rootVolumeID;
     }
 }

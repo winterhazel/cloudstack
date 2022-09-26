@@ -53,7 +53,7 @@ import com.cloud.utils.exception.CloudRuntimeException;
 
 @Component
 public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements VolumeDao {
-    protected Logger logger = Logger.getLogger(VolumeDaoImpl.class);
+    private static final Logger s_logger = Logger.getLogger(VolumeDaoImpl.class);
     protected final SearchBuilder<VolumeVO> DetachedAccountIdSearch;
     protected final SearchBuilder<VolumeVO> TemplateZoneSearch;
     protected final GenericSearchBuilder<VolumeVO, SumCount> TotalSizeByPoolSearch;
@@ -236,27 +236,6 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
     }
 
     @Override
-    public List<VolumeVO> findRootVolumesByInstance(long instanceId) {
-        SearchCriteria<VolumeVO> sc = RootDiskStateSearch.create();
-        sc.setParameters("instanceId", instanceId);
-        sc.setParameters("vType", Volume.Type.ROOT);
-        return listBy(sc);
-    }
-
-    @Override
-    public VolumeVO getInstanceRootVolume(long instanceId, String instanceUuid) {
-        List<VolumeVO> rootVolumeVoList = findRootVolumesByInstance(instanceId);
-        if (rootVolumeVoList.size() > 1) {
-            logger.warn(String.format("More than one ROOT volume has been found for VM [%s], there is probably an inconsistency in the database.", instanceUuid));
-        } else if (rootVolumeVoList.isEmpty()) {
-            CloudRuntimeException exception = new CloudRuntimeException(String.format("No ROOT volume has been found for VM [%s].", instanceUuid));
-            logger.error(exception.getMessage(), exception);
-            throw exception;
-        }
-        return rootVolumeVoList.get(0);
-    }
-
-    @Override
     public List<VolumeVO> findByPod(long podId) {
         SearchCriteria<VolumeVO> sc = AllFieldsSearch.create();
         sc.setParameters("pod", podId);
@@ -359,7 +338,7 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
                 } else if (scope == ScopeType.ZONE) {
                     sql = SELECT_HYPERTYPE_FROM_ZONE_VOLUME;
                 } else {
-                    logger.error("Unhandled scope type '" + scope + "' when running getHypervisorType on volume id " + volumeId);
+                    s_logger.error("Unhandled scope type '" + scope + "' when running getHypervisorType on volume id " + volumeId);
                 }
 
                 pstmt = txn.prepareAutoCloseStatement(sql);
@@ -389,7 +368,7 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
         } else if (type.equals(HypervisorType.VMware)) {
             return ImageFormat.OVA;
         } else {
-            logger.warn("Do not support hypervisor " + type.toString());
+            s_logger.warn("Do not support hypervisor " + type.toString());
             return null;
         }
     }
@@ -600,7 +579,7 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
         builder.set(vo, "updated", new Date());
 
         int rows = update((VolumeVO)vo, sc);
-        if (rows == 0 && logger.isDebugEnabled()) {
+        if (rows == 0 && s_logger.isDebugEnabled()) {
             VolumeVO dbVol = findByIdIncludingRemoved(vo.getId());
             if (dbVol != null) {
                 StringBuilder str = new StringBuilder("Unable to update ").append(vo.toString());
@@ -611,7 +590,7 @@ public class VolumeDaoImpl extends GenericDaoBase<VolumeVO, Long> implements Vol
                 str.append(": stale Data={id=").append(vo.getId()).append("; state=").append(currentState).append("; event=").append(event).append("; updatecount=").append(oldUpdated)
                 .append("; updatedTime=").append(oldUpdatedTime);
             } else {
-                logger.debug("Unable to update volume: id=" + vo.getId() + ", as there is no such volume exists in the database anymore");
+                s_logger.debug("Unable to update volume: id=" + vo.getId() + ", as there is no such volume exists in the database anymore");
             }
         }
         return rows > 0;

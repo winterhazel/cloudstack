@@ -1569,11 +1569,6 @@ public class ApiResponseHelper implements ResponseGenerator {
                 }
             }
         }
-
-        VolumeVO rootVolumeVo = _volumeDao.getInstanceRootVolume(vm.getId(), vm.getUuid());
-
-        vmResponse.setRootVolumeID(rootVolumeVo.getUuid());
-
         vmResponse.setObjectName("systemvm");
         return vmResponse;
     }
