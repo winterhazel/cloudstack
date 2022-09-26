@@ -758,7 +758,7 @@ public class VeeamClient {
     }
 
     protected String removeDashesIfDatastoreNameIsUuid(String datastore) {
-        if (!UuidUtils.validateUUID(datastore)) {
+        if (!UuidUtils.isUuid(datastore)) {
             return datastore;
         }
         LOG.trace(String.format("Removing the dash symbol of datastore name [%s] because this name is a valid UUID used by ACS. This happens because when a new NFS storage is created via ACS, "
