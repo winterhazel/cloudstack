@@ -1611,10 +1611,29 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             s_logger.debug("Failed to recover volume" + volume.getId(), e);
             throw new CloudRuntimeException("Failed to recover volume" + volume.getId(), e);
         }
+
+        publishVolumeCreationUsageEvent(volume);
+
         _resourceLimitMgr.incrementResourceCount(volume.getAccountId(), ResourceType.volume, volume.isDisplay());
         _resourceLimitMgr.incrementResourceCount(volume.getAccountId(), ResourceType.primary_storage, volume.isDisplay(), new Long(volume.getSize()));
 
         return volume;
+    }
+
+    public void publishVolumeCreationUsageEvent(Volume volume) {
+        Long diskOfferingId = volume.getDiskOfferingId();
+        Long offeringId = null;
+        if (diskOfferingId != null) {
+            DiskOfferingVO offering = _diskOfferingDao.findById(diskOfferingId);
+            if (offering != null && (offering.getType() == DiskOfferingVO.Type.Disk)) {
+                offeringId = offering.getId();
+            }
+        }
+        UsageEventUtils
+                .publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(), offeringId,
+                        volume.getTemplateId(), volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
+
+        s_logger.debug(String.format("Volume [%s] has been successfully recovered, thus a new usage event %s has been published.", volume.getUuid(), EventTypes.EVENT_VOLUME_CREATE));
     }
 
     @Override

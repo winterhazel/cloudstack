@@ -2261,18 +2261,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 for (VolumeVO volume : volumes) {
                     if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
                         // Create an event
-                        Long templateId = volume.getTemplateId();
-                        Long diskOfferingId = volume.getDiskOfferingId();
-                        Long offeringId = null;
-                        if (diskOfferingId != null) {
-                            DiskOfferingVO offering = _diskOfferingDao.findById(diskOfferingId);
-                            if (offering != null && (offering.getType() == DiskOfferingVO.Type.Disk)) {
-                                offeringId = offering.getId();
-                            }
-                        }
-                        UsageEventUtils
-                        .publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(), offeringId,
-                                templateId, volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
+                        _volumeService.publishVolumeCreationUsageEvent(volume);
                     }
                 }
 
