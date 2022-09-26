@@ -55,19 +55,50 @@
 </template>
 
 <script>
+import moment from 'moment'
+
 export default {
   name: 'FilterStats',
+  emits: ['closeAction', 'onSubmit'],
+  props: {
+    startDateProp: {
+      type: [Date, String, Number],
+      required: false,
+      default: null
+    },
+    endDateProp: {
+      type: [Date, String, Number],
+      required: false,
+      default: null
+    }
+  },
+  computed: {
+    startDate () {
+      if (this.startDateProp) {
+        return moment(this.startDateProp)
+      }
+      return null
+    },
+    endDate () {
+      if (this.endDateProp) {
+        return moment(this.endDateProp)
+      }
+      return null
+    }
+  },
   data () {
     return {
       formLayout: 'vertical',
       form: this.$form.createForm(this),
-      startDate: null,
-      endDate: null,
       showAllDataAlert: false,
       showAllData: true,
       showStartDate: true,
       showEndDate: true
     }
+  },
+  updated () {
+    this.form.startDate = this.startDate
+    this.form.endDate = this.endDate
   },
   methods: {
     handleSubmit (e) {
