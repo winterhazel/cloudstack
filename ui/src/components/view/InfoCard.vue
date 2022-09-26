@@ -800,7 +800,7 @@ export default {
   },
   computed: {
     name () {
-      return this.resource.displayname || this.resource.displaytext || this.resource.name || this.resource.username ||
+      return this.resource.displayname || this.resource.name || this.resource.displaytext || this.resource.username ||
         this.resource.ipaddress || this.resource.virtualmachinename || this.resource.templatetype
     },
     ipV6Address () {
