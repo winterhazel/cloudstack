@@ -106,10 +106,10 @@ public class ParamProcessWorker implements DispatchWorker {
         }
     }
 
-    private void validateUuidString(final Object param, final String argName) {
+    private void isUuidString(final Object param, final String argName) {
         String value = String.valueOf(param);
 
-        if (!UuidUtils.validateUUID(value)) {
+        if (!UuidUtils.isUuid(value)) {
             throwInvalidParameterValueException(argName);
         }
     }
@@ -148,7 +148,7 @@ public class ParamProcessWorker implements DispatchWorker {
                 case UuidString:
                     switch (annotation.type()) {
                         case STRING:
-                            validateUuidString(paramObj, argName);
+                            isUuidString(paramObj, argName);
                             break;
                     }
                     break;
