@@ -41,6 +41,7 @@ import org.apache.cloudstack.api.ApiErrorCode;
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
+import org.apache.cloudstack.api.command.QuotaConfigureEmailCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
 import org.apache.cloudstack.api.command.QuotaResourceQuotingCmd;
@@ -58,13 +59,17 @@ import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariable
 import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariables;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
+import org.apache.cloudstack.quota.dao.QuotaAccountDao;
 import org.apache.cloudstack.quota.dao.QuotaBalanceDao;
 import org.apache.cloudstack.quota.dao.QuotaCreditsDao;
+import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDao;
 import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.dao.QuotaSummaryDao;
 import org.apache.cloudstack.quota.dao.QuotaTariffDao;
+import org.apache.cloudstack.quota.vo.QuotaAccountVO;
 import org.apache.cloudstack.quota.vo.QuotaBalanceVO;
 import org.apache.cloudstack.quota.vo.QuotaCreditsVO;
+import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
 import org.apache.cloudstack.quota.vo.QuotaSummaryVO;
 import org.apache.cloudstack.quota.vo.QuotaTariffVO;
@@ -142,8 +147,14 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
 
     private Set<Account.Type> accountTypesThatCanListAllQuotaSummaries = Sets.newHashSet(Account.Type.ADMIN, Account.Type.DOMAIN_ADMIN);
 
+    @Inject
+    private QuotaAccountDao quotaAccountDao;
+
     private final Type linkedListOfResourcesToQuoteType = new TypeToken<LinkedList<ResourcesToQuoteVo>>() {
     }.getType();
+
+    @Inject
+    private QuotaEmailConfigurationDao quotaEmailConfigurationDao;
 
     @Override
     public QuotaTariffResponse createQuotaTariffResponse(QuotaTariffVO tariff, boolean returnActivationRule) {
@@ -890,6 +901,61 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     public boolean isUserAllowedToSeeActivationRules(User user) {
         List<ApiDiscoveryResponse> apiList = (List<ApiDiscoveryResponse>)apiDiscoveryService.listApis(user, null).getResponses();
         return apiList.stream().anyMatch(response -> StringUtils.equalsAny(response.getName(), "quotaTariffCreate", "quotaTariffUpdate"));
+    }
+
+    @Override
+    public QuotaEmailConfigurationVO configureQuotaEmail(QuotaConfigureEmailCmd cmd) {
+        validateQuotaConfigureEmailCmdParameters(cmd);
+
+        if (cmd.getMinBalance() != null) {
+            _quotaService.setMinBalance(cmd.getAccountId(), cmd.getMinBalance());
+        }
+
+        if (cmd.getTemplateName() != null) {
+            List<QuotaEmailTemplatesVO> templateVO = _quotaEmailTemplateDao.listAllQuotaEmailTemplates(cmd.getTemplateName());
+            if (templateVO.isEmpty()) {
+                throw new InvalidParameterValueException(String.format("Could not find template with name [%s].", cmd.getTemplateName()));
+            }
+            QuotaEmailConfigurationVO configurationVO = quotaEmailConfigurationDao.findByIds(cmd.getAccountId(), templateVO.get(0).getId());
+
+            if (configurationVO == null) {
+                QuotaAccountVO quotaAccountVO = quotaAccountDao.findByIdQuotaAccount(cmd.getAccountId());
+                configurationVO = new QuotaEmailConfigurationVO(quotaAccountVO.getAccountId(), templateVO.get(0).getId(), cmd.getEnable());
+                return quotaEmailConfigurationDao.persistQuotaEmailConfiguration(configurationVO);
+            }
+
+            configurationVO.setEnable(cmd.getEnable());
+            return quotaEmailConfigurationDao.updateQuotaEmailConfiguration(configurationVO);
+        }
+
+        return null;
+    }
+
+    private void validateQuotaConfigureEmailCmdParameters(QuotaConfigureEmailCmd cmd) {
+        if (cmd.getTemplateName() == null && cmd.getMinBalance() == null) {
+            throw new InvalidParameterValueException("You should inform at least the minbalance or both the templatename and enable parameters.");
+        }
+
+        if (cmd.getTemplateName() != null && cmd.getEnable() == null) {
+            throw new InvalidParameterValueException("If you inform the template name, you must also inform the enable parameter");
+        }
+    }
+
+    public QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO, String templateName) {
+        QuotaConfigureEmailResponse quotaConfigureEmailResponse = new QuotaConfigureEmailResponse();
+
+        Account account = _accountDao.findByIdIncludingRemoved(quotaEmailConfigurationVO.getAccountId());
+
+        quotaConfigureEmailResponse.setAccountId(account.getUuid());
+        quotaConfigureEmailResponse.setTemplateName(templateName);
+        quotaConfigureEmailResponse.setEnabled(quotaEmailConfigurationVO.getEnable());
+
+        QuotaAccountVO quotaAccountVO = quotaAccountDao.findByIdQuotaAccount(account.getAccountId());
+
+        if (quotaAccountVO != null) {
+            quotaConfigureEmailResponse.setMinBalance(quotaAccountVO.getQuotaMinBalance().doubleValue());
+        }
+        return quotaConfigureEmailResponse;
     }
 
 }

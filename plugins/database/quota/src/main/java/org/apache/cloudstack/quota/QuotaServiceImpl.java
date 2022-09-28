@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
+import org.apache.cloudstack.api.command.QuotaConfigureEmailCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
@@ -139,6 +140,7 @@ public class QuotaServiceImpl extends ManagerBase implements QuotaService, Confi
         cmdList.add(QuotaTariffCreateCmd.class);
         cmdList.add(QuotaTariffDeleteCmd.class);
         cmdList.add(QuotaResourceQuotingCmd.class);
+        cmdList.add(QuotaConfigureEmailCmd.class);
         return cmdList;
     }
 

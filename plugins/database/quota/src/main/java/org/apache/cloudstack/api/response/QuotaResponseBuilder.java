@@ -18,6 +18,7 @@ package org.apache.cloudstack.api.response;
 
 import com.cloud.user.User;
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
+import org.apache.cloudstack.api.command.QuotaConfigureEmailCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
@@ -27,6 +28,7 @@ import org.apache.cloudstack.api.command.QuotaTariffCreateCmd;
 import org.apache.cloudstack.api.command.QuotaTariffListCmd;
 import org.apache.cloudstack.api.command.QuotaTariffUpdateCmd;
 import org.apache.cloudstack.quota.vo.QuotaBalanceVO;
+import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 import org.apache.cloudstack.quota.vo.QuotaTariffVO;
 import org.apache.cloudstack.quota.vo.QuotaUsageVO;
 import org.apache.cloudstack.quota.vo.ResourcesToQuoteVo;
@@ -80,4 +82,8 @@ public interface QuotaResponseBuilder {
     List<ResourcesQuotingResultResponse> quoteResources(String resourcesToQuoteAsJson);
 
     boolean isUserAllowedToSeeActivationRules(User user);
+
+    QuotaEmailConfigurationVO configureQuotaEmail(QuotaConfigureEmailCmd cmd);
+
+    QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO, String templateName);
 }
