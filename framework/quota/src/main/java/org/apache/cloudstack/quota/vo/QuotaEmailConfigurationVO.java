@@ -30,8 +30,8 @@ public class QuotaEmailConfigurationVO {
     @Column(name = "email_template_id")
     private long emailTemplateId;
 
-    @Column(name = "enable")
-    private boolean enable;
+    @Column(name = "enabled")
+    private boolean enabled;
 
     public QuotaEmailConfigurationVO() {
     }
@@ -39,7 +39,7 @@ public class QuotaEmailConfigurationVO {
     public QuotaEmailConfigurationVO(long accountId, long emailTemplateId, boolean enable) {
         this.accountId = accountId;
         this.emailTemplateId = emailTemplateId;
-        this.enable = enable;
+        this.enabled = enable;
     }
 
     public long getAccountId() {
@@ -58,11 +58,11 @@ public class QuotaEmailConfigurationVO {
         this.emailTemplateId = emailTemplateId;
     }
 
-    public boolean getEnable() {
-        return enable;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setEnable(boolean enable) {
-        this.enable = enable;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

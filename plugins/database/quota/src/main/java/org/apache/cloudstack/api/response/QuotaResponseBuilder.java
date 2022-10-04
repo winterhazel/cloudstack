@@ -85,5 +85,7 @@ public interface QuotaResponseBuilder {
 
     QuotaEmailConfigurationVO configureQuotaEmail(QuotaConfigureEmailCmd cmd);
 
-    QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO, String templateName);
+    QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
+
+    List<QuotaConfigureEmailResponse> listEmailConfiguration(long accountId);
 }

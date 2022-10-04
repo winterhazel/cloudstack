@@ -16,7 +16,6 @@
 //under the License.
 package org.apache.cloudstack.api.command;
 
-import com.cloud.user.Account;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseCmd;
@@ -32,7 +31,8 @@ import javax.inject.Inject;
         requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
 public class QuotaConfigureEmailCmd extends BaseCmd {
 
-    @Parameter(name = ApiConstants.ACCOUNT_ID, type = CommandType.UUID, entityType = AccountResponse.class, required = true, description = "Account ID for which to configure quota template email or min balance")
+    @Parameter(name = ApiConstants.ACCOUNT_ID, type = CommandType.UUID, entityType = AccountResponse.class, required = true,
+            description = "Account ID for which to configure quota template email or min balance")
     private long accountId;
 
     @Parameter(name = ApiConstants.TEMPLATE_NAME, type = CommandType.STRING, description = "Quota email template name which should be configured")
@@ -49,7 +49,7 @@ public class QuotaConfigureEmailCmd extends BaseCmd {
 
     @Override public void execute() {
         QuotaEmailConfigurationVO quotaEmailConfigurationVO = responseBuilder.configureQuotaEmail(this);
-        QuotaConfigureEmailResponse quotaConfigureEmailResponse = responseBuilder.createQuotaConfigureEmailResponse(quotaEmailConfigurationVO, getTemplateName());
+        QuotaConfigureEmailResponse quotaConfigureEmailResponse = responseBuilder.createQuotaConfigureEmailResponse(quotaEmailConfigurationVO);
         quotaConfigureEmailResponse.setResponseName(getCommandName());
         this.setResponseObject(quotaConfigureEmailResponse);
     }
@@ -59,7 +59,7 @@ public class QuotaConfigureEmailCmd extends BaseCmd {
     }
 
     @Override public long getEntityOwnerId() {
-        return Account.ACCOUNT_ID_SYSTEM;
+        return accountId;
     }
 
     public long getAccountId() {

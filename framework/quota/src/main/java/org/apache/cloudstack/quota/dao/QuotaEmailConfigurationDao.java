@@ -19,11 +19,15 @@ package org.apache.cloudstack.quota.dao;
 import com.cloud.utils.db.GenericDao;
 import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 
+import java.util.List;
+
 public interface QuotaEmailConfigurationDao extends GenericDao<QuotaEmailConfigurationVO, Long> {
 
     QuotaEmailConfigurationVO findByIds(long accountId, long emailTemplateId);
 
-    QuotaEmailConfigurationVO updateQuotaEmailConfiguration(final QuotaEmailConfigurationVO quotaEmailConfigurationVO);
+    QuotaEmailConfigurationVO updateQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
 
-    QuotaEmailConfigurationVO persistQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
+    void persistQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
+
+    List<QuotaEmailConfigurationVO> listByAccount(long accountId);
 }

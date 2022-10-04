@@ -30,6 +30,7 @@ import javax.naming.ConfigurationException;
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.dao.QuotaAccountDao;
+import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDaoImpl;
 import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.vo.QuotaAccountVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
@@ -71,6 +72,9 @@ public class QuotaAlertManagerImplTest extends TestCase {
     @Mock
     private ConfigurationDao configDao;
 
+    @Mock
+    private QuotaEmailConfigurationDaoImpl quotaEmailConfigurationDaoMock;
+
     @Spy
     @InjectMocks
     private QuotaAlertManagerImpl quotaAlertManager = new QuotaAlertManagerImpl();
@@ -104,6 +108,8 @@ public class QuotaAlertManagerImplTest extends TestCase {
 
         // call real method on send monthly statement
         Mockito.doCallRealMethod().when(quotaAlertManager).checkAndSendQuotaAlertEmails();
+
+        Mockito.doReturn(new ArrayList<>()).when(quotaEmailConfigurationDaoMock).listByAccount(Mockito.anyLong());
 
         // Case1: valid balance, no email should be sent
         quotaAlertManager.checkAndSendQuotaAlertEmails();

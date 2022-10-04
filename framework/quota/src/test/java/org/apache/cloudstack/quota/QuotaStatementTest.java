@@ -24,14 +24,18 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.mail.MessagingException;
 import javax.naming.ConfigurationException;
 
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.quota.QuotaStatementImpl.QuotaStatementPeriods;
 import org.apache.cloudstack.quota.dao.QuotaAccountDao;
+import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDaoImpl;
+import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.dao.QuotaUsageDao;
 import org.apache.cloudstack.quota.vo.QuotaAccountVO;
+import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +64,14 @@ public class QuotaStatementTest extends TestCase {
     @Mock
     QuotaAlertManager alertManager;
 
+    @Mock
+    QuotaEmailConfigurationDaoImpl quotaEmailConfigurationDaoMock;
+
+    @Mock
+    QuotaEmailTemplatesDao quotaEmailTemplatesDaoMock;
+
+    @Mock
+    QuotaEmailTemplatesVO quotaEmailTemplatesVOMock;
     @Spy
     QuotaStatementImpl quotaStatement = new QuotaStatementImpl();
 

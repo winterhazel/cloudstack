@@ -21,16 +21,21 @@ import com.cloud.utils.db.SearchBuilder;
 import com.cloud.utils.db.SearchCriteria;
 import com.cloud.utils.db.Transaction;
 import com.cloud.utils.db.TransactionCallback;
+import com.cloud.utils.db.TransactionCallbackNoReturn;
 import com.cloud.utils.db.TransactionLegacy;
 import com.cloud.utils.db.TransactionStatus;
 import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class QuotaEmailConfigurationDaoImpl extends GenericDaoBase<QuotaEmailConfigurationVO, Long> implements QuotaEmailConfigurationDao {
 
     private SearchBuilder<QuotaEmailConfigurationVO> searchBuilderFindByIds;
+
+    private SearchBuilder<QuotaEmailConfigurationVO> searchBuilderListByAccount;
 
     private static Logger LOGGER = Logger.getLogger(QuotaEmailConfigurationDaoImpl.class);
 
@@ -53,28 +58,34 @@ public class QuotaEmailConfigurationDaoImpl extends GenericDaoBase<QuotaEmailCon
         });
     }
 
-    public QuotaEmailConfigurationVO updateQuotaEmailConfiguration(final QuotaEmailConfigurationVO quotaEmailConfigurationVO) {
+    public QuotaEmailConfigurationVO updateQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO) {
         SearchCriteria<QuotaEmailConfigurationVO> sc = searchBuilderFindByIds.create();
         sc.setParameters("account_id", quotaEmailConfigurationVO.getAccountId());
         sc.setParameters("email_template_id", quotaEmailConfigurationVO.getEmailTemplateId());
-        int result = Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<Integer>() {
-            @Override public Integer doInTransaction(TransactionStatus status) {
-                return update(quotaEmailConfigurationVO, sc);
+        Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallbackNoReturn() {
+            @Override public void doInTransactionWithoutResult(TransactionStatus status) {
+                update(quotaEmailConfigurationVO, sc);
             }
         });
-
-        if (result == 0) {
-            LOGGER.debug(String.format("Unable to update [%s]", quotaEmailConfigurationVO));
-            return null;
-        }
 
         return quotaEmailConfigurationVO;
     }
 
-    public QuotaEmailConfigurationVO persistQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO) {
-        return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<QuotaEmailConfigurationVO>() {
-            @Override public QuotaEmailConfigurationVO doInTransaction(TransactionStatus status) {
-                return persist(quotaEmailConfigurationVO);
+    public void persistQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO) {
+        Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallbackNoReturn() {
+            @Override public void doInTransactionWithoutResult(TransactionStatus status) {
+                persist(quotaEmailConfigurationVO);
+            }
+        });
+    }
+
+    @Override public List<QuotaEmailConfigurationVO> listByAccount(long accountId) {
+        SearchCriteria<QuotaEmailConfigurationVO> sc = searchBuilderListByAccount.create();
+        sc.setParameters("account_id", accountId);
+
+        return Transaction.execute(TransactionLegacy.USAGE_DB, new TransactionCallback<List<QuotaEmailConfigurationVO>>() {
+            @Override public List<QuotaEmailConfigurationVO> doInTransaction(TransactionStatus status) {
+                return listBy(sc);
             }
         });
     }
