@@ -1074,10 +1074,11 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
         }
 
         private void syncBackupMetrics(final BackupProvider backupProvider, final Map<VirtualMachine, Backup.Metric> metrics) {
-            try {
-                for (final VirtualMachine vm : metrics.keySet()) {
+            for (final VirtualMachine vm : metrics.keySet()) {
+                try {
                     final Backup.Metric metric = metrics.get(vm);
                     if (metric != null) {
+                        LOG.debug(String.format("Trying to sync backups of VM [%s] using backup provider [%s].", vm.getUuid(), backupProvider.getName()));
                         // Sync out-of-band backups
                         backupProvider.syncBackups(vm, metric);
                         // Emit a usage event, update usage metric for the VM by the usage server
@@ -1086,9 +1087,9 @@ public class BackupManagerImpl extends ManagerBase implements BackupManager {
                                 vm.getBackupOfferingId(), null, metric.getBackupSize(), metric.getDataSize(),
                                 Backup.class.getSimpleName(), vm.getUuid());
                     }
+                } catch (final Exception e) {
+                    LOG.error(String.format("Failed to sync backup usage metrics and out-of-band backups of VM [%s] due to: [%s].", vm.getUuid(), e.getMessage()), e);
                 }
-            } catch (final Throwable e) {
-                LOG.error(String.format("Failed to sync backup usage metrics and out-of-band backups due to: [%s].", e.getMessage()), e);
             }
         }
 
