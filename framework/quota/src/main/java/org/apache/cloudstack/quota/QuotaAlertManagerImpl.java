@@ -31,7 +31,7 @@ import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaConfig.QuotaEmailTemplateTypes;
 import org.apache.cloudstack.quota.dao.QuotaAccountDao;
-import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDaoImpl;
+import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDao;
 import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.vo.QuotaAccountVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
@@ -78,7 +78,7 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
     private QuotaManager _quotaManager;
 
     @Inject
-    private QuotaEmailConfigurationDaoImpl quotaEmailConfigurationDao;
+    private QuotaEmailConfigurationDao quotaEmailConfigurationDao;
 
     private boolean _lockAccountEnforcement = false;
     private String senderAddress;
@@ -139,52 +139,60 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
     public void checkAndSendQuotaAlertEmails() {
         List<DeferredQuotaEmail> deferredQuotaEmailList = new ArrayList<DeferredQuotaEmail>();
         final BigDecimal zeroBalance = new BigDecimal(0);
+
+        s_logger.info("Checking and sending quota alert emails.");
         for (final QuotaAccountVO quotaAccount : _quotaAcc.listAllQuotaAccount()) {
-            if (s_logger.isDebugEnabled()) {
-                s_logger.debug("checkAndSendQuotaAlertEmails accId=" + quotaAccount.getId());
-            }
             BigDecimal accountBalance = quotaAccount.getQuotaBalance();
+
+            if (accountBalance == null) {
+                continue;
+            }
+
+            AccountVO account = _accountDao.findById(quotaAccount.getId());
+            if (account == null) {
+                continue;
+            }
+            s_logger.debug(String.format("Checking %s to see if we send a quota alert email.", account));
+
             Date balanceDate = quotaAccount.getQuotaBalanceDate();
             Date alertDate = quotaAccount.getQuotaAlertDate();
             int lockable = quotaAccount.getQuotaEnforce();
             BigDecimal thresholdBalance = quotaAccount.getQuotaMinBalance();
-            if (accountBalance != null) {
-                AccountVO account = _accountDao.findById(quotaAccount.getId());
-                if (account == null) {
-                    continue; // the account is removed
-                }
-                if (s_logger.isDebugEnabled()) {
-                    s_logger.debug("checkAndSendQuotaAlertEmails: Check id=" + account.getId() + " bal=" + accountBalance + ", alertDate=" + alertDate + ", lockable=" + lockable);
-                }
-                boolean quotaEmptyConfigured = true;
-                boolean quotaLowConfigured = true;
-                List<QuotaEmailConfigurationVO> quotaEmailConfigurationVOList = quotaEmailConfigurationDao.listByAccount(account.getAccountId());
-                for (QuotaEmailConfigurationVO quotaEmailConfigurationVO: quotaEmailConfigurationVOList) {
-                    QuotaEmailTemplatesVO quotaEmailTemplatesVO = _quotaEmailTemplateDao.findById(quotaEmailConfigurationVO.getEmailTemplateId());
-                    if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaConfig.QuotaEmailTemplateTypes.QUOTA_EMPTY.toString())) {
-                        quotaEmptyConfigured = quotaEmailConfigurationVO.isEnabled();
-                    } else if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaEmailTemplateTypes.QUOTA_LOW.toString())) {
-                        quotaLowConfigured = quotaEmailConfigurationVO.isEnabled();
-                    }
-                }
-                if (accountBalance.compareTo(zeroBalance) < 0) {
-                    if (_lockAccountEnforcement && (lockable == 1)) {
-                        if (_quotaManager.isLockable(account)) {
-                            s_logger.info("Locking account " + account.getAccountName() + " due to quota < 0.");
-                            lockAccount(account.getId());
-                        }
-                    }
-                    if (quotaEmptyConfigured && (alertDate == null || (balanceDate.after(alertDate) && getDifferenceDays(alertDate, new Date()) > 1))) {
-                        s_logger.info("Sending alert " + account.getAccountName() + " due to quota < 0.");
-                        deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_EMPTY));
-                    }
-                } else if (accountBalance.compareTo(thresholdBalance) < 0) {
-                    if (quotaLowConfigured && (alertDate == null || (balanceDate.after(alertDate) && getDifferenceDays(alertDate, new Date()) > 1))) {
-                        s_logger.info("Sending alert " + account.getAccountName() + " due to quota below threshold.");
-                        deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_LOW));
-                    }
+
+
+            s_logger.debug(String.format("Checking account [%s].", account));
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("checkAndSendQuotaAlertEmails: Check id=" + account.getId() + " bal=" + accountBalance + ", alertDate=" + alertDate + ", lockable=" + lockable);
+            }
+            boolean quotaEmptyConfigured = true;
+            boolean quotaLowConfigured = true;
+            List<QuotaEmailConfigurationVO> quotaEmailConfigurationVOList = quotaEmailConfigurationDao.listByAccount(account.getAccountId());
+            for (QuotaEmailConfigurationVO quotaEmailConfigurationVO: quotaEmailConfigurationVOList) {
+                QuotaEmailTemplatesVO quotaEmailTemplatesVO = _quotaEmailTemplateDao.findById(quotaEmailConfigurationVO.getEmailTemplateId());
+                if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaConfig.QuotaEmailTemplateTypes.QUOTA_EMPTY.toString())) {
+                    quotaEmptyConfigured = quotaEmailConfigurationVO.isEnabled();
+                } else if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaEmailTemplateTypes.QUOTA_LOW.toString())) {
+                    quotaLowConfigured = quotaEmailConfigurationVO.isEnabled();
                 }
             }
+            if (accountBalance.compareTo(zeroBalance) < 0) {
+                if (_lockAccountEnforcement && (lockable == 1)) {
+                    if (_quotaManager.isLockable(account)) {
+                        s_logger.info("Locking account " + account.getAccountName() + " due to quota < 0.");
+                        lockAccount(account.getId());
+                    }
+                }
+                if (quotaEmptyConfigured && (alertDate == null || (balanceDate.after(alertDate) && getDifferenceDays(alertDate, new Date()) > 1))) {
+                    s_logger.info("Sending alert " + account.getAccountName() + " due to quota < 0.");
+                    deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_EMPTY));
+                }
+            } else if (accountBalance.compareTo(thresholdBalance) < 0) {
+                if (quotaLowConfigured && (alertDate == null || (balanceDate.after(alertDate) && getDifferenceDays(alertDate, new Date()) > 1))) {
+                    s_logger.info("Sending alert " + account.getAccountName() + " due to quota below threshold.");
+                    deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_LOW));
+                }
+            }
+
         }
 
         for (DeferredQuotaEmail emailToBeSent : deferredQuotaEmailList) {

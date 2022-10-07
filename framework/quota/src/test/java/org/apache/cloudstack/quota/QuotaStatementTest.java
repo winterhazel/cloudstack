@@ -24,7 +24,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.inject.Inject;
 import javax.mail.MessagingException;
 import javax.naming.ConfigurationException;
 
@@ -35,10 +34,12 @@ import org.apache.cloudstack.quota.dao.QuotaEmailConfigurationDaoImpl;
 import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.dao.QuotaUsageDao;
 import org.apache.cloudstack.quota.vo.QuotaAccountVO;
+import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -72,7 +73,12 @@ public class QuotaStatementTest extends TestCase {
 
     @Mock
     QuotaEmailTemplatesVO quotaEmailTemplatesVOMock;
+
+    @Mock
+    List<QuotaEmailTemplatesVO> listMock;
+
     @Spy
+    @InjectMocks
     QuotaStatementImpl quotaStatement = new QuotaStatementImpl();
 
     private void injectMockToField(Object mock, String fieldName) throws NoSuchFieldException, IllegalAccessException {
@@ -239,7 +245,11 @@ public class QuotaStatementTest extends TestCase {
 
 
     @Test
-    public void testSendStatement() throws UnsupportedEncodingException, MessagingException {
+    public void sendStatementTestUnconfiguredEmail() {
+        Mockito.doReturn(listMock).when(quotaEmailTemplatesDaoMock).listAllQuotaEmailTemplates(Mockito.anyString());
+        Mockito.doReturn(quotaEmailTemplatesVOMock).when(listMock).get(Mockito.anyInt());
+        Mockito.doReturn(null).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+
         Calendar date = Calendar.getInstance();
         AccountVO accountVO = new AccountVO();
         accountVO.setId(2L);
@@ -262,6 +272,55 @@ public class QuotaStatementTest extends TestCase {
         if (period != null){
             Mockito.verify(alertManager, Mockito.times(1)).sendQuotaAlert(Mockito.any(QuotaAlertManagerImpl.DeferredQuotaEmail.class));
         }
+    }
+
+    @Test
+    public void sendStatementTestEnabledEmail() {
+        Mockito.doReturn(listMock).when(quotaEmailTemplatesDaoMock).listAllQuotaEmailTemplates(Mockito.anyString());
+        Mockito.doReturn(quotaEmailTemplatesVOMock).when(listMock).get(Mockito.anyInt());
+
+        QuotaEmailConfigurationVO quotaEmailConfigurationVOMock = new QuotaEmailConfigurationVO();
+        quotaEmailConfigurationVOMock.setEnabled(true);
+
+        Mockito.doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+
+        Calendar date = Calendar.getInstance();
+        AccountVO accountVO = new AccountVO();
+        accountVO.setId(2L);
+        accountVO.setDomainId(1L);
+        Mockito.lenient().when(accountDao.findById(Mockito.anyLong())).thenReturn(accountVO);
+
+        QuotaAccountVO acc = new QuotaAccountVO(2L);
+        acc.setQuotaBalance(new BigDecimal(404));
+        acc.setLastStatementDate(null);
+        List<QuotaAccountVO> accounts = new ArrayList<>();
+        accounts.add(acc);
+        Mockito.lenient().when(quotaAcc.listAllQuotaAccount()).thenReturn(accounts);
+
+        Mockito.lenient().when(quotaUsage.findTotalQuotaUsage(Mockito.anyLong(), Mockito.anyLong(), Mockito.anyInt(), Mockito.any(Date.class), Mockito.any(Date.class)))
+                .thenReturn(new BigDecimal(100));
+
+        // call real method on send monthly statement
+        quotaStatement.sendStatement();
+        Calendar period[] = quotaStatement.statementTime(date, QuotaStatementPeriods.MONTHLY);
+        if (period != null){
+            Mockito.verify(alertManager, Mockito.times(1)).sendQuotaAlert(Mockito.any(QuotaAlertManagerImpl.DeferredQuotaEmail.class));
+        }
+    }
+
+    @Test
+    public void sendStatementTestDisabledEmail() {
+        Mockito.doReturn(listMock).when(quotaEmailTemplatesDaoMock).listAllQuotaEmailTemplates(Mockito.anyString());
+        Mockito.doReturn(quotaEmailTemplatesVOMock).when(listMock).get(Mockito.anyInt());
+
+        QuotaEmailConfigurationVO quotaEmailConfigurationVOMock = new QuotaEmailConfigurationVO();
+        quotaEmailConfigurationVOMock.setEnabled(false);
+
+        Mockito.lenient().doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+
+        quotaStatement.sendStatement();
+
+        Mockito.verify(quotaStatement, Mockito.never()).statementTime(Mockito.any(), Mockito.any());
     }
 
 }

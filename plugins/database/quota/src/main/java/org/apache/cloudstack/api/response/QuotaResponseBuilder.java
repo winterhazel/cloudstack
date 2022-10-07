@@ -83,9 +83,9 @@ public interface QuotaResponseBuilder {
 
     boolean isUserAllowedToSeeActivationRules(User user);
 
-    QuotaEmailConfigurationVO configureQuotaEmail(QuotaConfigureEmailCmd cmd);
+    Pair<QuotaEmailConfigurationVO, Double> configureQuotaEmail(QuotaConfigureEmailCmd cmd);
 
-    QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
+    QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO, Double minBalance, long accountId);
 
     List<QuotaConfigureEmailResponse> listEmailConfiguration(long accountId);
 }

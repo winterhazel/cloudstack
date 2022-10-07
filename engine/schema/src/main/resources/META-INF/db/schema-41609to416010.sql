@@ -22,3 +22,12 @@
 UPDATE  cloud.configuration
 SET     description = 'Comma separated list of email addresses which are going to receive alert emails.'
 WHERE   name = 'alert.email.addresses';
+
+CREATE TABLE `cloud_usage`.`quota_email_configuration`(
+`account_id` int(11) NOT NULL,
+`email_template_id` bigint(20) NOT NULL,
+`enabled` int(1) UNSIGNED NOT NULL,
+PRIMARY KEY (`account_id`, `email_template_id`),
+CONSTRAINT `FK_quota_email_configuration_account_id` FOREIGN KEY (`account_id`) REFERENCES `cloud_usage`.`quota_account`(`account_id`),
+CONSTRAINT `FK_quota_email_configuration_email_te1mplate_id` FOREIGN KEY (`email_template_id`) REFERENCES `cloud_usage`.`quota_email_templates`(`id`));
+

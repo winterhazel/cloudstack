@@ -16,6 +16,7 @@
 //under the License.
 package org.apache.cloudstack.api.command;
 
+import com.cloud.utils.Pair;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseCmd;
@@ -48,8 +49,8 @@ public class QuotaConfigureEmailCmd extends BaseCmd {
     private QuotaResponseBuilder responseBuilder;
 
     @Override public void execute() {
-        QuotaEmailConfigurationVO quotaEmailConfigurationVO = responseBuilder.configureQuotaEmail(this);
-        QuotaConfigureEmailResponse quotaConfigureEmailResponse = responseBuilder.createQuotaConfigureEmailResponse(quotaEmailConfigurationVO);
+        Pair<QuotaEmailConfigurationVO, Double> result = responseBuilder.configureQuotaEmail(this);
+        QuotaConfigureEmailResponse quotaConfigureEmailResponse = responseBuilder.createQuotaConfigureEmailResponse(result.first(), result.second(), accountId);
         quotaConfigureEmailResponse.setResponseName(getCommandName());
         this.setResponseObject(quotaConfigureEmailResponse);
     }

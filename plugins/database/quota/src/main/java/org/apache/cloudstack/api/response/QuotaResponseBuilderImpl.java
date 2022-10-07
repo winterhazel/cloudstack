@@ -902,10 +902,12 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     }
 
     @Override
-    public QuotaEmailConfigurationVO configureQuotaEmail(QuotaConfigureEmailCmd cmd) {
+    public Pair<QuotaEmailConfigurationVO, Double> configureQuotaEmail(QuotaConfigureEmailCmd cmd) {
         validateQuotaConfigureEmailCmdParameters(cmd);
 
-        if (cmd.getMinBalance() != null) {
+        Double minBalance = cmd.getMinBalance();
+
+        if (minBalance != null) {
             _quotaService.setMinBalance(cmd.getAccountId(), cmd.getMinBalance());
         }
 
@@ -919,13 +921,13 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             if (configurationVO == null) {
                 configurationVO = new QuotaEmailConfigurationVO(cmd.getAccountId(), templateVO.get(0).getId(), cmd.getEnable());
                 quotaEmailConfigurationDao.persistQuotaEmailConfiguration(configurationVO);
-                return configurationVO;
+                return new Pair<>(configurationVO, minBalance);
             }
 
             configurationVO.setEnabled(cmd.getEnable());
-            return quotaEmailConfigurationDao.updateQuotaEmailConfiguration(configurationVO);
+            return new Pair<>(quotaEmailConfigurationDao.updateQuotaEmailConfiguration(configurationVO), minBalance);
         }
-        return null;
+        return new Pair<>(null, minBalance);
     }
 
     private void validateQuotaConfigureEmailCmdParameters(QuotaConfigureEmailCmd cmd) {
@@ -938,21 +940,20 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         }
     }
 
-    public QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO) {
+    public QuotaConfigureEmailResponse createQuotaConfigureEmailResponse(QuotaEmailConfigurationVO quotaEmailConfigurationVO, Double minBalance, long accountId) {
         QuotaConfigureEmailResponse quotaConfigureEmailResponse = new QuotaConfigureEmailResponse();
 
-        Account account = _accountDao.findByIdIncludingRemoved(quotaEmailConfigurationVO.getAccountId());
-        QuotaEmailTemplatesVO templateVO = _quotaEmailTemplateDao.findById(quotaEmailConfigurationVO.getEmailTemplateId());
+        Account account = _accountDao.findByIdIncludingRemoved(accountId);
+        if (quotaEmailConfigurationVO != null) {
+            QuotaEmailTemplatesVO templateVO = _quotaEmailTemplateDao.findById(quotaEmailConfigurationVO.getEmailTemplateId());
 
-        quotaConfigureEmailResponse.setAccountId(account.getUuid());
-        quotaConfigureEmailResponse.setTemplateName(templateVO.getTemplateName());
-        quotaConfigureEmailResponse.setEnabled(quotaEmailConfigurationVO.isEnabled());
-
-        QuotaAccountVO quotaAccountVO = quotaAccountDao.findByIdQuotaAccount(account.getAccountId());
-
-        if (quotaAccountVO != null) {
-            quotaConfigureEmailResponse.setMinBalance(quotaAccountVO.getQuotaMinBalance().doubleValue());
+            quotaConfigureEmailResponse.setAccountId(account.getUuid());
+            quotaConfigureEmailResponse.setTemplateName(templateVO.getTemplateName());
+            quotaConfigureEmailResponse.setEnabled(quotaEmailConfigurationVO.isEnabled());
         }
+
+        quotaConfigureEmailResponse.setMinBalance(minBalance);
+
         return quotaConfigureEmailResponse;
     }
 
