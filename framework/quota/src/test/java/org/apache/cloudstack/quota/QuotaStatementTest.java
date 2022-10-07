@@ -16,7 +16,6 @@
 // under the License.
 package org.apache.cloudstack.quota;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import javax.mail.MessagingException;
 import javax.naming.ConfigurationException;
 
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;

@@ -931,12 +931,16 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     }
 
     private void validateQuotaConfigureEmailCmdParameters(QuotaConfigureEmailCmd cmd) {
+        if (quotaAccountDao.findByIdQuotaAccount(cmd.getAccountId()) == null) {
+            throw new InvalidParameterValueException("You must have the quota enabled for this account to configure quota emails.");
+        }
+
         if (cmd.getTemplateName() == null && cmd.getMinBalance() == null) {
-            throw new InvalidParameterValueException("You should inform at least the minbalance or both the templatename and enable parameters.");
+            throw new InvalidParameterValueException("You should inform at least the 'minbalance' or both the 'templatename' and enable parameters.");
         }
 
         if (cmd.getTemplateName() != null && cmd.getEnable() == null) {
-            throw new InvalidParameterValueException("If you inform the template name, you must also inform the enable parameter");
+            throw new InvalidParameterValueException("If you inform the template name, you must also inform the enable parameter.");
         }
     }
 
