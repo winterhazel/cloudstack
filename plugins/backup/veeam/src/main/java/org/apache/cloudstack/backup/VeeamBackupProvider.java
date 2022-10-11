@@ -31,6 +31,7 @@ import javax.inject.Inject;
 
 import org.apache.cloudstack.api.InternalIdentity;
 import org.apache.cloudstack.backup.Backup.Metric;
+import org.apache.cloudstack.backup.Backup.RestorePoint;
 import org.apache.cloudstack.backup.dao.BackupDao;
 import org.apache.cloudstack.backup.dao.BackupOfferingDao;
 import org.apache.cloudstack.backup.veeam.VeeamClient;
@@ -349,8 +350,7 @@ public class VeeamBackupProvider extends AdapterBase implements BackupProvider, 
                         backup.setSize(metric.getBackupSize());
                         backup.setProtectedSize(metric.getDataSize());
                     }
-                    BackupOffering externalId = backupOfferingDao.findByUuid(restorePoint.getBackupUuid());
-                    backup.setBackupOfferingId(externalId.getId());
+                    backup.setBackupOfferingId(findBackupOfferingOfBackup(restorePoint, vm));
                     backup.setAccountId(vm.getAccountId());
                     backup.setDomainId(vm.getDomainId());
                     backup.setZoneId(vm.getDataCenterId());
@@ -364,6 +364,24 @@ public class VeeamBackupProvider extends AdapterBase implements BackupProvider, 
                     LOG.warn(String.format("Removing backup with ID: [%s].", backupIdToRemove));
                     backupDao.remove(backupIdToRemove);
                 }
+            }
+
+            private long findBackupOfferingOfBackup(RestorePoint restorePoint, VirtualMachine vm) {
+                LOG.debug(String.format("Trying to find backup offering of restore point [%s] of VM [%s] using backup UUID [%s].", restorePoint.getId(), vm.getUuid(), restorePoint.getBackupUuid()));
+                BackupOffering backupOffering = backupOfferingDao.findByUuid(restorePoint.getBackupUuid());
+                if (backupOffering != null) {
+                    return backupOffering.getId();
+                }
+                LOG.warn(String.format("Could not find any backup offering with UUID [%s] used by restore point [%s]. " +
+                                "Trying to use the ID [%s] data from vm_instance table instead.", restorePoint.getBackupUuid(),
+                        restorePoint.getId(), vm.getBackupOfferingId()));
+                backupOffering = backupOfferingDao.findById(vm.getBackupOfferingId());
+                if (backupOffering == null) {
+                    String errMsg = String.format("Could not find any backup offering with ID [%s] or UUID [%s] used by VM [%s].", vm.getBackupOfferingId(), restorePoint.getBackupUuid(), vm.getUuid());
+                    LOG.warn(errMsg);
+                    throw new RuntimeException(errMsg);
+                }
+                return backupOffering.getId();
             }
         });
     }
