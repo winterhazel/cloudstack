@@ -156,8 +156,17 @@ public class UsageSanityChecker {
     }
 
     protected void checkTemplateISOUsage() {
-        addCheckCase("select count(*) from cloud_usage.cloud_usage cu inner join cloud.template_zone_ref tzr where "
-                + "cu.usage_id = tzr.template_id and cu.zone_id = tzr.zone_id and cu.usage_type in (7,8) and cu.start_date > tzr.removed ",
+        addCheckCase("SELECT  count(*) " +
+                    " FROM    cloud_usage.cloud_usage AS cu " +
+                    " INNER   JOIN cloud.template_zone_ref AS c_tzr ON  ( c_tzr.template_id = cu.usage_id " +
+                    "                                              AND   c_tzr.zone_id = cu.zone_id) " +
+                    " WHERE   cu.usage_type in (7,8) " +
+                    " AND     cu.start_date > c_tzr.removed " +
+                    " AND     NOT EXISTS  ( SELECT  1 " +
+                    "                       FROM    cloud.template_zone_ref c_tzr_internal " +
+                    "                       WHERE   c_tzr_internal.template_id = c_tzr.template_id " +
+                    "                       AND     c_tzr_internal.zone_id = c_tzr.zone_id " +
+                    "                       AND     c_tzr_internal.removed IS NULL) ",
                 "template/ISO usage records which are created after it is removed",
                 lastCheckId);
     }
