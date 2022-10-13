@@ -152,7 +152,7 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
     }
 
     protected void checkQuotaAlertEmailForAccount(List<DeferredQuotaEmail> deferredQuotaEmailList, QuotaAccountVO quotaAccount) {
-        s_logger.debug(String.format("Checking %s.", quotaAccount));
+        s_logger.debug(String.format("Checking %s for email alerts.", quotaAccount));
         BigDecimal accountBalance = quotaAccount.getQuotaBalance();
 
         if (accountBalance == null) {
@@ -179,11 +179,11 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
 
         if (accountBalance.compareTo(BigDecimal.ZERO) < 0) {
             if (_lockAccountEnforcement && (lockable == 1) && _quotaManager.isLockable(account)) {
-                s_logger.info(String.format("Locking %s due to quota balance being lower then 0.", account));
+                s_logger.info(String.format("Locking %s due to quota balance being lower than 0.", account));
                 lockAccount(account.getId());
             }
             if (templateConfigurations.first() && shouldSendEmail) {
-                s_logger.debug(String.format("Adding %s to deferred email list due to quota balance being lower then 0.", account));
+                s_logger.debug(String.format("Adding %s to deferred email list due to quota balance being lower than 0.", account));
                 deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaEmailTemplateTypes.QUOTA_EMPTY));
                 return;
             }

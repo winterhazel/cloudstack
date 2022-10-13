@@ -109,38 +109,6 @@ public class QuotaAlertManagerImplTest extends TestCase {
         TransactionLegacy.open("QuotaAlertManagerImplTest");
     }
 
-//@Test
-//    public void testCheckAndSendQuotaAlertEmails() {
-//        QuotaAccountVO acc = new QuotaAccountVO(2L);
-//        acc.setQuotaBalance(new BigDecimal(404));
-//        acc.setQuotaMinBalance(new BigDecimal(100));
-//        acc.setQuotaBalanceDate(new Date());
-//        acc.setQuotaAlertDate(null);
-//        acc.setQuotaEnforce(0);
-//        List<QuotaAccountVO> accounts = new ArrayList<>();
-//        accounts.add(acc);
-//        Mockito.when(quotaAcc.listAllQuotaAccount()).thenReturn(accounts);
-//
-//        // Don't test sendQuotaAlert yet
-//        Mockito.doNothing().when(quotaAlertManager).sendQuotaAlert(Mockito.any(QuotaAlertManagerImpl.DeferredQuotaEmail.class));
-//        Mockito.lenient().doReturn(true).when(quotaAlertManager).lockAccount(Mockito.anyLong());
-//
-//        // call real method on send monthly statement
-//        Mockito.doCallRealMethod().when(quotaAlertManager).checkAndSendQuotaAlertEmails();
-//
-//        Mockito.doReturn(new ArrayList<>()).when(quotaEmailConfigurationDaoMock).listByAccount(Mockito.anyLong());
-//
-//        // Case1: valid balance, no email should be sent
-//        quotaAlertManager.checkAndSendQuotaAlertEmails();
-//        Mockito.verify(quotaAlertManager, Mockito.times(0)).sendQuotaAlert(Mockito.any(QuotaAlertManagerImpl.DeferredQuotaEmail.class));
-//
-//        // Case2: low balance, email should be sent
-//        accounts.get(0).setQuotaBalance(new BigDecimal(99));
-//        //Mockito.when(quotaAcc.listAll()).thenReturn(accounts);
-//        quotaAlertManager.checkAndSendQuotaAlertEmails();
-//        Mockito.verify(quotaAlertManager, Mockito.times(1)).sendQuotaAlert(Mockito.any(QuotaAlertManagerImpl.DeferredQuotaEmail.class));
-//    }
-
     @Test
     public void checkQuotaAlertEmailForAccountTestNullAccountBalance() {
         Mockito.doReturn(null).when(quotaAccountVOMock).getQuotaBalance();
