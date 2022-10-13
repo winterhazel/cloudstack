@@ -23,6 +23,10 @@ UPDATE  cloud.configuration
 SET     description = 'Comma separated list of email addresses which are going to receive alert emails.'
 WHERE   name = 'alert.email.addresses';
 
+UPDATE  cloud.configuration
+SET     description = "Use SSL method used to encrypt copy traffic between zones. Also ensures that the certificate assigned to the zone is used when generating links for external access."
+WHERE   name = 'secstorage.encrypt.copy';
+
 CREATE TABLE `cloud_usage`.`quota_email_configuration`(
 `account_id` int(11) NOT NULL,
 `email_template_id` bigint(20) NOT NULL,
