@@ -52,7 +52,6 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import com.cloud.network.router.CommandSetupHelper;
 import com.cloud.network.router.NetworkHelper;
-import com.cloud.storage.VolumeApiServiceImpl;
 import org.apache.cloudstack.acl.ControlledEntity;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.acl.SecurityChecker.AccessType;
@@ -4206,12 +4205,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
     @Override
     public boolean shouldValidateStorageTags(VolumeVO currentRootDisk, ServiceOfferingVO currentServiceOffering) {
-        if (!VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.value()) {
-            s_logger.debug(String.format("The global configuration [%s] has value 'False', therefore we will not check the storage tags compatibility.",
-                    VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.key()));
-            return false;
-        }
-
         if (currentRootDisk.getDiskOfferingId() != currentServiceOffering.getId()) {
             s_logger.debug(String.format("The ROOT's disk offering was changed manually. The current ROOT's disk offering [%s] is different from the current VM's " +
                     "service offering [%s]. As they are different and the ROOT disk offering will not change automatically, " +
