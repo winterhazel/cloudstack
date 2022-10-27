@@ -3236,24 +3236,24 @@ public class QueryManagerImpl extends MutualExclusiveIdsManagerBase implements Q
             return;
         }
         VolumeVO currentRootDisk = currentRootDisks.get(0);
-        if (userVmManager.shouldValidateStorageTags(currentRootDisk, currentVmOffering)) {
-            List<String> storageTags = StringUtils.csvTagsToList(currentVmOffering.getTags());
-            if (storageTags.isEmpty()) {
-                s_logger.debug(String.format("Since the storage tags are empty we do not need to check them."));
-                return;
-            }
-            SearchBuilder<ServiceOfferingJoinVO> sb = _srvOfferingJoinDao.createSearchBuilder();
-            for(String tag : storageTags) {
-                sb.and(tag, sb.entity().getTags(), Op.FIND_IN_SET);
-            }
-            sb.done();
-
-            SearchCriteria<ServiceOfferingJoinVO> scc = sb.create();
-            for(String tag : storageTags) {
-                scc.setParameters(tag, tag);
-            }
-            sc.addAnd("storageTags", Op.SC, scc);
-            }
+        if (!userVmManager.shouldValidateStorageTags(currentRootDisk, currentVmOffering)) {
+            return;
+        }
+        List<String> storageTags = StringUtils.csvTagsToList(currentVmOffering.getTags());
+        if (storageTags.isEmpty()) {
+            s_logger.debug(String.format("Since the storage tags are empty we do not need to check them."));
+            return;
+        }
+        SearchBuilder<ServiceOfferingJoinVO> sb = _srvOfferingJoinDao.createSearchBuilder();
+        for(String tag : storageTags) {
+            sb.and(tag, sb.entity().getTags(), Op.FIND_IN_SET);
+        }
+        sb.done();
+        SearchCriteria<ServiceOfferingJoinVO> scc = sb.create();
+        for(String tag : storageTags) {
+            scc.setParameters(tag, tag);
+        }
+        sc.addAnd("storageTags", Op.SC, scc);
     }
 
     @Override

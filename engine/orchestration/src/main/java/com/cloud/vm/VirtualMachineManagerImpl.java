@@ -3953,9 +3953,13 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
      * @throws InvalidParameterValueException if tags do not match.
      */
     protected void checkStorageTagsIfNeeded(VirtualMachine vmInstance, ServiceOffering newServiceOffering, ServiceOfferingVO currentServiceOffering) {
+        if (!VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.value()) {
+            s_logger.debug(String.format("The global configuration [%s] has value 'False'; therefore, we will not check the storage tags compatibility.",
+                    VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.key()));
+            return;
+        }
         s_logger.debug(String.format("Checking storage tags compatibility between the current service offering [%s] and the new service offering [%s].",
                 currentServiceOffering, newServiceOffering));
-
         List<VolumeVO> currentRootDisks = _volsDao.findReadyAndAllocatedRootVolumesByInstance(vmInstance.getId());
         if (currentRootDisks.isEmpty()){
             s_logger.debug(String.format("Could not find any root disk attached to the instance with UUID [%s]. Skipping checking storage tags.", vmInstance.getUuid()));
@@ -3967,10 +3971,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         if (!_userVmMgr.shouldValidateStorageTags(currentRootDisk, currentServiceOffering)) {
             return;
         }
-        s_logger.debug(String.format("The global configuration [%s] has its value set as true, and the current root disk offering [%s] is equal to the " +
-                        "current service offering [%s], meaning that we need to check storage pool tags because the disk offering will be updated with " +
-                        "the new service offering [%s].",
-                VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering.key(), currentRootDisk.getUuid(), currentServiceOffering.getUuid(), newServiceOffering.getUuid()));
+        s_logger.debug(String.format("The current root disk offering [%s] is equal to the current service offering [%s], meaning that we need to check storage pool tags " +
+                        "because the disk offering will be updated with the new service offering [%s].",
+                currentRootDisk.getUuid(), currentServiceOffering.getUuid(), newServiceOffering.getUuid()));
         List<String> currentTags = StringUtils.csvTagsToList(currentServiceOffering.getTags());
         List<String> newTags = StringUtils.csvTagsToList(newServiceOffering.getTags());
         if (!newTags.containsAll(currentTags)) {

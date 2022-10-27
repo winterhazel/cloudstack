@@ -40,7 +40,6 @@ import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.VMTemplateVO;
 import com.cloud.storage.Volume;
 import com.cloud.storage.VolumeApiService;
-import com.cloud.storage.VolumeApiServiceImpl;
 import com.cloud.storage.VolumeVO;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -56,7 +55,6 @@ import org.apache.cloudstack.backup.BackupVO;
 import org.apache.cloudstack.backup.dao.BackupDao;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
-import org.apache.cloudstack.framework.config.ConfigKey;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -660,23 +658,9 @@ public class UserVmManagerImplTest {
     }
 
     @Test
-    public void shouldValidateStorageTagsTestMatchStoragePoolTagsWithDiskOfferingFalse() {
-        boolean value = false;
-        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
-        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
-        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
-        boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
-        assertFalse(result);
-    }
-
-    @Test
     public void shouldValidateStorageTagsTestCurrentRootDiskEqualToCurrentServiceOffering() {
         Mockito.when(volumeVOMock.getDiskOfferingId()).thenReturn(1l);
         Mockito.when(serviceOfferingVO.getId()).thenReturn(1l);
-        boolean value = true;
-        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
-        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
-        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
         boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
         assertTrue(result);
     }
@@ -685,10 +669,6 @@ public class UserVmManagerImplTest {
     public void shouldValidateStorageTagsTestCurrentRootDiskNotEqualToCurrentServiceOffering() {
         Mockito.when(volumeVOMock.getDiskOfferingId()).thenReturn(1l);
         Mockito.when(serviceOfferingVO.getId()).thenReturn(2l);
-        boolean value = true;
-        ConfigKey<Boolean> MatchStoragePoolTagsWithDiskOfferingMock = Mockito.mock(ConfigKey.class);
-        VolumeApiServiceImpl.MatchStoragePoolTagsWithDiskOffering = MatchStoragePoolTagsWithDiskOfferingMock;
-        Mockito.doReturn(value).when(MatchStoragePoolTagsWithDiskOfferingMock).value();
         boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
         assertFalse(result);
     }
