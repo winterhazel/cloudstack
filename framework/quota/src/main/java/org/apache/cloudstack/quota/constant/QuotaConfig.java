@@ -63,6 +63,9 @@ public interface QuotaConfig {
     ConfigKey<Boolean> QuotaAccountEnabled = new ConfigKey<>("Advanced", Boolean.class, "quota.account.enabled", "true", "Indicates whether Quota plugin is enabled or not for " +
             "the account.", true, ConfigKey.Scope.Account);
 
+
+    Integer QUOTA_USAGE_ROUNDING = 2;
+
     enum QuotaEmailTemplateTypes {
         QUOTA_LOW, QUOTA_EMPTY, QUOTA_UNLOCK_ACCOUNT, QUOTA_STATEMENT
     }
