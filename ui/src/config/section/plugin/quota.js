@@ -40,10 +40,6 @@ export default {
       filters: ['all', 'activeaccounts', 'removedaccounts'],
       tabs: [
         {
-          name: 'details',
-          component: () => import('@/components/view/DetailsTab.vue')
-        },
-        {
           name: 'quota.statement.quota',
           component: () => import('@/views/plugins/quota/QuotaUsage.vue')
         },
