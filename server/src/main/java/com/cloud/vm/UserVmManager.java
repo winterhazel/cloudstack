@@ -56,6 +56,10 @@ public interface UserVmManager extends UserVmService {
     ConfigKey<Boolean> DisplayVMOVFProperties = new ConfigKey<Boolean>("Advanced", Boolean.class, "vm.display.ovf.properties", "false",
             "Set display of VMs OVF properties as part of VM details", true);
 
+    ConfigKey<Boolean> DestroyRootVolumeOnVmDestruction = new ConfigKey<Boolean>("Advanced", Boolean.class, "destroy.root.volume.on.vm.destruction", "false",
+            "Destroys the VM's root volume when the VM is destroyed. When set to true, volume cleanup task will not expunge destroyed volumes, but the VM cleanup task will.",
+            true, ConfigKey.Scope.Domain);
+
     static final int MAX_USER_DATA_LENGTH_BYTES = 2048;
 
     public  static  final String CKS_NODE = "cksnode";
@@ -133,5 +137,7 @@ public interface UserVmManager extends UserVmService {
     boolean checkIfDynamicScalingCanBeEnabled(VirtualMachine vm, ServiceOffering offering, VirtualMachineTemplate template, Long zoneId);
 
     boolean shouldValidateStorageTags(VolumeVO currentRootDisk, ServiceOfferingVO currentServiceOffering);
+
+    Boolean getDestroyRootVolumeOnVmDestruction(Long domainId);
 
 }

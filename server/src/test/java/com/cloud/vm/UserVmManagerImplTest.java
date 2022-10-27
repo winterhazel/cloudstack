@@ -672,4 +672,14 @@ public class UserVmManagerImplTest {
         boolean result = userVmManagerImpl.shouldValidateStorageTags(volumeVOMock, serviceOfferingVO);
         assertFalse(result);
     }
+
+    @Test
+    public void recoverRootVolumeTestDestroyState() {
+        Mockito.doReturn(Volume.State.Destroy).when(volumeVOMock).getState();
+
+        userVmManagerImpl.recoverRootVolume(volumeVOMock, vmId);
+
+        Mockito.verify(volumeApiServiceMock).recoverVolume(volumeVOMock.getId());
+        Mockito.verify(volumeDaoMock).attachVolume(volumeVOMock.getId(), vmId, UserVmManagerImpl.ROOT_DEVICE_ID);
+    }
 }
