@@ -602,6 +602,18 @@
             <a-icon type="calendar" />{{ $toLocaleDate(resource.lastupdated) }}
           </div>
         </div>
+        <div class="resource-detail-item" v-if="resource.currency && $route.path.includes('quotasummary')">
+          <div class="resource-detail-item__label">{{ $t('label.currency') }}</div>
+          <div class="resource-detail-item__details">
+            <span>{{ resource.currency }}</span>
+          </div>
+        </div>
+        <div class="resource-detail-item" v-if="resource.currentbalance && $route.path.includes('quotasummary')">
+          <div class="resource-detail-item__label">{{ $t('label.currentbalance') }}</div>
+          <div class="resource-detail-item__details">
+            <span>{{ resource.currentbalance }}</span>
+          </div>
+        </div>
       </div>
 
       <div class="account-center-tags" v-if="$route.meta.related">
