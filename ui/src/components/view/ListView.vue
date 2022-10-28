@@ -186,6 +186,9 @@
     <template slot="agentstate" slot-scope="text">
       <status :text="text ? text : ''" displayText />
     </template>
+    <template slot="quotastate" slot-scope="text">
+      <status :text="text ? text : ''" displayText />
+    </template>
     <a slot="guestnetworkname" slot-scope="text, record" href="javascript:;">
       <router-link :to="{ path: '/guestnetwork/' + record.guestnetworkid }">{{ text }}</router-link>
     </a>
