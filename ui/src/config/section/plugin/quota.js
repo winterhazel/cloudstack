@@ -30,11 +30,15 @@ export default {
       title: 'label.quota.summary',
       icon: 'bars',
       permission: ['quotaSummary'],
-      columns: [
+      columns: ['account',
         {
-          account: (record) => record.quotaenabled ? record.account : record.account + ' (quota-disabled)'
-        }, 'domain', 'state', 'currency', 'balance'],
-      columnNames: ['account', 'domain', 'state', 'currency', 'currentbalance'],
+          state: (record) => record.state.toLowerCase()
+        },
+        {
+          quotastate: (record) => record.quotaenabled ? 'Enabled' : 'Disabled'
+        }, 'domain', 'currency', 'balance'
+      ],
+      columnNames: ['account', 'accountstate', 'quotastate', 'domain', 'currency', 'currentbalance'],
       details: ['currency', 'currentbalance'],
       component: () => import('@/views/plugins/quota/QuotaSummary.vue'),
       filters: ['all', 'activeaccounts', 'removedaccounts'],
