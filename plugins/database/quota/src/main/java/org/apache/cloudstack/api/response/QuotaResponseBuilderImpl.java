@@ -918,7 +918,7 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             if (templateVO.isEmpty()) {
                 throw new InvalidParameterValueException(String.format("Could not find template with name [%s].", cmd.getTemplateName()));
             }
-            QuotaEmailConfigurationVO configurationVO = quotaEmailConfigurationDao.findByIds(cmd.getAccountId(), templateVO.get(0).getId());
+            QuotaEmailConfigurationVO configurationVO = quotaEmailConfigurationDao.findByAccountIdAndEmailTemplateId(cmd.getAccountId(), templateVO.get(0).getId());
 
             if (configurationVO == null) {
                 configurationVO = new QuotaEmailConfigurationVO(cmd.getAccountId(), templateVO.get(0).getId(), cmd.getEnable());

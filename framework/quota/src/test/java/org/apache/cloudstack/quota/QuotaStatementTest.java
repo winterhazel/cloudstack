@@ -246,7 +246,7 @@ public class QuotaStatementTest extends TestCase {
     public void sendStatementTestUnconfiguredEmail() {
         Mockito.doReturn(listMock).when(quotaEmailTemplatesDaoMock).listAllQuotaEmailTemplates(Mockito.anyString());
         Mockito.doReturn(quotaEmailTemplatesVOMock).when(listMock).get(Mockito.anyInt());
-        Mockito.doReturn(null).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+        Mockito.doReturn(null).when(quotaEmailConfigurationDaoMock).findByAccountIdAndEmailTemplateId(Mockito.anyLong(), Mockito.anyLong());
 
         Calendar date = Calendar.getInstance();
         AccountVO accountVO = new AccountVO();
@@ -280,7 +280,7 @@ public class QuotaStatementTest extends TestCase {
         QuotaEmailConfigurationVO quotaEmailConfigurationVOMock = new QuotaEmailConfigurationVO();
         quotaEmailConfigurationVOMock.setEnabled(true);
 
-        Mockito.doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+        Mockito.doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByAccountIdAndEmailTemplateId(Mockito.anyLong(), Mockito.anyLong());
 
         Calendar date = Calendar.getInstance();
         AccountVO accountVO = new AccountVO();
@@ -314,7 +314,7 @@ public class QuotaStatementTest extends TestCase {
         QuotaEmailConfigurationVO quotaEmailConfigurationVOMock = new QuotaEmailConfigurationVO();
         quotaEmailConfigurationVOMock.setEnabled(false);
 
-        Mockito.lenient().doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByIds(Mockito.anyLong(), Mockito.anyLong());
+        Mockito.lenient().doReturn(quotaEmailConfigurationVOMock).when(quotaEmailConfigurationDaoMock).findByAccountIdAndEmailTemplateId(Mockito.anyLong(), Mockito.anyLong());
 
         quotaStatement.sendStatement();
 

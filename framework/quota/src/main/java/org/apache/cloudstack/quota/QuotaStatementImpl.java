@@ -124,7 +124,7 @@ public class QuotaStatementImpl extends ManagerBase implements QuotaStatement {
             if (quotaAccount.getQuotaBalance() == null) {
                 continue; // no quota usage for this account ever, ignore
             }
-            QuotaEmailConfigurationVO quotaEmailConfigurationVO = quotaEmailConfigurationDao.findByIds(quotaAccount.getAccountId(), templateVO.getId());
+            QuotaEmailConfigurationVO quotaEmailConfigurationVO = quotaEmailConfigurationDao.findByAccountIdAndEmailTemplateId(quotaAccount.getAccountId(), templateVO.getId());
             if (quotaEmailConfigurationVO != null && !quotaEmailConfigurationVO.isEnabled()) {
                 s_logger.debug(String.format("%s has quota_statement email disabled. Therefore we will not send the email.", quotaAccount));
                 continue;

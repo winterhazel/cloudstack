@@ -23,7 +23,7 @@ import java.util.List;
 
 public interface QuotaEmailConfigurationDao extends GenericDao<QuotaEmailConfigurationVO, Long> {
 
-    QuotaEmailConfigurationVO findByIds(long accountId, long emailTemplateId);
+    QuotaEmailConfigurationVO findByAccountIdAndEmailTemplateId(long accountId, long emailTemplateId);
 
     QuotaEmailConfigurationVO updateQuotaEmailConfiguration(QuotaEmailConfigurationVO quotaEmailConfigurationVO);
 

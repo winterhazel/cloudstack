@@ -51,7 +51,7 @@ public class QuotaEmailConfigurationDaoImpl extends GenericDaoBase<QuotaEmailCon
         searchBuilderListByAccount.done();
     }
 
-    public QuotaEmailConfigurationVO findByIds(long accountId, long emailTemplateId) {
+    public QuotaEmailConfigurationVO findByAccountIdAndEmailTemplateId(long accountId, long emailTemplateId) {
         SearchCriteria<QuotaEmailConfigurationVO> sc = searchBuilderFindByIds.create();
         sc.setParameters("account_id", accountId);
         sc.setParameters("email_template_id", emailTemplateId);
