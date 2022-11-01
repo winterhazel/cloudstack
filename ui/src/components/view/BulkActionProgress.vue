@@ -78,6 +78,9 @@
         <template slot="vm" slot-scope="record">
           <div><a-icon type="desktop"/> {{ record.virtualmachinename }} ({{ record.vmguestip }})</div>
         </template>
+        <template slot="cidrlist" slot-scope="record">
+          <span style="white-space: pre-line"> {{ record.cidrlist.replaceAll(" ", "\n") }}</span>
+        </template>
       </a-table>
       <br/>
     </div>
