@@ -3250,7 +3250,12 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         deleteVolumesFromVm(volumesToBeDeleted, expunge);
 
         if (getDestroyRootVolumeOnVmDestruction(vm.getDomainId())) {
-            _volService.destroyVolume(_volsDao.getInstanceRootVolume(vm.getId(), vm.getUuid()).getId());
+            VolumeVO rootVolume = _volsDao.getInstanceRootVolume(vm.getId(), vm.getUuid());
+            if (rootVolume != null) {
+                _volService.destroyVolume(rootVolume.getId());
+            } else {
+                s_logger.warn(String.format("Tried to destroy ROOT volume for VM [%s], but couldn't retrieve it.", vm.getUuid()));
+            }
         }
 
         return destroyedVm;
