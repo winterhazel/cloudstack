@@ -70,7 +70,7 @@ function generateRouterMap (section) {
           filters: child.filters,
           params: child.params ? child.params : {},
           columns: child.columns,
-          columnNames: child.columnNames ? child.columnNames : child.columns,
+          columnNames: child.columnNames,
           details: child.details,
           detailLabels: child.detailLabels,
           searchFilters: child.searchFilters,
