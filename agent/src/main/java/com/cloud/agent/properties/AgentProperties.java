@@ -724,6 +724,14 @@ public class AgentProperties{
      */
     public static final Property<Integer> IOTHREADS = new Property<>("iothreads", 1);
 
+    /**
+     * Time interval (in milliseconds) between KVM heartbeats. <br>
+     * This property is for KVM only.
+     * Data type: Long.<br>
+     * Default value: <code>60000l</code>
+     */
+    public static final Property<Long> KVM_HEARTBEAT_UPDATE_FREQUENCY = new Property<Long>("kvm.heartbeat.update.frequency", 60000l);
+
     public static class Property <T>{
         private String name;
         private T defaultValue;
