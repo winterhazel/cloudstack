@@ -28,9 +28,11 @@ import org.apache.cloudstack.quota.vo.QuotaEmailConfigurationVO;
 
 import javax.inject.Inject;
 
-@APICommand(name = "quotaConfigureEmail", responseObject = QuotaConfigureEmailResponse.class, description = "Configure a quota email template", since = "4.16.0.11",
+@APICommand(name = QuotaConfigureEmailCmd.API_NAME, responseObject = QuotaConfigureEmailResponse.class, description = "Configure a quota email template", since = "4.16.0.11",
         requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
 public class QuotaConfigureEmailCmd extends BaseCmd {
+
+    public static final String API_NAME = "quotaConfigureEmail";
 
     @Parameter(name = ApiConstants.ACCOUNT_ID, type = CommandType.UUID, entityType = AccountResponse.class, required = true,
             description = "Account ID for which to configure quota template email or min balance")

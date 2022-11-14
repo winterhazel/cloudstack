@@ -47,6 +47,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.command.QuotaBalanceCmd;
+import org.apache.cloudstack.api.command.QuotaConfigureEmailCmd;
 import org.apache.cloudstack.api.command.QuotaCreditsListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateListCmd;
 import org.apache.cloudstack.api.command.QuotaEmailTemplateUpdateCmd;
@@ -60,10 +61,12 @@ import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariable
 import org.apache.cloudstack.quota.activationrule.presetvariables.PresetVariables;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaTypes;
+import org.apache.cloudstack.quota.dao.QuotaAccountDao;
 import org.apache.cloudstack.quota.dao.QuotaBalanceDao;
 import org.apache.cloudstack.quota.dao.QuotaCreditsDao;
 import org.apache.cloudstack.quota.dao.QuotaEmailTemplatesDao;
 import org.apache.cloudstack.quota.dao.QuotaTariffDao;
+import org.apache.cloudstack.quota.vo.QuotaAccountVO;
 import org.apache.cloudstack.quota.vo.QuotaBalanceVO;
 import org.apache.cloudstack.quota.vo.QuotaCreditsVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
@@ -193,6 +196,15 @@ public class QuotaResponseBuilderImplTest extends TestCase {
 
     @Mock
     User userMock;
+
+    @Mock
+    QuotaConfigureEmailCmd quotaConfigureEmailCmdMock;
+
+    @Mock
+    QuotaAccountDao quotaAccountDaoMock;
+
+    @Mock
+    QuotaAccountVO quotaAccountVOMock;
 
     LinkedList<ResourcesToQuoteVo> linkedListResourcesToQuoteVo = new LinkedList<>(Arrays.asList(new ResourcesToQuoteVo(), new ResourcesToQuoteVo(), new ResourcesToQuoteVo()));
 
@@ -1393,6 +1405,46 @@ public class QuotaResponseBuilderImplTest extends TestCase {
         Mockito.doReturn(responseList).when(apiDiscoveryServiceMock).listApis(userMock, null);
 
         assertFalse(quotaResponseBuilderImplSpy.isUserAllowedToSeeActivationRules(userMock));
+    }
+
+    @Test (expected = InvalidParameterValueException.class)
+    public void validateQuotaConfigureEmailCmdParametersTestNullQuotaAccount() {
+        Mockito.doReturn(null).when(quotaAccountDaoMock).findByIdQuotaAccount(Mockito.any());
+        quotaResponseBuilderImplSpy.validateQuotaConfigureEmailCmdParameters(quotaConfigureEmailCmdMock);
+    }
+
+    @Test (expected = InvalidParameterValueException.class)
+    public void validateQuotaConfigureEmailCmdParametersTestNullTemplateNameAndMinBalance() {
+        Mockito.doReturn(quotaAccountVOMock).when(quotaAccountDaoMock).findByIdQuotaAccount(Mockito.any());
+        Mockito.doReturn(null).when(quotaConfigureEmailCmdMock).getTemplateName();
+        Mockito.doReturn(null).when(quotaConfigureEmailCmdMock).getMinBalance();
+        quotaResponseBuilderImplSpy.validateQuotaConfigureEmailCmdParameters(quotaConfigureEmailCmdMock);
+    }
+
+    @Test (expected = InvalidParameterValueException.class)
+    public void validateQuotaConfigureEmailCmdParametersTestEnableNullAndTemplateNameNotNull() {
+        Mockito.doReturn(quotaAccountVOMock).when(quotaAccountDaoMock).findByIdQuotaAccount(Mockito.any());
+        Mockito.doReturn(QuotaConfig.QuotaEmailTemplateTypes.QUOTA_LOW.toString()).when(quotaConfigureEmailCmdMock).getTemplateName();
+        Mockito.doReturn(null).when(quotaConfigureEmailCmdMock).getEnable();
+        quotaResponseBuilderImplSpy.validateQuotaConfigureEmailCmdParameters(quotaConfigureEmailCmdMock);
+    }
+
+
+    @Test
+    public void validateQuotaConfigureEmailCmdParametersTestNullTemplateName() {
+        Mockito.doReturn(quotaAccountVOMock).when(quotaAccountDaoMock).findByIdQuotaAccount(Mockito.any());
+        Mockito.doReturn(null).when(quotaConfigureEmailCmdMock).getTemplateName();
+        Mockito.doReturn(100D).when(quotaConfigureEmailCmdMock).getMinBalance();
+        quotaResponseBuilderImplSpy.validateQuotaConfigureEmailCmdParameters(quotaConfigureEmailCmdMock);
+    }
+
+
+    @Test
+    public void validateQuotaConfigureEmailCmdParametersTestWithTemplateNameAndEnable() {
+        Mockito.doReturn(quotaAccountVOMock).when(quotaAccountDaoMock).findByIdQuotaAccount(Mockito.any());
+        Mockito.doReturn(QuotaConfig.QuotaEmailTemplateTypes.QUOTA_LOW.toString()).when(quotaConfigureEmailCmdMock).getTemplateName();
+        Mockito.doReturn(true).when(quotaConfigureEmailCmdMock).getEnable();
+        quotaResponseBuilderImplSpy.validateQuotaConfigureEmailCmdParameters(quotaConfigureEmailCmdMock);
     }
 
 }

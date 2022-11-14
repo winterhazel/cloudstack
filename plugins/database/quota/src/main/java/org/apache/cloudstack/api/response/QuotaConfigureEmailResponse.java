@@ -28,7 +28,7 @@ public class QuotaConfigureEmailResponse extends BaseResponse {
     private String accountId;
 
     @SerializedName("templatename")
-    @Param(description = "The templates name.")
+    @Param(description = "The template's name.")
     private String templateName;
 
     @SerializedName("enabled")

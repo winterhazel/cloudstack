@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
-import com.cloud.utils.Pair;
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaConfig.QuotaEmailTemplateTypes;
@@ -156,13 +155,13 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
         BigDecimal accountBalance = quotaAccount.getQuotaBalance();
 
         if (accountBalance == null) {
-            s_logger.debug(String.format("%s has a null balance, therefore it does not have quota enabled and thus should not receive quota alert emails.", quotaAccount));
+            s_logger.debug(String.format("%s has a null balance, therefore it will not receive quota alert emails.", quotaAccount));
             return;
         }
 
         AccountVO account = _accountDao.findById(quotaAccount.getId());
         if (account == null) {
-            s_logger.debug(String.format("Account of %s is removed, thus it should not receive quota alert emails.", quotaAccount));
+            s_logger.debug(String.format("Account of %s is removed, thus it will not receive quota alert emails.", quotaAccount));
             return;
         }
 
@@ -174,7 +173,9 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
         s_logger.debug(String.format("Checking %s with accountBalance [%s], alertDate [%s] and lockable [%s] to see if we should send a quota alert email.", account,
                 accountBalance, alertDate, lockable));
 
-        Pair<Boolean, Boolean> templateConfigurations = checkQuotaEmptyAndLowConfigurations(account.getAccountId());
+        QuotaEmailConfigurationVO quotaEmpty = quotaEmailConfigurationDao.findByAccountIdAndEmailTemplateType(account.getAccountId(), QuotaEmailTemplateTypes.QUOTA_EMPTY);
+        QuotaEmailConfigurationVO quotaLow = quotaEmailConfigurationDao.findByAccountIdAndEmailTemplateType(account.getAccountId(), QuotaEmailTemplateTypes.QUOTA_LOW);
+
         boolean shouldSendEmail = alertDate == null || (balanceDate.after(alertDate) && getDifferenceDays(alertDate, new Date()) > 1);
 
         if (accountBalance.compareTo(BigDecimal.ZERO) < 0) {
@@ -182,37 +183,17 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
                 s_logger.info(String.format("Locking %s due to quota balance being lower than 0.", account));
                 lockAccount(account.getId());
             }
-            if (templateConfigurations.first() && shouldSendEmail) {
+            if (quotaEmpty != null && quotaEmpty.isEnabled() && shouldSendEmail) {
                 s_logger.debug(String.format("Adding %s to deferred email list due to quota balance being lower than 0.", account));
                 deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaEmailTemplateTypes.QUOTA_EMPTY));
                 return;
             }
-        } else if (accountBalance.compareTo(thresholdBalance) < 0 && templateConfigurations.second() && shouldSendEmail) {
-            s_logger.debug("Adding %s to deferred email list due to quota balance below threshold.");
+        } else if (accountBalance.compareTo(thresholdBalance) < 0 && quotaLow != null && quotaLow.isEnabled() && shouldSendEmail) {
+            s_logger.debug(String.format("Adding %s to deferred email list due to quota balance [%s] below threshold [%s].", account, accountBalance, thresholdBalance));
             deferredQuotaEmailList.add(new DeferredQuotaEmail(account, quotaAccount, QuotaEmailTemplateTypes.QUOTA_LOW));
             return;
         }
-        s_logger.debug(String.format("%s will not receive any quota alert email for the time being.", account));
-    }
-
-    /**
-     * Checks if email templates QUOTA_LOW and QUOTA_EMPTY are enabled for a given accountId.
-     *
-     * @param accountId the account for which to check
-     * @return Pair<Boolean, Boolean> where the first value is whether the QUOTA_EMPTY template is enabled and the second values is whether the QUOTA_LOW template is enabled.
-     * */
-    protected Pair<Boolean, Boolean> checkQuotaEmptyAndLowConfigurations(long accountId) {
-        Pair<Boolean, Boolean> configurations = new Pair<>(Boolean.TRUE, Boolean.TRUE);
-        List<QuotaEmailConfigurationVO> quotaEmailConfigurationVOList = quotaEmailConfigurationDao.listByAccount(accountId);
-        for (QuotaEmailConfigurationVO quotaEmailConfigurationVO: quotaEmailConfigurationVOList) {
-            QuotaEmailTemplatesVO quotaEmailTemplatesVO = _quotaEmailTemplateDao.findById(quotaEmailConfigurationVO.getEmailTemplateId());
-            if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaConfig.QuotaEmailTemplateTypes.QUOTA_EMPTY.toString())) {
-                configurations.first(quotaEmailConfigurationVO.isEnabled());
-            } else if (quotaEmailTemplatesVO.getTemplateName().equals(QuotaEmailTemplateTypes.QUOTA_LOW.toString())) {
-                configurations.second(quotaEmailConfigurationVO.isEnabled());
-            }
-        }
-        return configurations;
+        s_logger.debug(String.format("%s will not receive any quota alert email in this round.", account));
     }
 
     @Override

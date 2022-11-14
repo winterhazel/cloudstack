@@ -932,7 +932,7 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         return new Pair<>(null, minBalance);
     }
 
-    private void validateQuotaConfigureEmailCmdParameters(QuotaConfigureEmailCmd cmd) {
+    protected void validateQuotaConfigureEmailCmdParameters(QuotaConfigureEmailCmd cmd) {
         if (quotaAccountDao.findByIdQuotaAccount(cmd.getAccountId()) == null) {
             throw new InvalidParameterValueException("You must have the quota enabled for this account to configure quota emails.");
         }
@@ -963,7 +963,8 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
         return quotaConfigureEmailResponse;
     }
 
-    @Override public List<QuotaConfigureEmailResponse> listEmailConfiguration(long accountId) {
+    @Override
+    public List<QuotaConfigureEmailResponse> listEmailConfiguration(long accountId) {
         List<QuotaEmailConfigurationVO> emailConfigurationVOList = quotaEmailConfigurationDao.listByAccount(accountId);
         Account account = _accountDao.findById(accountId);
         QuotaAccountVO quotaAccountVO = quotaAccountDao.findByIdQuotaAccount(accountId);
