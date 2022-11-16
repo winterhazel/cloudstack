@@ -48,7 +48,7 @@
         </div>
         <div>
           <a-select
-            style="width: 33%; margin: 5px 0 10px 0px"
+            style="width: 100%; margin: 5px 0 10px 0px"
             show-search
             v-model="selectedResource"
             @change="handleSelectedResourceChange">
@@ -56,7 +56,7 @@
               v-for="quotaType of getQuotaTypes()"
               :value="`${quotaType.id}-${quotaType.type}`"
               :key="quotaType.id">
-              {{ quotaType.type }}
+              {{ $t(quotaType.type) }}
             </a-select-option>
           </a-select>
           <a-button v-if="dataSourceDetailed.length > 0" type="dashed" @click="exportDetailsToCsv" class="w-100 mb-10" icon="download">
@@ -136,7 +136,7 @@ export default {
           sorter: (a, b) => a.name.localeCompare(b.name),
           scopedSlots: { customRender: 'name' },
           customRender: (text, record) => {
-            return <a onclick={() => this.setSelectedResource(`${record.type}-${record.name}`)}>{{ text }}</a>
+            return <a onclick={() => this.setSelectedResource(`${record.type}-${record.name}`)}>{ this.$t(text) }</a>
           }
         },
         {
@@ -144,7 +144,10 @@ export default {
           dataIndex: 'unit',
           width: 'calc(100% / 3)',
           sorter: (a, b) => a.unit.localeCompare(b.unit),
-          scopedSlots: { customRender: 'unit' }
+          scopedSlots: { customRender: 'unit' },
+          customRender: (text) => {
+            return <div>{ this.$t(text) }</div>
+          }
         },
         {
           title: this.$t('label.quota.usage'),
@@ -236,7 +239,7 @@ export default {
       for (const row of this.dataSource) {
         if (row.quota > 0) {
           datasets.push({
-            label: row.name,
+            label: this.$t(row.name),
             data: [row.quota],
             ...getChartColorObject(getByQuotaTypeByType(row.name).chartColor)
           })
@@ -261,8 +264,8 @@ export default {
           startDate: startDate.format(this.pattern),
           endDate: endDate.format(this.pattern)
         })
-
         this.dataSource = quotaStatement.quotausage.filter(item => item.quota !== 0)
+        this.dataSource.forEach(item => { item.unit = this.$t(item.unit) })
         this.currency = quotaStatement.currency
         this.totalQuota = quotaStatement.totalquota
       } finally {

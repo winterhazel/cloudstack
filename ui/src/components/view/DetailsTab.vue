@@ -47,6 +47,7 @@
         </div>
         <div style="white-space: pre;" v-else-if="$route.meta.name === 'quotatariff' && item === 'description'">{{ resource[item] }} </div>
         <vue-code-highlight language="javascript" v-else-if="['activationRule'].includes(item)">{{ resource[item] }}</vue-code-highlight>
+        <div v-else-if="['usageName'].includes(item) || ['usageUnit'].includes(item)">{{ $t(resource[item]) }}</div>
         <div v-else>{{ resource[item] }} </div>
       </div>
     </a-list-item>

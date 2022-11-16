@@ -47,7 +47,7 @@
           :placeholder="$t('placeholder.quota.tariff.usagetype')"
         >
           <a-select-option v-for="quotaType of getQuotaTypes()" :value="`${quotaType.id}-${quotaType.type}`" :key="quotaType.id">
-            {{ quotaType.type }}
+            {{ $t(quotaType.type) }}
           </a-select-option>
         </a-select>
       </a-form-item>
