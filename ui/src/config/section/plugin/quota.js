@@ -74,7 +74,14 @@ export default {
       icon: 'credit-card',
       docHelp: 'plugins/quota.html#quota-tariff',
       permission: ['quotaTariffList'],
-      columns: ['name', 'usageName', 'usageUnit', 'tariffValue',
+      columns: ['name',
+        {
+          usageName: (record) => i18n.t(record.usageName)
+        },
+        {
+          usageUnit: (record) => i18n.t(record.usageUnit)
+        },
+        'tariffValue',
         {
           hasActivationRule: (record) => record.activationRule ? i18n.t('label.yes') : i18n.t('label.no')
         },
