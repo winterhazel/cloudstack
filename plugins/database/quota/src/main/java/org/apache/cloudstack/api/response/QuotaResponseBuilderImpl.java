@@ -85,6 +85,7 @@ import com.cloud.domain.dao.DomainDao;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.network.dao.IPAddressDao;
 import com.cloud.network.dao.IPAddressVO;
+import com.cloud.projects.dao.ProjectDao;
 import com.cloud.usage.UsageVO;
 import com.cloud.usage.dao.UsageDao;
 import com.cloud.user.Account;
@@ -115,6 +116,9 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
     private QuotaService _quotaService;
     @Inject
     private AccountDao _accountDao;
+
+    @Inject
+    private ProjectDao projectDao;
 
     @Inject
     private DomainDao domainDao;
@@ -258,6 +262,12 @@ public class QuotaResponseBuilderImpl implements QuotaResponseBuilder {
             response.setCurrency(QuotaConfig.QuotaCurrencySymbol.value());
             response.setObjectName("summary");
             response.setQuotaEnabled(QuotaConfig.QuotaAccountEnabled.valueIn(summary.getAccountId()));
+
+            if (summary.getProjectUuid() != null) {
+                response.setProjectId(summary.getProjectUuid());
+                response.setProjectName(summary.getProjectName());
+                response.setProjectRemoved(summary.getProjectRemoved() != null);
+            }
 
             return response;
         }).collect(Collectors.toList());
