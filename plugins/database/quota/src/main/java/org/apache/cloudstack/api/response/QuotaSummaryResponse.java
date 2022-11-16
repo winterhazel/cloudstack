@@ -68,6 +68,18 @@ public class QuotaSummaryResponse extends BaseResponse {
     @Param(description = "if the account has the quota config enabled")
     private boolean quotaEnabled;
 
+    @SerializedName("projectname")
+    @Param(description = "name of the project")
+    private String projectName;
+
+    @SerializedName("projectid")
+    @Param(description = "project id")
+    private String projectId;
+
+    @SerializedName("projectremoved")
+    @Param(description = "project is removed or not")
+    private Boolean projectRemoved;
+
     public QuotaSummaryResponse() {
         super();
     }
@@ -143,11 +155,36 @@ public class QuotaSummaryResponse extends BaseResponse {
     public void setAccountRemoved(boolean accountRemoved) {
         this.accountRemoved = accountRemoved;
     }
+
     public boolean getQuotaEnabled() {
         return quotaEnabled;
     }
 
     public void setQuotaEnabled(boolean quotaEnabled) {
         this.quotaEnabled = quotaEnabled;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    public Boolean isProjectRemoved() {
+        return projectRemoved;
+    }
+
+    public void setProjectRemoved(Boolean projectRemoved) {
+        this.projectRemoved = projectRemoved;
     }
 }
