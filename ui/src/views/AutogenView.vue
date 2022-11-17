@@ -761,7 +761,7 @@ export default {
         this.apiName = this.$route.meta.permission[0]
         if (this.$route.meta.columns) {
           const columns = this.$route.meta.columns
-          this.columnNames = this.$route.meta.columnNames || {}
+          this.columnNames = this.$route.meta.columnNames || []
           if (columns && typeof columns === 'function') {
             this.columnKeys = columns(this.$store.getters)
           } else {

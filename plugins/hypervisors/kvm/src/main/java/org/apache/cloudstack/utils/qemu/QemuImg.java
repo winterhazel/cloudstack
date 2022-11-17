@@ -77,34 +77,45 @@ public class QemuImg {
         }
 
         public static PreallocationType getPreallocationType(final Storage.ProvisioningType provisioningType){
-            switch (provisioningType){
-            case THIN:
-                return PreallocationType.Off;
-            case SPARSE:
-                return PreallocationType.Metadata;
-            case FAT:
-                return PreallocationType.Full;
-            default:
-                throw new NotImplementedException(String.format("type %s not defined as member-value of PreallocationType", provisioningType));
+            switch (provisioningType) {
+                case THIN:
+                    return PreallocationType.Off;
+                case SPARSE:
+                    return PreallocationType.Metadata;
+                case FAT:
+                    return PreallocationType.Full;
+                default:
+                    throw new NotImplementedException(String.format("type %s not defined as member-value of PreallocationType.", provisioningType));
             }
         }
     }
 
+    /**
+     * Creates a QemuImg object.
+     *
+     * @param timeout
+     *            The timeout of scripts executed by this QemuImg object.
+     */
     public QemuImg(final int timeout) {
         this.timeout = timeout;
     }
 
+    /**
+     * Sets the timeout for the scripts executed by this QemuImg object.
+     *
+     * @param timeout
+     *            The timeout for the object.
+     * @return void
+     */
     public void setTimeout(final int timeout) {
         this.timeout = timeout;
     }
 
     /**
-     * Create a QemuImg object
-     *
+     * Creates a QemuImg object.
      *
      * @param qemuImgPath
-     *            A alternative path to the qemu-img binary
-     * @return void
+     *            An alternative path to the qemu-img binary.
      */
     public QemuImg(final String qemuImgPath) {
         _qemuImgPath = qemuImgPath;
@@ -112,24 +123,16 @@ public class QemuImg {
 
     /* These are all methods supported by the qemu-img tool */
 
-    /* Perform a consistency check on the disk image */
-    public void check(final QemuImgFile file) {
-
-    }
-
     /**
-     * Create a new image
-     *
-     * This method calls 'qemu-img create'
+     * Creates a new image. This method is a facade for 'qemu-img create'.
      *
      * @param file
-     *            The file to create
+     *            The file to be created.
      * @param backingFile
-     *            A backing file if used (for example with qcow2)
+     *            A backing file, if used (for example with qcow2).
      * @param options
-     *            Options for the create. Takes a Map<String, String> with key value
+     *            Options for the creation. Takes a Map<String, String> with key value
      *            pairs which are passed on to qemu-img without validation.
-     * @return void
      */
     public void create(final QemuImgFile file, final QemuImgFile backingFile, final Map<String, String> options) throws QemuImgException {
         final Script s = new Script(_qemuImgPath, timeout);
@@ -169,7 +172,7 @@ public class QemuImg {
         if (file.getSize() != 0L) {
             s.add(Long.toString(file.getSize()));
         } else if (backingFile == null) {
-            throw new QemuImgException("No size was passed, and no backing file was passed");
+            throw new QemuImgException("Neither the size nor the backing file was passed.");
         }
 
         final String result = s.execute();
@@ -179,68 +182,54 @@ public class QemuImg {
     }
 
     /**
-     * Create a new image
-     *
-     * This method calls 'qemu-img create'
+     * Creates a new image. This method is a facade for {@link QemuImg#create(QemuImgFile, QemuImgFile, Map)}.
      *
      * @param file
-     *            The file to create
-     * @return void
+     *            The file to be created.
      */
     public void create(final QemuImgFile file) throws QemuImgException {
         this.create(file, null, null);
     }
 
     /**
-     * Create a new image
-     *
-     * This method calls 'qemu-img create'
+     * Creates a new image. This method is a facade for {@link QemuImg#create(QemuImgFile, QemuImgFile, Map)}.
      *
      * @param file
-     *            The file to create
+     *            The file to be created.
      * @param backingFile
-     *            A backing file if used (for example with qcow2)
-     * @return void
+     *            A backing file, if used (for example with qcow2).
      */
     public void create(final QemuImgFile file, final QemuImgFile backingFile) throws QemuImgException {
         this.create(file, backingFile, null);
     }
 
     /**
-     * Create a new image
-     *
-     * This method calls 'qemu-img create'
+     * Creates a new image. This method is a facade for {@link QemuImg#create(QemuImgFile, QemuImgFile, Map)}.
      *
      * @param file
-     *            The file to create
+     *            The file to be created.
      * @param options
-     *            Options for the create. Takes a Map<String, String> with key value
+     *            Options for the creation. Takes a Map<String, String> with key value
      *            pairs which are passed on to qemu-img without validation.
-     * @return void
      */
     public void create(final QemuImgFile file, final Map<String, String> options) throws QemuImgException {
         this.create(file, null, options);
     }
 
     /**
-     * Convert a image from source to destination
-     *
-     * This method calls 'qemu-img convert' and takes five objects
-     * as an argument.
-     *
+     * Converts an image from source to destination. This method is a facade for 'qemu-img convert' and converts a disk image or snapshot into a disk image with the specified filename and format.
      *
      * @param srcFile
-     *            The source file
+     *            The source file.
      * @param destFile
-     *            The destination file
+     *            The destination file.
      * @param options
-     *            Options for the convert. Takes a Map<String, String> with key value
+     *            Options for the conversion. Takes a Map<String, String> with key value
      *            pairs which are passed on to qemu-img without validation.
      * @param snapshotName
-     *            If it is provided, convertion uses it as parameter
+     *            If it is provided, conversion uses it as parameter.
      * @param forceSourceFormat
-     *            If true, specifies the source format in the conversion cmd
-     * @return void
+     *            If true, specifies the source format in the conversion command.
      */
     public void convert(final QemuImgFile srcFile, final QemuImgFile destFile,
                         final Map<String, String> options, final String snapshotName, final boolean forceSourceFormat) throws QemuImgException, LibvirtException {
@@ -299,110 +288,73 @@ public class QemuImg {
     }
 
     /**
-     * Convert a image from source to destination
-     *
-     * This method calls 'qemu-img convert' and takes four objects
-     * as an argument.
-     *
+     * Converts an image from source to destination. This method is a facade for {@link QemuImg#convert(QemuImgFile, QemuImgFile, Map, String, boolean)}.
      *
      * @param srcFile
-     *            The source file
+     *            The source file.
      * @param destFile
-     *            The destination file
+     *            The destination file.
      * @param options
-     *            Options for the convert. Takes a Map<String, String> with key value
+     *            Options for the conversion. Takes a Map<String, String> with key value
      *            pairs which are passed on to qemu-img without validation.
      * @param snapshotName
-     *            If it is provided, convertion uses it as parameter
-     * @return void
+     *            If it is provided, conversion uses it as parameter.
      */
     public void convert(final QemuImgFile srcFile, final QemuImgFile destFile,
                         final Map<String, String> options, final String snapshotName) throws QemuImgException, LibvirtException {
         this.convert(srcFile, destFile, options, snapshotName, false);
     }
 
-        /**
-         * Convert a image from source to destination
-         *
-         * This method calls 'qemu-img convert' and takes two objects
-         * as an argument.
-         *
-         *
-         * @param srcFile
-         *            The source file
-         * @param destFile
-         *            The destination file
-         * @return void
-         */
+    /**
+     * Converts an image from source to destination. This method is a facade for {@link QemuImg#convert(QemuImgFile, QemuImgFile, Map, String)}.
+     *
+     * @param srcFile
+     *            The source file.
+     * @param destFile
+     *            The destination file.
+     * @return void
+     */
     public void convert(final QemuImgFile srcFile, final QemuImgFile destFile) throws QemuImgException, LibvirtException {
         this.convert(srcFile, destFile, null, null);
     }
 
     /**
-     * Convert a image from source to destination
-     *
-     * This method calls 'qemu-img convert' and takes three objects
-     * as an argument.
-     *
+     * Converts an image from source to destination. This method is a facade for {@link QemuImg#convert(QemuImgFile, QemuImgFile, Map, String, boolean)}.
      *
      * @param srcFile
-     *            The source file
+     *            The source file.
      * @param destFile
-     *            The destination file
+     *            The destination file.
      * @param forceSourceFormat
-     *            If true, specifies the source format in the conversion cmd
-     * @return void
+     *            If true, specifies the source format in the conversion command.
      */
     public void convert(final QemuImgFile srcFile, final QemuImgFile destFile, final boolean forceSourceFormat) throws QemuImgException, LibvirtException {
         this.convert(srcFile, destFile, null, null, forceSourceFormat);
     }
 
     /**
-     * Convert a image from source to destination
-     *
-     * This method calls 'qemu-img convert' and takes three objects
-     * as an argument.
-     *
+     * Converts an image from source to destination. This method is a facade for {@link QemuImg#convert(QemuImgFile, QemuImgFile, Map, String)}.
      *
      * @param srcFile
-     *            The source file
+     *            The source file.
      * @param destFile
-     *            The destination file
+     *            The destination file.
      * @param snapshotName
-     *            The snapshot name
-     * @return void
+     *            The snapshot name.
      */
     public void convert(final QemuImgFile srcFile, final QemuImgFile destFile, String snapshotName) throws QemuImgException, LibvirtException {
         this.convert(srcFile, destFile, null, snapshotName);
     }
 
     /**
-     * Commit the changes recorded in the file in its base image.
-     *
-     * This method calls 'qemu-img commit' and takes one object as
-     * an argument
-     *
-     * @param file
-     *            The file of which changes have to be committed
-     * @return void
-     */
-    public void commit(final QemuImgFile file) throws QemuImgException {
-
-    }
-
-    /**
-     * Execute qemu-img info for the given file
-     *
-     * Qemu-img returns human readable output, but this method does it's best
-     * to turn that into machine readeable data.
-     *
-     * Spaces in keys are replaced by underscores (_).
-     * Sizes (virtual_size and disk_size) are returned in bytes
-     * Paths (image and backing_file) are the absolute path to the file
+     * Executes 'qemu-img info' for the given file. Qemu-img returns a human-readable output and this method parses the result to machine-readable data.
+     * - Spaces in keys are replaced by underscores (_).
+     * - Sizes (virtual_size and disk_size) are returned in bytes.
+     * - Paths (image and backing_file) are the absolute path to the file.
      *
      * @param file
-     *            A QemuImgFile object containing the file to get the information from
-     * @return A HashMap with String key-value information as returned by 'qemu-img info'
+     *            A QemuImgFile object containing the file to get the information from.
+     * @return A HashMap with string key-value information as returned by 'qemu-img info'.
      */
     public Map<String, String> info(final QemuImgFile file) throws QemuImgException, LibvirtException {
         final Script s = new Script(_qemuImgPath);
@@ -439,15 +391,24 @@ public class QemuImg {
         return info;
     }
 
-    /* List, apply, create or delete snapshots in image */
-    public void snapshot() throws QemuImgException {
+    /**
+     * Rebases the backing file of the image. This method is a facade for 'qemu-img rebase'.
+     *
+     * @param file
+     *            The file to be rebased.
+     * @param backingFile
+     *            The new backing file.
+     * @param backingFileFormat
+     *            The format of the new backing file.
+     * @param secure
+     *            Indicates whether 'safe mode' is active. When active, the operation will be more expensive and will only be possible if the old
+     *            backing file still exists. However, if safe mode is off, the changes in the file name and format will be made without validation,
+     *            so, if the backing file is wrongly specified the contents of the image may be corrupted.
+     */
 
-    }
-
-    /* Changes the backing file of an image */
     public void rebase(final QemuImgFile file, final QemuImgFile backingFile, final String backingFileFormat, final boolean secure) throws QemuImgException {
         if (backingFile == null) {
-            throw new QemuImgException("No backing file was passed");
+            throw new QemuImgException("No backing file was passed.");
         }
         final Script s = new Script(_qemuImgPath, timeout);
         s.add("rebase");
@@ -471,25 +432,22 @@ public class QemuImg {
     }
 
     /**
-     * Resize an image
+     * Resizes an image. This method is a facade for 'qemu-img resize'.
      *
-     * This method simple calls 'qemu-img resize'.
-     * A negative size value will get prefixed with - and a positive with +
-     *
-     * Sizes are in bytes and will be passed on that way
+     * A negative size value will get prefixed with '-' and a positive with '+'. Sizes are in bytes and will be passed on that way.
      *
      * @param file
-     *            The file to resize
+     *            The file to be resized.
      * @param size
-     *            The new size
+     *            The new size.
      * @param delta
-     *            Flag if the new size is a delta
+     *            Flag to inform if the new size is a delta.
      */
     public void resize(final QemuImgFile file, final long size, final boolean delta) throws QemuImgException {
         String newSize = null;
 
         if (size == 0) {
-            throw new QemuImgException("size should never be exactly zero");
+            throw new QemuImgException("size should never be exactly zero.");
         }
 
         if (delta) {
@@ -513,17 +471,13 @@ public class QemuImg {
     }
 
     /**
-     * Resize an image
-     *
-     * This method simple calls 'qemu-img resize'.
-     * A negative size value will get prefixed with - and a positive with +
-     *
-     * Sizes are in bytes and will be passed on that way
+     * Resizes an image. This method is a facade for {@link QemuImg#resize(QemuImgFile, long, boolean)}.
+     * A negative size value will get prefixed with - and a positive with +. Sizes are in bytes and will be passed on that way.
      *
      * @param file
-     *            The file to resize
+     *            The file to be resized.
      * @param size
-     *            The new size
+     *            The new size.
      */
     public void resize(final QemuImgFile file, final long size) throws QemuImgException {
         this.resize(file, size, false);

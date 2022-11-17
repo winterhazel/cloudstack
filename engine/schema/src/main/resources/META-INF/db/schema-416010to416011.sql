@@ -19,6 +19,34 @@
 -- Schema upgrade from 4.16.0.10 to 4.16.0.11
 --;
 
+CREATE OR REPLACE
+ALGORITHM = UNDEFINED VIEW cloud_usage.quota_summary_view AS
+select
+    cloud_usage.quota_account.account_id AS account_id,
+    cloud_usage.quota_account.quota_balance AS quota_balance,
+    cloud_usage.quota_account.quota_balance_date AS quota_balance_date,
+    cloud_usage.quota_account.quota_enforce AS quota_enforce,
+    cloud_usage.quota_account.quota_min_balance AS quota_min_balance,
+    cloud_usage.quota_account.quota_alert_date AS quota_alert_date,
+    cloud_usage.quota_account.quota_alert_type AS quota_alert_type,
+    cloud_usage.quota_account.last_statement_date AS last_statement_date,
+    cloud.account.uuid AS account_uuid,
+    cloud.account.account_name AS account_name,
+    cloud.account.state AS account_state,
+    cloud.account.removed AS account_removed,
+    cloud.domain.id AS domain_id,
+    cloud.domain.uuid AS domain_uuid,
+    cloud.domain.name AS domain_name,
+    cloud.domain.path AS domain_path,
+    cloud.domain.removed AS domain_removed,
+    cloud.projects.uuid AS project_uuid,
+    cloud.projects.name AS project_name,
+    cloud.projects.removed AS project_removed
+from
+    cloud_usage.quota_account
+        join cloud.account on (cloud.account.id = cloud_usage.quota_account.account_id)
+        join cloud.domain on (cloud.domain.id = cloud.account.domain_id)
+        left join cloud.projects on (cloud.account.type = 5 and cloud.account.id = cloud.projects.project_account_id);
 
 CREATE TABLE `cloud_usage`.`quota_email_configuration`(
 `account_id` int(11) NOT NULL,

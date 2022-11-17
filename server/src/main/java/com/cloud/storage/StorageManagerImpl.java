@@ -50,6 +50,7 @@ import com.cloud.agent.api.GetStoragePoolCapabilitiesCommand;
 import com.cloud.network.router.VirtualNetworkApplianceManager;
 import com.cloud.server.StatsCollector;
 import com.cloud.upgrade.SystemVmTemplateRegistration;
+import com.cloud.vm.UserVmManager;
 import org.apache.cloudstack.annotation.AnnotationService;
 import org.apache.cloudstack.annotation.dao.AnnotationDao;
 import org.apache.cloudstack.api.ApiConstants;
@@ -340,6 +341,8 @@ public class StorageManagerImpl extends ManagerBase implements StorageManager, C
     @Inject
     private AnnotationDao annotationDao;
 
+    @Inject
+    protected UserVmManager userVmManager;
     protected List<StoragePoolDiscoverer> _discoverers;
 
     public List<StoragePoolDiscoverer> getDiscoverers() {
@@ -1300,6 +1303,12 @@ public class StorageManagerImpl extends ManagerBase implements StorageManager, C
 
                     List<VolumeVO> vols = _volsDao.listVolumesToBeDestroyed(new Date(System.currentTimeMillis() - ((long)StorageCleanupDelay.value() << 10)));
                     for (VolumeVO vol : vols) {
+                        if (Type.ROOT.equals(vol.getVolumeType()) && userVmManager.getDestroyRootVolumeOnVmDestruction(vol.getDomainId())) {
+                            s_logger.debug(String.format("ROOT volume [%s] will not be expunged because domain configuration [%s] for domain [%s] is set to 'true'.",
+                                    vol.getUuid(), UserVmManager.DestroyRootVolumeOnVmDestruction, vol.getDomainId()));
+                            continue;
+                        }
+
                         try {
                             // If this fails, just log a warning. It's ideal if we clean up the host-side clustered file
                             // system, but not necessary.

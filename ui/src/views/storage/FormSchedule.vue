@@ -71,8 +71,7 @@
                 class="custom-time-select"
                 :label="$t('label.time')">
                 <a-time-picker
-                  use12Hours
-                  format="h:mm A"
+                  format="HH:mm"
                   v-decorator="['timeSelect', {
                     rules: [{
                       type: 'object',

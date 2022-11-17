@@ -30,19 +30,19 @@ export default {
       title: 'label.quota.summary',
       icon: 'bars',
       permission: ['quotaSummary'],
-      columns: [
+      columns: ['account',
         {
-          account: (record) => record.quotaenabled ? record.account : record.account + ' (quota-disabled)'
-        }, 'domain', 'state', 'currency', 'balance'],
-      columnNames: ['account', 'domain', 'state', 'currency', 'currentbalance'],
+          state: (record) => record.state.toLowerCase()
+        },
+        {
+          quotastate: (record) => record.quotaenabled ? 'Enabled' : 'Disabled'
+        }, 'domain', 'currency', 'balance'
+      ],
+      columnNames: ['account', 'accountstate', 'quotastate', 'domain', 'currency', 'currentbalance'],
       details: ['currency', 'currentbalance'],
       component: () => import('@/views/plugins/quota/QuotaSummary.vue'),
       filters: ['all', 'activeaccounts', 'removedaccounts'],
       tabs: [
-        {
-          name: 'details',
-          component: () => import('@/components/view/DetailsTab.vue')
-        },
         {
           name: 'quota.statement.quota',
           component: () => import('@/views/plugins/quota/QuotaUsage.vue')
@@ -74,7 +74,14 @@ export default {
       icon: 'credit-card',
       docHelp: 'plugins/quota.html#quota-tariff',
       permission: ['quotaTariffList'],
-      columns: ['name', 'usageName', 'usageUnit', 'tariffValue',
+      columns: ['name',
+        {
+          usageName: (record) => i18n.t(record.usageName)
+        },
+        {
+          usageUnit: (record) => i18n.t(record.usageUnit)
+        },
+        'tariffValue',
         {
           hasActivationRule: (record) => record.activationRule ? i18n.t('label.yes') : i18n.t('label.no')
         },

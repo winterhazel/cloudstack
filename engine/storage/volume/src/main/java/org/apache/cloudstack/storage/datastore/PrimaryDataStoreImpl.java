@@ -46,6 +46,7 @@ import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
 import org.apache.cloudstack.storage.volume.VolumeObject;
+import org.apache.cloudstack.utils.reflectiontostringbuilderutils.ReflectionToStringBuilderUtils;
 import org.apache.log4j.Logger;
 
 import com.cloud.agent.api.to.DataObjectType;
@@ -451,5 +452,10 @@ public class PrimaryDataStoreImpl implements PrimaryDataStore {
             return primaryTO;
         }
         return to;
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilderUtils.reflectOnlySelectedFields(this, "name", "uuid");
     }
 }

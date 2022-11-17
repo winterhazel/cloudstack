@@ -91,6 +91,14 @@ public class QuotaSummaryVO {
     @Column(name = "domain_removed")
     private Date domainRemoved;
 
+    @Column(name = "project_uuid")
+    private String projectUuid;
+
+    @Column(name = "project_name")
+    private String projectName;
+
+    @Column(name = "project_removed")
+    private Date projectRemoved;
 
     public Long getAccountId() {
         return accountId;
@@ -228,4 +236,27 @@ public class QuotaSummaryVO {
         this.domainRemoved = domainRemoved;
     }
 
+    public String getProjectUuid() {
+        return projectUuid;
+    }
+
+    public void setProjectUuid(String projectUuid) {
+        this.projectUuid = projectUuid;
+    }
+
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public Date getProjectRemoved() {
+        return projectRemoved;
+    }
+
+    public void setProjectRemoved(Date projectRemoved) {
+        this.projectRemoved = projectRemoved;
+    }
 }

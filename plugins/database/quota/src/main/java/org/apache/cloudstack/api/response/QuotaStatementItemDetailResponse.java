@@ -26,6 +26,7 @@ import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseResponse;
 
 import com.cloud.serializer.Param;
+import org.apache.cloudstack.quota.constant.QuotaConfig;
 
 public class QuotaStatementItemDetailResponse extends BaseResponse {
 
@@ -54,7 +55,7 @@ public class QuotaStatementItemDetailResponse extends BaseResponse {
     private QuotaStatementItemDetailResourceResponse resource;
 
     public void setQuotaUsed(BigDecimal quotaUsed) {
-        this.quotaUsed = quotaUsed.setScale(2, RoundingMode.HALF_EVEN);
+        this.quotaUsed = quotaUsed.setScale(QuotaConfig.QUOTA_USAGE_ROUNDING, RoundingMode.HALF_EVEN);
     }
 
     public String getAccountUuid() {

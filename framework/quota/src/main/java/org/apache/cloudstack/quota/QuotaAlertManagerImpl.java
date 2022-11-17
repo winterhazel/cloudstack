@@ -17,6 +17,7 @@
 package org.apache.cloudstack.quota;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -317,7 +318,10 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
         }
 
         public BigDecimal getQuotaUsage() {
-            return quotaUsage;
+            BigDecimal roundedUsage = quotaUsage.setScale(QuotaConfig.QUOTA_USAGE_ROUNDING, RoundingMode.HALF_EVEN);
+            s_logger.debug(String.format("Quota usage is [%s] for [%s], but it will be rounded to [%s] decimal places to be sent via email, it will be sent as [%s].", quotaUsage,
+                    quotaAccount, QuotaConfig.QUOTA_USAGE_ROUNDING, roundedUsage));
+            return roundedUsage;
         }
 
         public Date getSendDate() {
