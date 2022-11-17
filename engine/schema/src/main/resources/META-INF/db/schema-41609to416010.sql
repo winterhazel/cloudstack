@@ -26,4 +26,3 @@ WHERE   name = 'alert.email.addresses';
 UPDATE  cloud.configuration
 SET     description = "Use SSL method used to encrypt copy traffic between zones. Also ensures that the certificate assigned to the zone is used when generating links for external access."
 WHERE   name = 'secstorage.encrypt.copy';
-
