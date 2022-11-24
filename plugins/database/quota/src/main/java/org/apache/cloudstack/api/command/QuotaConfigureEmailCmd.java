@@ -58,7 +58,7 @@ public class QuotaConfigureEmailCmd extends BaseCmd {
     }
 
     @Override public String getCommandName() {
-        return "quotaconfigureemailresponse";
+        return API_NAME.toLowerCase() + BaseCmd.RESPONSE_SUFFIX;
     }
 
     @Override public long getEntityOwnerId() {

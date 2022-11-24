@@ -28,9 +28,11 @@ import org.apache.cloudstack.api.response.QuotaResponseBuilder;
 
 import javax.inject.Inject;
 
-@APICommand(name = "quotaListEmailConfiguration", responseObject = QuotaConfigureEmailResponse.class, description = "List quota email template configurations", since = "4.16.0.11",
+@APICommand(name = QuotaListEmailConfigurationCmd.API_NAME, responseObject = QuotaConfigureEmailResponse.class, description = "List quota email template configurations", since = "4.16.0.11",
         requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
 public class QuotaListEmailConfigurationCmd extends BaseCmd {
+
+    public static final String API_NAME = "quotaListEmailConfiguration";
 
     @Parameter(name = ApiConstants.ACCOUNT_ID, type = BaseCmd.CommandType.UUID, entityType = AccountResponse.class, required = true,
             description = "Account ID for which to list quota template email configurations")
@@ -47,7 +49,7 @@ public class QuotaListEmailConfigurationCmd extends BaseCmd {
     }
 
     @Override public String getCommandName() {
-        return "quotalistemailconfigurationresponse";
+        return API_NAME.toLowerCase() + BaseCmd.RESPONSE_SUFFIX;
     }
 
     @Override public long getEntityOwnerId() {

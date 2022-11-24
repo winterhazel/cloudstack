@@ -126,7 +126,7 @@ public class QuotaStatementImpl extends ManagerBase implements QuotaStatement {
             }
             QuotaEmailConfigurationVO quotaEmailConfigurationVO = quotaEmailConfigurationDao.findByAccountIdAndEmailTemplateId(quotaAccount.getAccountId(), templateVO.getId());
             if (quotaEmailConfigurationVO != null && !quotaEmailConfigurationVO.isEnabled()) {
-                s_logger.debug(String.format("%s has [%s] email disabled. Therefore we will not send the email.", quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_STATEMENT));
+                s_logger.debug(String.format("%s has [%s] email disabled. Therefore the email will not be sent.", quotaAccount, QuotaConfig.QuotaEmailTemplateTypes.QUOTA_STATEMENT));
                 continue;
             }
 
