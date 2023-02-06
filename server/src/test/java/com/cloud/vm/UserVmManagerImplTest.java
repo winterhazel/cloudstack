@@ -2359,7 +2359,7 @@ public class UserVmManagerImplTest {
         Mockito.doThrow(InsufficientAddressCapacityException.class).when(userVmManagerImpl).updateVmNetwork(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any());
 
-        Assert.assertThrows(RuntimeException.class, () -> userVmManagerImpl.executeStepsToChangeOwnershipOfVm(assignVmCmdMock, callerAccount, accountMock, accountMock,
+        Assert.assertThrows(CloudRuntimeException.class, () -> userVmManagerImpl.executeStepsToChangeOwnershipOfVm(assignVmCmdMock, callerAccount, accountMock, accountMock,
                 userVmVoMock, serviceOfferingVoMock, volumes, virtualMachineTemplateMock, 1l));
 
         Mockito.verify(userVmManagerImpl).resourceCountDecrement(Mockito.anyLong(), Mockito.any(), Mockito.anyLong(), Mockito.anyLong());
@@ -2383,7 +2383,7 @@ public class UserVmManagerImplTest {
         Mockito.doThrow(ResourceAllocationException.class).when(userVmManagerImpl).updateVmNetwork(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
                 Mockito.any());
 
-        Assert.assertThrows(RuntimeException.class, () -> userVmManagerImpl.executeStepsToChangeOwnershipOfVm(assignVmCmdMock, callerAccount, accountMock, accountMock,
+        Assert.assertThrows(CloudRuntimeException.class, () -> userVmManagerImpl.executeStepsToChangeOwnershipOfVm(assignVmCmdMock, callerAccount, accountMock, accountMock,
                 userVmVoMock, serviceOfferingVoMock, volumes, virtualMachineTemplateMock, 1l));
 
         Mockito.verify(userVmManagerImpl).resourceCountDecrement(Mockito.anyLong(), Mockito.any(), Mockito.anyLong(), Mockito.anyLong());
