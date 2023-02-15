@@ -30,6 +30,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cloud.network.vpc.Vpc;
+import com.cloud.usage.dao.UsageVpcDao;
+import com.cloud.usage.parser.VpcUsageParser;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -163,6 +166,9 @@ public class UsageManagerImpl extends ManagerBase implements UsageManager, Runna
     private QuotaAlertManager _alertManager;
     @Inject
     private QuotaStatement _quotaStatement;
+
+    @Inject
+    private UsageVpcDao usageVpcDao;
 
     private String _version = null;
     private final Calendar _jobExecTime = Calendar.getInstance();
@@ -978,6 +984,10 @@ public class UsageManagerImpl extends ManagerBase implements UsageManager, Runna
                 s_logger.debug("VM Backup usage successfully parsed? " + parsed + " (for account: " + account.getAccountName() + ", id: " + account.getId() + ")");
             }
         }
+        parsed = VpcUsageParser.parse(account, currentStartDate, currentEndDate);
+        if (!parsed) {
+            s_logger.debug(String.format("VPC usage failed to parse for account [%s].", account));
+        }
         return parsed;
     }
 
@@ -1011,6 +1021,8 @@ public class UsageManagerImpl extends ManagerBase implements UsageManager, Runna
             createVmSnapshotOnPrimaryEvent(event);
         } else if (isBackupEvent(eventType)) {
             createBackupEvent(event);
+        } else if (EventTypes.isVpcEvent(eventType)) {
+            handleVpcEvent(event);
         }
     }
 
@@ -2050,6 +2062,19 @@ public class UsageManagerImpl extends ManagerBase implements UsageManager, Runna
             usageBackupDao.removeUsage(accountId, vmId, event.getCreateDate());
         } else if (EventTypes.EVENT_VM_BACKUP_USAGE_METRIC.equals(event.getType())) {
             usageBackupDao.updateMetrics(vmId, event.getSize(), event.getVirtualSize());
+        }
+    }
+
+    private void handleVpcEvent(UsageEventVO event) {
+        Account account = _accountDao.findByIdIncludingRemoved(event.getAccountId());
+        long domainId = account.getDomainId();
+        if (EventTypes.EVENT_VPC_DELETE.equals(event.getType())) {
+            usageVpcDao.remove(event.getResourceId(), event.getCreateDate());
+        } else if (EventTypes.EVENT_VPC_CREATE.equals(event.getType())) {
+            UsageVpcVO usageVPCVO = new UsageVpcVO(event.getResourceId(), event.getZoneId(), event.getAccountId(), domainId, Vpc.State.Enabled.name(), event.getCreateDate(), null);
+            usageVpcDao.persist(usageVPCVO);
+        } else {
+            s_logger.error(String.format("Unknown event type [%s] in VPC event parser. Skipping it.", event.getType()));
         }
     }
 
