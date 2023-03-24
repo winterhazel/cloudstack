@@ -17,16 +17,19 @@
 package org.apache.cloudstack.quota;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.utils.NumbersUtil;
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.quota.constant.QuotaConfig;
 import org.apache.cloudstack.quota.constant.QuotaConfig.QuotaEmailTemplateTypes;
@@ -36,6 +39,7 @@ import org.apache.cloudstack.quota.vo.QuotaAccountVO;
 import org.apache.cloudstack.quota.vo.QuotaEmailTemplatesVO;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -49,8 +53,6 @@ import com.cloud.user.dao.AccountDao;
 import com.cloud.user.dao.UserDao;
 import com.cloud.utils.component.ManagerBase;
 import com.cloud.utils.db.TransactionLegacy;
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.cloudstack.utils.mailing.MailAddress;
 import org.apache.cloudstack.utils.mailing.SMTPMailProperties;
 import org.apache.cloudstack.utils.mailing.SMTPMailSender;
@@ -244,12 +246,23 @@ public class QuotaAlertManagerImpl extends ManagerBase implements QuotaAlertMana
     public Map<String, String> generateOptionMap(AccountVO accountVO, String userNames, DomainVO domainVO, final BigDecimal balance, final BigDecimal usage,
                                                  final QuotaConfig.QuotaEmailTemplateTypes emailType, boolean escapeHtml) {
         final Map<String, String> optionMap = new HashMap<>();
+
+        String currencyLocale = _configDao.getValue(QuotaConfig.QuotaCurrencyLocale.key());
+        String currencySymbol = ObjectUtils.defaultIfNull(_configDao.getValue(QuotaConfig.QuotaCurrencySymbol.key()), QuotaConfig.QuotaCurrencySymbol.defaultValue());
+
+        NumberFormat localeFormat = null;
+
+        if (currencyLocale != null) {
+            Locale locale = Locale.forLanguageTag(currencyLocale);
+            localeFormat = NumberFormat.getNumberInstance(locale);
+        }
+
         optionMap.put("accountID", accountVO.getUuid());
         optionMap.put("domainID", domainVO.getUuid());
-        optionMap.put("quotaBalance", QuotaConfig.QuotaCurrencySymbol.value() + " " + balance.toString());
+        optionMap.put("quotaBalance", String.format("%s %s", currencySymbol, NumbersUtil.getBigDecimalFormattedToNumberFormatIfBothNotNull(balance, localeFormat)));
 
         if (emailType == QuotaEmailTemplateTypes.QUOTA_STATEMENT) {
-            optionMap.put("quotaUsage", QuotaConfig.QuotaCurrencySymbol.value() + " " + usage.toString());
+            optionMap.put("quotaUsage", String.format("%s %s", currencySymbol, NumbersUtil.getBigDecimalFormattedToNumberFormatIfBothNotNull(usage, localeFormat)));
         }
 
         if (escapeHtml) {
