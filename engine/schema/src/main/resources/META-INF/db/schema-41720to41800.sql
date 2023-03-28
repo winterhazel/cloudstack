@@ -1590,3 +1590,11 @@ CREATE TABLE IF NOT EXISTS `cloud_usage`.`usage_networks` (
 ) ENGINE=InnoDB CHARSET=utf8;
 
 ALTER TABLE `cloud_usage`.`cloud_usage` ADD COLUMN state VARCHAR(100) DEFAULT NULL;
+
+-- Change usage of VM_DISK_IO_WRITE to use right usage_type
+UPDATE
+  `cloud_usage`.`cloud_usage`
+SET
+  usage_type = 22
+WHERE
+  usage_type = 24 AND usage_display like '% io write';
