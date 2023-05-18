@@ -1575,20 +1575,6 @@ CREATE VIEW `cloud`.`user_view` AS
 DELETE FROM `cloud`.`snapshot_store_ref`
 WHERE store_role = "Primary" AND store_id IN (SELECT id FROM storage_pool WHERE removed IS NOT NULL);
 
-CREATE TABLE IF NOT EXISTS `cloud_usage`.`usage_vpc` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `vpc_id` bigint(20) unsigned NOT NULL,
-  `zone_id` bigint(20) unsigned NOT NULL,
-  `account_id` bigint(20) unsigned NOT NULL,
-  `domain_id` bigint(20) unsigned NOT NULL,
-  `state` varchar(100) DEFAULT NULL,
-  `created` datetime NOT NULL,
-  `removed` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB CHARSET=utf8;
-
-ALTER TABLE `cloud_usage`.`cloud_usage` ADD state VARCHAR(100) DEFAULT NULL;
-
 -- Change usage of VM_DISK_IO_WRITE to use right usage_type
 UPDATE
   `cloud_usage`.`cloud_usage`
