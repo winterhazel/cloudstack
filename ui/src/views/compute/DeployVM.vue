@@ -123,6 +123,7 @@
                         :filterOption="filterOption"
                         :options="hostSelectOptions"
                         :loading="loading.hosts"
+                        @change="onSelectHostId"
                       ></a-select>
                     </a-form-item>
                   </div>
@@ -1185,7 +1186,7 @@ export default {
       })
       options.unshift({
         label: this.$t('label.default'),
-        value: undefined
+        value: null
       })
       return options
     },
@@ -1198,7 +1199,7 @@ export default {
       })
       options.unshift({
         label: this.$t('label.default'),
-        value: undefined
+        value: null
       })
       return options
     },
@@ -1211,7 +1212,7 @@ export default {
       })
       options.unshift({
         label: this.$t('label.default'),
-        value: undefined
+        value: null
       })
       return options
     },
@@ -1618,11 +1619,11 @@ export default {
         if (this.templateId) {
           apiName = 'listTemplates'
           params.listall = true
-          params.templatefilter = 'all'
+          params.templatefilter = this.isNormalAndDomainUser ? 'executable' : 'all'
           params.id = this.templateId
         } else if (this.isoId) {
           params.listall = true
-          params.isofilter = 'all'
+          params.isofilter = this.isNormalAndDomainUser ? 'executable' : 'all'
           params.id = this.isoId
           apiName = 'listIsos'
         } else if (this.networkId) {
@@ -1843,7 +1844,7 @@ export default {
       this.form.networkids = ids
     },
     updateDefaultNetworks (id) {
-      this.defaultNetwork = id
+      this.defaultnetworkid = id
       this.form.defaultnetworkid = id
     },
     updateNetworkConfig (networks) {
@@ -2411,14 +2412,26 @@ export default {
     },
     onSelectPodId (value) {
       this.podId = value
+      if (this.podId === null) {
+        this.form.podid = undefined
+      }
 
       this.fetchOptions(this.params.clusters, 'clusters')
       this.fetchOptions(this.params.hosts, 'hosts')
     },
     onSelectClusterId (value) {
       this.clusterId = value
+      if (this.clusterId === null) {
+        this.form.clusterid = undefined
+      }
 
       this.fetchOptions(this.params.hosts, 'hosts')
+    },
+    onSelectHostId (value) {
+      this.hostId = value
+      if (this.hostId === null) {
+        this.form.hostid = undefined
+      }
     },
     handleSearchFilter (name, options) {
       this.params[name].options = { ...this.params[name].options, ...options }
