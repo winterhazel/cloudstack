@@ -225,8 +225,8 @@ export default {
       })
     },
     convertConfigToHierarchy (config) {
-      var hierarchy = {}
-      for (var c of config) {
+      const hierarchy = {}
+      for (const c of config) {
         if (c.parent && c.parent.length !== 0) {
           if (hierarchy[c.parent]) {
             hierarchy[c.parent].push(c)
@@ -235,7 +235,7 @@ export default {
           }
         }
       }
-      for (c of config) {
+      for (const c of config) {
         if (hierarchy[c.name]) {
           c.children = hierarchy[c.name]
         }

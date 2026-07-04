@@ -342,7 +342,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.action.delete.routing.firewall.rule'),
           description: rule.id,
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.remove.routing.firewall.rule.success'),
           successMethod: () => {
             if (this.selectedItems.length > 0) {

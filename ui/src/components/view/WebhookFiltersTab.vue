@@ -173,7 +173,7 @@ export default {
   },
   computed: {
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       if (this.device !== 'desktop') {
         sizes.unshift(10)
       }
@@ -239,13 +239,13 @@ export default {
     },
     updateColumns () {
       this.columns = []
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         const key = columnKey
         if (!this.selectedColumnKeys.includes(key)) continue
-        var title = this.$t('label.' + String(key).toLowerCase())
+        const title = this.$t('label.' + String(key).toLowerCase())
         this.columns.push({
-          key: key,
-          title: title,
+          key,
+          title,
           dataIndex: key,
           sorter: (a, b) => { return genericCompare(a[key] || '', b[key] || '') }
         })
@@ -310,7 +310,7 @@ export default {
         ? this.$t('label.action.delete.webhook.filters')
         : this.$t('label.action.clear.webhook.filters')
       this.$confirm({
-        title: title,
+        title,
         okText: this.$t('label.ok'),
         okType: 'danger',
         cancelText: this.$t('label.cancel'),
@@ -327,7 +327,7 @@ export default {
       const promises = []
       this.selectedRowKeys.forEach(id => {
         const params = {
-          id: id
+          id
         }
         promises.push(new Promise((resolve, reject) => {
           postAPI('deleteWebhookFilter', params).then(json => {

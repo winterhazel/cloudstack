@@ -349,7 +349,7 @@ export default {
         }
 
         this.fields.push({
-          type: type,
+          type,
           name: item,
           opts: [],
           loading: false
@@ -1176,7 +1176,7 @@ export default {
               } else if (a.type === 'non-strict host affinity') {
                 name = 'host affinity (Non-Strict)'
               }
-              return { id: a.type, name: name }
+              return { id: a.type, name }
             })
             this.alertTypes = alerttypes
             resolve({
@@ -1382,7 +1382,7 @@ export default {
       return scope
     },
     fetchState () {
-      var state = []
+      let state = []
       if (this.apiName.includes('listVolumes')) {
         state = [
           {
@@ -1524,7 +1524,7 @@ export default {
           SYSTEM_VM: 'System VM',
           KUBERNETES_CLUSTER: 'Kubernetes Cluster'
         }
-        for (var key in allowedTypes) {
+        for (const key in allowedTypes) {
           entityType.push({
             id: key,
             name: allowedTypes[key]
@@ -1718,9 +1718,7 @@ export default {
     },
     updateIsFiltered () {
       this.isFiltered = this.searchFilters.some(item => {
-        if (this.searchParams[item]) {
-          return true
-        }
+        return !!this.searchParams[item]
       })
     }
   }

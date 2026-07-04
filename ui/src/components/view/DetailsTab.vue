@@ -270,7 +270,7 @@ export default {
   },
   computed: {
     customDisplayItems () {
-      var items = ['ip4routes', 'ip6routes', 'privatemtu', 'publicmtu', 'provider', 'details', 'parameters']
+      const items = ['ip4routes', 'ip6routes', 'privatemtu', 'publicmtu', 'provider', 'details', 'parameters']
       if (this.$route.meta.name === 'webhookdeliveries') {
         items.push('startdate')
         items.push('enddate')
@@ -383,8 +383,8 @@ export default {
     },
     ip4routes () {
       if (this.resource.ip4routes && this.resource.ip4routes.length > 0) {
-        var routes = []
-        for (var route of this.resource.ip4routes) {
+        const routes = []
+        for (const route of this.resource.ip4routes) {
           routes.push(route.subnet + ' via ' + route.gateway)
         }
         return routes.join('<br>')
@@ -393,8 +393,8 @@ export default {
     },
     ip6routes () {
       if (this.resource.ip6routes && this.resource.ip6routes.length > 0) {
-        var routes = []
-        for (var route of this.resource.ip6routes) {
+        const routes = []
+        for (const route of this.resource.ip6routes) {
           routes.push(route.subnet + ' via ' + route.gateway)
         }
         return routes.join('<br>')
@@ -431,9 +431,9 @@ export default {
       if (!this.dataResource.owner) {
         return false
       }
-      var owners = this.dataResource.owner
-      var projectAdmins = []
-      for (var owner of owners) {
+      const owners = this.dataResource.owner
+      const projectAdmins = []
+      for (const owner of owners) {
         projectAdmins.push(Object.keys(owner).includes('user') ? owner.account + '(' + owner.user + ')' : owner.account)
       }
       this.dataResource.account = projectAdmins.join()

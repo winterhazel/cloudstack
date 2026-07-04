@@ -437,7 +437,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var url = values.hostname
+        let url = values.hostname
         if (values.hostname.indexOf('http://') === -1 && this.selectedClusterHyperVisorType !== 'External') {
           url = `http://${values.hostname}`
         }
@@ -447,7 +447,7 @@ export default {
           values.password = 'external'
         }
 
-        var args = {
+        const args = {
           zoneid: values.zoneid,
           podid: values.podid,
           clusterid: values.clusterid,
@@ -456,7 +456,7 @@ export default {
           hosttags: values.hosttags ? values.hosttags.join() : null,
           username: values.username,
           password: this.authMethod !== 'password' ? '' : values.password,
-          url: url,
+          url,
           agentusername: values.agentusername,
           agentpassword: values.agentpassword,
           agentport: values.agentport
@@ -532,7 +532,11 @@ export default {
     },
     returnPlaceholder (field) {
       this.params.find(i => {
-        if (i.name === field) this.placeholder[field] = i.description
+        if (i.name === field) {
+          this.placeholder[field] = i.description
+          return true
+        }
+        return false
       })
     },
     closeAction () {

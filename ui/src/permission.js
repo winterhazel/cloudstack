@@ -56,9 +56,9 @@ router.beforeEach((to, from, next) => {
 
   const validLogin = vueProps.$localStorage.get(ACCESS_TOKEN) || Cookies.get('userid') || Cookies.get('userid', { path: '/client' })
   if (validLogin) {
-    var currentURL = new URL(window.location.href)
-    var urlParams = new URLSearchParams(currentURL.search)
-    var code = urlParams.get('code')
+    const currentURL = new URL(window.location.href)
+    const urlParams = new URLSearchParams(currentURL.search)
+    const code = urlParams.get('code')
     if (code != null) {
       urlParams.delete('code')
     }
@@ -127,7 +127,7 @@ router.beforeEach((to, from, next) => {
             }
 
             store.dispatch('GenerateRoutes', { apis }).then(() => {
-              store.getters.addRouters.map(route => {
+              store.getters.addRouters.forEach(route => {
                 router.addRoute(route)
               })
               const redirect = decodeURIComponent(from.query.redirect || to.path)
@@ -136,7 +136,7 @@ router.beforeEach((to, from, next) => {
               } else {
                 next({ path: redirect })
               }
-              var project = vueProps.$localStorage.get(CURRENT_PROJECT)
+              let project = vueProps.$localStorage.get(CURRENT_PROJECT)
               if (project == null) {
                 project = {}
                 store.commit('SET_PROJECT', project)
@@ -171,9 +171,9 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     if (window.location.href.includes('verifyOauth') && to.name === undefined) {
-      currentURL = new URL(window.location.href)
-      urlParams = new URLSearchParams(currentURL.search)
-      code = urlParams.get('code')
+      const currentURL = new URL(window.location.href)
+      const urlParams = new URLSearchParams(currentURL.search)
+      const code = urlParams.get('code')
       urlParams.delete('verifyOauth')
       urlParams.delete('state')
       currentURL.search = '?code=' + code

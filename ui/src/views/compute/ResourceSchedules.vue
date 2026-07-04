@@ -391,7 +391,7 @@ export default {
   },
   computed: {
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       if (this.device !== 'desktop') {
         sizes.unshift(10)
       }
@@ -496,7 +496,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
         const selectedAction = values.action || (this.actions.length === 1 ? this.actions[0].value : null)
-        var params = {
+        const params = {
           description: values.description,
           schedule: values.schedule,
           timezone: values.timezone,
@@ -614,7 +614,7 @@ export default {
         startdate: this.$t('label.start.date.and.time'),
         enddate: this.$t('label.end.date.and.time')
       }
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         if (!this.selectedColumnKeys.includes(columnKey)) continue
         this.columns.push({
           key: columnKey,

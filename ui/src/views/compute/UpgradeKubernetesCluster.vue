@@ -120,14 +120,14 @@ export default {
       getAPI('listKubernetesSupportedVersions', params).then(json => {
         const versionObjs = json.listkubernetessupportedversionsresponse.kubernetessupportedversion
         if (this.arrayHasItems(versionObjs)) {
-          var clusterVersion = null
-          for (var j = 0; j < versionObjs.length; j++) {
+          let clusterVersion = null
+          for (let j = 0; j < versionObjs.length; j++) {
             if (versionObjs[j].id === this.resource.kubernetesversionid) {
               clusterVersion = versionObjs[j]
               break
             }
           }
-          for (var i = 0; i < versionObjs.length; i++) {
+          for (let i = 0; i < versionObjs.length; i++) {
             if (versionObjs[i].id !== this.resource.kubernetesversionid &&
               (clusterVersion == null || (clusterVersion != null && versionObjs[i].semanticversion !== clusterVersion.semanticversion)) &&
               versionObjs[i].state === 'Enabled' && versionObjs[i].isostate === 'Ready') {

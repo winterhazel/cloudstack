@@ -237,10 +237,10 @@ export default {
       if (!this.isObjectEmpty(this.resource)) {
         params.id = offeringId
       }
-      var minCpu = 0
-      var minMemory = 0
+      let minCpu = 0
+      let minMemory = 0
       getAPI('listServiceOfferings', params).then(json => {
-        var items = json?.listserviceofferingsresponse?.serviceoffering || []
+        const items = json?.listserviceofferingsresponse?.serviceoffering || []
         if (this.arrayHasItems(items) && !this.isObjectEmpty(items[0])) {
           minCpu = items[0].cpunumber
           minMemory = items[0].memory
@@ -254,8 +254,8 @@ export default {
       if (!this.isObjectEmpty(this.resource)) {
         params.id = this.resource.kubernetesversionid
       }
-      var minCpu = 0
-      var minMemory = 0
+      let minCpu = 0
+      let minMemory = 0
       getAPI('listKubernetesSupportedVersions', params).then(json => {
         const versionObjs = json?.listkubernetessupportedversionsresponse?.kubernetessupportedversion || []
         if (this.arrayHasItems(versionObjs) && !this.isObjectEmpty(versionObjs[0])) {
@@ -272,16 +272,16 @@ export default {
       })
     },
     fetchServiceOfferingData (minCpu, minMemory, type) {
-      var offerings = []
+      const offerings = []
       const params = {
         cpunumber: minCpu,
         memory: minMemory
       }
       this.serviceOfferingLoading = true
       getAPI('listServiceOfferings', params).then(json => {
-        var items = json?.listserviceofferingsresponse?.serviceoffering || []
+        const items = json?.listserviceofferingsresponse?.serviceoffering || []
         if (this.arrayHasItems(items)) {
-          for (var i = 0; i < items.length; i++) {
+          for (let i = 0; i < items.length; i++) {
             if (items[i].iscustomized === false) {
               offerings.push(items[i])
             }
@@ -299,7 +299,7 @@ export default {
           } else if (type === 'etcd') {
             this.etcdOfferings = offerings
           }
-          for (var i = 0; i < offerings.length; i++) {
+          for (let i = 0; i < offerings.length; i++) {
             if (type === 'default' && offerings[i].id === this.resource.serviceofferingid) {
               this.form.serviceofferingid = i
               break
@@ -342,7 +342,7 @@ export default {
         if (this.isValidValueForKey(values, 'maxsize')) {
           params.maxsize = values.maxsize
         }
-        var advancedOfferings = 0
+        let advancedOfferings = 0
         if (this.isValidValueForKey(values, 'controlofferingid') && this.arrayHasItems(this.controlOfferings) && this.controlOfferings[values.controlofferingid].id != null) {
           params['nodeofferings[' + advancedOfferings + '].node'] = 'control'
           params['nodeofferings[' + advancedOfferings + '].offering'] = this.controlOfferings[values.controlofferingid].id

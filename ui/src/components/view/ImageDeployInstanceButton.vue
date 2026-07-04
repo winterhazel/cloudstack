@@ -148,7 +148,7 @@ export default {
       }
       this.$router.push({
         path: '/action/deployVirtualMachine',
-        query: query
+        query
       })
     }
   }

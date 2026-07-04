@@ -69,11 +69,11 @@ export default {
   },
   methods: {
     fetchData () {
-      var page = 1
+      let page = 1
       const samlAccounts = []
       const getNextPage = () => {
         this.loading = true
-        postAPI('listAndSwitchSamlAccount', { details: 'min', page: page, pageSize: 500 }).then(json => {
+        postAPI('listAndSwitchSamlAccount', { details: 'min', page, pageSize: 500 }).then(json => {
           if (json && json.listandswitchsamlaccountresponse && json.listandswitchsamlaccountresponse.samluseraccount) {
             samlAccounts.push(...json.listandswitchsamlaccountresponse.samluseraccount)
           }

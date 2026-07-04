@@ -378,7 +378,8 @@ export default {
         'usersecuritygrouplist[0].group': this.newRule.usersecuritygrouplist.group
       }).then(response => {
         this.$pollJob({
-          jobId: this.tabType === 'ingress' ? response.authorizesecuritygroupingressresponse.jobid
+          jobId: this.tabType === 'ingress'
+            ? response.authorizesecuritygroupingressresponse.jobid
             : response.authorizesecuritygroupegressresponse.jobid,
           successMessage: this.$t('message.success.add.rule'),
           successMethod: () => {
@@ -412,7 +413,8 @@ export default {
         account: this.resource.account
       }).then(response => {
         this.$pollJob({
-          jobId: this.tabType === 'ingress' ? response.revokesecuritygroupingressresponse.jobid
+          jobId: this.tabType === 'ingress'
+            ? response.revokesecuritygroupingressresponse.jobid
             : response.revokesecuritygroupegressresponse.jobid,
           successMessage: this.$t('message.success.remove.rule'),
           successMethod: () => {

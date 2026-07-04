@@ -161,20 +161,24 @@ export default {
   },
   computed: {
     accountsList () {
-      return this.accounts.length > 0 ? this.accounts
-        .filter(a =>
-          this.selectedOperation === 'add'
-            ? !this.permittedAccounts.includes(a.name)
-            : this.permittedAccounts.includes(a.name)
-        ) : this.accounts
+      return this.accounts.length > 0
+        ? this.accounts
+          .filter(a =>
+            this.selectedOperation === 'add'
+              ? !this.permittedAccounts.includes(a.name)
+              : this.permittedAccounts.includes(a.name)
+          )
+        : this.accounts
     },
     projectsList () {
-      return this.projects > 0 ? this.projects
-        .filter(p =>
-          this.selectedOperation === 'add'
-            ? !this.permittedProjects.includes(p.id)
-            : this.permittedProjects.includes(p.id)
-        ) : this.projects
+      return this.projects > 0
+        ? this.projects
+          .filter(p =>
+            this.selectedOperation === 'add'
+              ? !this.permittedProjects.includes(p.id)
+              : this.permittedProjects.includes(p.id)
+          )
+        : this.projects
     }
   },
   created () {

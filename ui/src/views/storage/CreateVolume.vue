@@ -413,7 +413,7 @@ export default {
         this.form.kmskeyid = undefined
       }
       this.loading = true
-      var params = {
+      const params = {
         zoneid: zoneId,
         listall: true,
         domainid: this.owner.domainid
@@ -466,7 +466,7 @@ export default {
       })
     },
     fetchVirtualMachines (zoneId) {
-      var params = {
+      const params = {
         zoneid: zoneId,
         details: 'min'
       }
@@ -478,7 +478,7 @@ export default {
       }
 
       this.loading = true
-      var vmStates = ['Running', 'Stopped']
+      const vmStates = ['Running', 'Stopped']
       vmStates.forEach((state) => {
         params.state = state
         getAPI('listVirtualMachines', params).then(response => {

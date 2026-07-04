@@ -115,8 +115,8 @@ export default {
       const endDate = this.endDateProp ? dayjs(this.endDateProp) : null
 
       this.form = reactive({
-        startDate: startDate,
-        endDate: endDate
+        startDate,
+        endDate
       })
     },
     handleSubmit (e) {

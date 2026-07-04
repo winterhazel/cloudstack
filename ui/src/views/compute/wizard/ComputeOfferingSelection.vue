@@ -219,12 +219,12 @@ export default {
     },
     tableSource () {
       return this.computeItems.map((item) => {
-        var maxCpuNumber = item.cpunumber
-        var maxCpuSpeed = item.cpuspeed
-        var maxMemory = item.memory
-        var cpuNumberValue = (item.cpunumber !== null && item.cpunumber !== undefined && item.cpunumber > 0) ? item.cpunumber + '' : ''
-        var cpuSpeedValue = (item.cpuspeed !== null && item.cpuspeed !== undefined && item.cpuspeed > 0) ? parseFloat(item.cpuspeed / 1000.0).toFixed(2) + '' : ''
-        var ramValue = (item.memory !== null && item.memory !== undefined && item.memory > 0) ? item.memory + '' : ''
+        let maxCpuNumber = item.cpunumber
+        const maxCpuSpeed = item.cpuspeed
+        let maxMemory = item.memory
+        let cpuNumberValue = (item.cpunumber !== null && item.cpunumber !== undefined && item.cpunumber > 0) ? item.cpunumber + '' : ''
+        const cpuSpeedValue = (item.cpuspeed !== null && item.cpuspeed !== undefined && item.cpuspeed > 0) ? parseFloat(item.cpuspeed / 1000.0).toFixed(2) + '' : ''
+        let ramValue = (item.memory !== null && item.memory !== undefined && item.memory > 0) ? item.memory + '' : ''
         if (item.iscustomized === true) {
           if ('serviceofferingdetails' in item &&
             'mincpunumber' in item.serviceofferingdetails &&
@@ -239,7 +239,7 @@ export default {
             ramValue = item.serviceofferingdetails.minmemory + '-' + item.serviceofferingdetails.maxmemory
           }
         }
-        var disabled = false
+        let disabled = false
         if (this.minimumCpunumber > 0 && ((item.iscustomized === false && maxCpuNumber !== this.minimumCpunumber) ||
             (item.iscustomized === true && maxCpuNumber < this.minimumCpunumber))) {
           disabled = true
@@ -261,10 +261,10 @@ export default {
         if (this.allowAllOfferings) {
           disabled = false
         }
-        var gpuEnabledOffering = false
-        var gpuCount = 0
-        var gpuType = ''
-        var gpuValue = ''
+        let gpuEnabledOffering = false
+        let gpuCount = 0
+        let gpuType = ''
+        let gpuValue = ''
         if (item.gpucardname !== undefined && item.gpucardname !== null) {
           gpuEnabledOffering = true
           gpuCount = item.gpucount
@@ -280,11 +280,11 @@ export default {
           name: item.name,
           cpu: cpuNumberValue.length > 0 ? `${cpuNumberValue} CPU x ${cpuSpeedValue} Ghz` : '',
           ram: ramValue.length > 0 ? `${ramValue} MB` : '',
-          disabled: disabled,
+          disabled,
           leaseduration: item.leaseduration,
-          gpuEnabledOffering: gpuEnabledOffering,
-          gpuCount: gpuCount,
-          gpuType: gpuType,
+          gpuEnabledOffering,
+          gpuCount,
+          gpuType,
           gpu: gpuValue,
           gpuDetails: this.getGpuDetails(item),
           hosttags: item.hosttags !== undefined && item.hosttags !== null ? item.hosttags : undefined,

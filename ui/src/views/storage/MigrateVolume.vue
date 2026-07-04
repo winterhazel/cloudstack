@@ -183,7 +183,7 @@ export default {
         return
       }
       this.isSubmitted = true
-      var params = {
+      const params = {
         livemigrate: this.resource.vmstate === 'Running',
         storageid: this.selectedStoragePool.id,
         volumeid: this.resource.id

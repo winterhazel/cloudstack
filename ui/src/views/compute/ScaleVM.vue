@@ -189,7 +189,7 @@ export default {
           isready: true,
           id: this.resource.templateid
         }).then(response => {
-          var template = response?.listtemplatesresponse?.template?.[0] || null
+          const template = response?.listtemplatesresponse?.template?.[0] || null
           resolve(template)
         }).catch(error => {
           reject(error)

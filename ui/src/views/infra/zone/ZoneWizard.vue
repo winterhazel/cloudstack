@@ -186,7 +186,7 @@ export default {
   },
   computed: {
     zoneSteps () {
-      var steps = [...this.steps]
+      const steps = [...this.steps]
       if (this.zoneConfig.zoneSuperType !== 'Edge') {
         steps.splice(1, 0, this.coreZoneTypeStep)
       }

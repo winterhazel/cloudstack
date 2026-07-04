@@ -319,7 +319,7 @@ export default {
         return true
       }
       if (this.selectedHost.id === -1 && this.hasVolumes) {
-        for (var volume of this.volumes) {
+        for (const volume of this.volumes) {
           if (volume.storagetype === 'local') {
             return true
           }
@@ -343,11 +343,11 @@ export default {
           ? 'migrateVirtualMachineWithVolume'
           : 'migrateVirtualMachine'
         : 'migrateSystemVm'
-      var params = this.selectedHost.id === -1
+      const params = this.selectedHost.id === -1
         ? { autoselect: true, virtualmachineid: this.resource.id }
         : { hostid: this.selectedHost.id, virtualmachineid: this.resource.id }
       if (this.migrateWithStorage && this.volumeToPoolSelection && this.volumeToPoolSelection.length > 0) {
-        for (var i = 0; i < this.volumeToPoolSelection.length; i++) {
+        for (let i = 0; i < this.volumeToPoolSelection.length; i++) {
           const mapping = this.volumeToPoolSelection[i]
           params['migrateto[' + i + '].volume'] = mapping.volume
           params['migrateto[' + i + '].pool'] = mapping.pool
@@ -356,7 +356,7 @@ export default {
       postAPI(migrateApi, params).then(response => {
         const jobId = response[migrateApi.toLowerCase() + 'response'].jobid
         this.$pollJob({
-          jobId: jobId,
+          jobId,
           title: `${this.$t('label.migrating')} ${this.resource.name}`,
           description: this.resource.name,
           successMessage: `${this.$t('message.success.migrating')} ${this.resource.name}`,

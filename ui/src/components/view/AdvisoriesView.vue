@@ -124,7 +124,7 @@ export default {
     showActionMessage (type, key, content) {
       const data = {
         content: this.$t(content),
-        key: key,
+        key,
         duration: type === 'loading' ? 0 : 3
       }
       if (type === 'loading') {

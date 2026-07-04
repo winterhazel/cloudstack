@@ -31,15 +31,15 @@ function numericComparator (a, b) {
 }
 
 function metricComparator (ma, mb) {
-  var a = ('' + ma).replace(/((%)|(Ghz)|(Mhz)|(MiB)|(GiB)|(GB)).*$/g, '')
-  var b = ('' + mb).replace(/((%)|(Ghz)|(Mhz)|(MiB)|(GiB)|(GB)).*$/g, '')
+  const a = ('' + ma).replace(/((%)|(Ghz)|(Mhz)|(MiB)|(GiB)|(GB)).*$/g, '')
+  const b = ('' + mb).replace(/((%)|(Ghz)|(Mhz)|(MiB)|(GiB)|(GB)).*$/g, '')
   return parseFloat(a) < parseFloat(b) ? 1 : -1
 }
 
 function ipV4AddressCIDRComparator (a, b) {
   a = a.split(/[./]/gm)
   b = b.split(/[./]/gm)
-  for (var i = 0; i < a.length; i++) {
+  for (let i = 0; i < a.length; i++) {
     if ((a[i] = parseInt(a[i])) < (b[i] = parseInt(b[i]))) {
       return -1
     } else if (a[i] > b[i]) {
@@ -52,7 +52,7 @@ function ipV4AddressCIDRComparator (a, b) {
 function ipV6AddressCIDRComparator (a, b) {
   a = a.split(/[:/]/gm)
   b = b.split(/[:/]/gm)
-  for (var i = 0; i < a.length; i++) {
+  for (let i = 0; i < a.length; i++) {
     if ((a[i] = parseInt('0x' + a[i], 16)) < (b[i] = parseInt('0x' + b[i], 16))) {
       return -1
     } else if (a[i] > b[i]) {
@@ -92,7 +92,7 @@ function isMetric (value) {
  */
 export function genericCompare (a, b) {
   // strict function for filtering numbers (e.g. "2.3", "-2" but not "8 CPUs")
-  var comparator = stringComparator
+  let comparator = stringComparator
 
   if (a === b) {
     // Short circuit out to avoid unnecessary effort

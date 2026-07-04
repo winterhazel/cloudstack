@@ -506,7 +506,7 @@ export default {
         return
       }
 
-      var params = {
+      const params = {
         id: this.selectedBgpPeer.id,
         zoneid: this.selectedBgpPeer.zoneid,
         domainid: this.addAccountForBgpPeer.domain
@@ -632,7 +632,7 @@ export default {
         this.componentLoading = true
         this.addBgpPeerModal = false
         this.showAccountForBgpPeerFields = false
-        var params = {
+        const params = {
           zoneId: this.resource.id,
           asnumber: values.asnumber,
           ipaddress: values.ipaddress,
@@ -682,7 +682,7 @@ export default {
 
         this.componentLoading = true
         this.updateBgpPeerModal = false
-        var params = {
+        const params = {
           id: this.selectedBgpPeer.id,
           asnumber: values.asnumber,
           ipaddress: values.ipaddress,

@@ -342,7 +342,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.action.delete.ip.v6.firewall'),
           description: rule.id,
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.remove.ip.v6.firewall.rule.success'),
           successMethod: () => {
             if (this.selectedItems.length > 0) {

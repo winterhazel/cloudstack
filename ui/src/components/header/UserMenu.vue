@@ -146,7 +146,7 @@ export default {
           resolve(this.image)
         }
         getAPI('listUsers', {
-          id: id,
+          id,
           showicon: true
         }).then(json => {
           const response = json.listusersresponse.user || []

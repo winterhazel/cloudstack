@@ -1770,7 +1770,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.action.delete.load.balancer'),
           description: rule.id,
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.success.remove.rule'),
           successMethod: () => {
             if (this.selectedItems.length > 0) {
@@ -1919,7 +1919,7 @@ export default {
         pagesize: this.networkPageSize,
         supportedservices: 'Lb',
         isrecursive: true,
-        vpcid: vpcid
+        vpcid
       }).then(response => {
         this.networkCount = response.listnetworksresponse.count || 0
         this.networks = response.listnetworksresponse.network || []
@@ -2024,7 +2024,8 @@ export default {
         return
       }
 
-      const networkId = this.selectedTierForAutoScaling != null ? this.selectedTierForAutoScaling
+      const networkId = this.selectedTierForAutoScaling != null
+        ? this.selectedTierForAutoScaling
         : ('vpcid' in this.resource && !('associatednetworkid' in this.resource)) ? this.selectedTier : this.resource.associatednetworkid
       postAPI('createLoadBalancerRule', {
         openfirewall: false,
@@ -2170,7 +2171,7 @@ export default {
         postAPI('updateTungstenFabricLBHealthMonitor', this.healthMonitorParams).then(json => {
           const jobId = json?.updatetungstenfabriclbhealthmonitorresponse?.jobid
           this.$pollJob({
-            jobId: jobId,
+            jobId,
             successMessage: this.$t('message.success.config.health.monitor'),
             successMethod: () => {
               this.parentToggleLoading()

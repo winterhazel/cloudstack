@@ -113,12 +113,12 @@ export default {
       })
     },
     updateTaggedCapacities () {
-      var resourcesListCopy = [...this.resourcesList]
+      const resourcesListCopy = [...this.resourcesList]
       this.resourcesList = this.resourcesList.filter(x => !x.tag)
       this.resourcesList.forEach(resource => {
-        var tagged = []
-        var tags = []
-        for (var x of resourcesListCopy) {
+        const tagged = []
+        const tags = []
+        for (const x of resourcesListCopy) {
           if (resource.type === x.type && x.tag) {
             tagged.push(x)
             tags.push(x.tag)
@@ -186,7 +186,7 @@ export default {
         return
       }
       this.collapseActive[type] = true
-      var typeItems = this.resourcesList.filter(x => x.type === type)
+      const typeItems = this.resourcesList.filter(x => x.type === type)
       typeItems.forEach(resource => {
         this.animatePercentVals(resource.tagged)
       })

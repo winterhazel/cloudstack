@@ -160,7 +160,7 @@ export default {
 
       const params = {}
       if (args.mapping) {
-        Object.keys(args.mapping).map(key => {
+        Object.keys(args.mapping).forEach(key => {
           params[key] = args.mapping[key]?.value(this.resource) || null
         })
       }
@@ -185,14 +185,14 @@ export default {
         return {
           key: col,
           title: this.$t('label.' + col),
-          width: width,
+          width,
           dataIndex: col
         }
       })
 
       this.listData[args.title] = {
         title: args.title,
-        columns: columns,
+        columns,
         data: [],
         itemCount: 0,
         loading: true

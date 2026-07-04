@@ -119,7 +119,7 @@ export default {
   computed: {
     selectSource () {
       return this.selectOptions.map(item => {
-        var option = { ...item }
+        const option = { ...item }
         if (!('id' in option)) {
           option.id = option.name
         }
@@ -153,7 +153,7 @@ export default {
     },
     handleSelectOptionsUpdated () {
       if (!this.checked) return
-      var enabledOptions = this.selectSource?.filter(x => x.enabled !== false) || []
+      const enabledOptions = this.selectSource?.filter(x => x.enabled !== false) || []
       if (this.selectedOption && !enabledOptions.includes(this.selectedOption)) {
         this.handleSelectChange(enabledOptions[0]?.id || null)
       }

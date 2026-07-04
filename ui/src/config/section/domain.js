@@ -112,7 +112,7 @@ export default {
       listView: true,
       dataView: true,
       args: (record) => {
-        var fields = ['networkdomain']
+        const fields = ['networkdomain']
         if (record.name !== 'ROOT') {
           fields.unshift('name')
         }

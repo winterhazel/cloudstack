@@ -789,7 +789,7 @@ export default {
   computed: {
     isPageAllowed () {
       if (this.$route.meta.permission) {
-        for (var apiName of this.$route.meta.permission) {
+        for (const apiName of this.$route.meta.permission) {
           if (!(apiName in this.$store.getters.apis)) {
             return false
           }
@@ -900,7 +900,7 @@ export default {
       }
     },
     viewLoading () {
-      for (var key in this.optionLoading) {
+      for (const key in this.optionLoading) {
         if (this.optionLoading[key]) {
           return true
         }
@@ -1296,8 +1296,8 @@ export default {
       params.username = this.values.username
       params.password = this.values.password
       params.hypervisor = this.destinationHypervisor
-      var details = ['host', 'username', 'password']
-      for (var detail of details) {
+      const details = ['host', 'username', 'password']
+      for (const detail of details) {
         if (!params[detail]) {
           this.$notification.error({
             message: this.$t('message.request.failed'),
@@ -1471,16 +1471,16 @@ export default {
       const title = this.managedInstancesSelectedRowKeys.length > 1
         ? this.$t('message.action.unmanage.instances')
         : this.$t('message.action.unmanage.instance')
-      var vmNames = []
-      for (var index of this.managedInstancesSelectedRowKeys) {
+      const vmNames = []
+      for (const index of this.managedInstancesSelectedRowKeys) {
         vmNames.push(this.managedInstances[index].name)
       }
       const content = vmNames.join(', ')
       this.$confirm({
-        title: title,
+        title,
         okText: this.$t('label.ok'),
         okType: 'danger',
-        content: content,
+        content,
         cancelText: this.$t('label.cancel'),
         onOk () {
           self.unmanageInstances()
@@ -1503,9 +1503,9 @@ export default {
       })
     },
     unmanageInstances () {
-      for (var index of this.managedInstancesSelectedRowKeys) {
+      for (const index of this.managedInstancesSelectedRowKeys) {
         const vm = this.managedInstances[index]
-        var params = { id: vm.id }
+        const params = { id: vm.id }
         postAPI('unmanageVirtualMachine', params).then(json => {
           const jobId = json.unmanagevirtualmachineresponse.jobid
           this.$pollJob({

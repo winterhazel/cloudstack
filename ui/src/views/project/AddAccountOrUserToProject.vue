@@ -229,7 +229,7 @@ export default {
       apis.push('addUserToProject')
     }
     this.apiParams = {}
-    for (var api of apis) {
+    for (const api of apis) {
       this.apiParams[api] = this.$getApiParams(api)
     }
   },
@@ -328,7 +328,7 @@ export default {
       this.formRef.value.validate().then(() => {
         const values = toRaw(this.form)
         this.loading = true
-        var params = {
+        const params = {
           projectid: this.resource.id
         }
         for (const key in values) {
@@ -363,7 +363,7 @@ export default {
         const values = toRaw(this.form)
 
         this.loading = true
-        var params = {
+        const params = {
           projectid: this.resource.id
         }
         for (const key in values) {

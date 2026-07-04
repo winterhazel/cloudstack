@@ -286,8 +286,8 @@ export default {
     if (this.hasNetworkDomain) {
       this.resourceValues.networkdomain = this.resource.networkdomain
     }
-    for (var field in this.resourceValues) {
-      var fieldValue = this.resourceValues[field]
+    for (const field in this.resourceValues) {
+      const fieldValue = this.resourceValues[field]
       if (fieldValue) {
         this.form[field] = fieldValue
       }
@@ -363,7 +363,7 @@ export default {
       }).finally(() => {
         this.networkOfferingLoading = false
         if (this.arrayHasItems(this.networkOfferings)) {
-          for (var i = 0; i < this.networkOfferings.length; i++) {
+          for (let i = 0; i < this.networkOfferings.length; i++) {
             if (this.networkOfferings[i].id === this.resource.networkofferingid) {
               this.networkOffering = this.networkOfferings[i]
               this.form.networkofferingid = i

@@ -1204,7 +1204,7 @@ export default {
       return ['/tungstennetworkroutertable', '/tungstenpolicy', '/tungsteninterfaceroutertable',
         '/tungstenpolicyset', '/tungstenroutingpolicy', '/firewallrule', '/tungstenfirewallpolicy'].includes(this.$route.path)
     },
-    createPathBasedOnVmType: createPathBasedOnVmType,
+    createPathBasedOnVmType,
     quickViewEnabled (actions, columns, key) {
       return actions.length > 0 &&
         (columns && key === columns[0].dataIndex) &&
@@ -1526,7 +1526,7 @@ export default {
       if (!startdate || !enddate) {
         return ''
       }
-      var duration = Date.parse(enddate) - Date.parse(startdate)
+      const duration = Date.parse(enddate) - Date.parse(startdate)
       return (duration > 0 ? duration / 1000.0 : 0) + ''
     },
     getUsageTypes () {
@@ -1540,7 +1540,7 @@ export default {
               }
             })
             this.usageTypeMap = {}
-            for (var usageType of this.usageTypes) {
+            for (const usageType of this.usageTypes) {
               this.usageTypeMap[usageType.id] = usageType.value
             }
           }

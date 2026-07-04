@@ -213,7 +213,7 @@ export default {
           const tag = key.substring(idx + 1)
           const untaggedInput = values[resourcetype]
           if (untaggedInput > 0 && untaggedInput < input) {
-            var err = this.$t('message.update.resource.limit.max.untagged.error').replace('%x', this.$t('label.max' + this.resourceTypeIdNames[resourcetype].replace('_', '')))
+            let err = this.$t('message.update.resource.limit.max.untagged.error').replace('%x', this.$t('label.max' + this.resourceTypeIdNames[resourcetype].replace('_', '')))
             err = err.replace('%y', untaggedInput).replace('%z', tag)
             this.$notification.error({
               message: this.$t('message.request.failed'),
@@ -232,13 +232,13 @@ export default {
           if (json.listresourcelimitsresponse.resourcelimit) {
             dataResource = json.listresourcelimitsresponse.resourcelimit
             dataResource.sort((a, b) => a.resourcetype - b.resourcetype)
-            var taggedResource = dataResource?.filter(x => x.tag !== null && x.tag !== undefined) || []
+            const taggedResource = dataResource?.filter(x => x.tag !== null && x.tag !== undefined) || []
             dataResource = dataResource?.filter(x => x.tag === null || x.tag === undefined) || []
-            for (var untaggedResource of dataResource) {
-              var tagged = taggedResource.filter(x => x.resourcetype === untaggedResource.resourcetype) || []
+            for (const untaggedResource of dataResource) {
+              const tagged = taggedResource.filter(x => x.resourcetype === untaggedResource.resourcetype) || []
               tagged.sort((a, b) => a.tag.localeCompare(b.tag))
               untaggedResource.taggedresource = tagged
-              var tags = _.map(tagged, 'tag')
+              const tags = _.map(tagged, 'tag')
               untaggedResource.tags = tags
               untaggedResource.tagsasstring = '#' + tags.join(', #')
             }

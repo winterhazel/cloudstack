@@ -238,7 +238,7 @@ export default {
     },
     getImageFormat (url) {
       const fileExtension = url.split('.').pop()
-      var format = fileExtension
+      let format = fileExtension
       switch (fileExtension) {
         case 'img':
           format = 'RAW'

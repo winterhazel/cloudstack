@@ -584,7 +584,7 @@ export default {
       this.providers = []
       this.loading = true
       getAPI('listStorageProviders', { type: 'primary' }).then(json => {
-        var providers = json.liststorageprovidersresponse.dataStoreProvider || []
+        const providers = json.liststorageprovidersresponse.dataStoreProvider || []
         for (const provider of providers) {
           this.providers.push(provider.name)
         }
@@ -632,21 +632,20 @@ export default {
       }
     },
     filesystemURL (hostId, path) {
-      var url
       if (path.substring(0, 1) !== '/') {
         path = '/' + path
       }
-      var hostName
+      let hostName
       this.hosts.forEach(host => {
         if (host.id === hostId) {
           hostName = host.name
         }
       })
-      url = 'file://' + hostName + path
+      const url = 'file://' + hostName + path
       return url
     },
     nfsURL (server, path) {
-      var url
+      let url
       if (path.substring(0, 1) !== '/') {
         path = '/' + path
       }
@@ -659,7 +658,7 @@ export default {
       return url
     },
     smbURL (server, path, smbUsername, smbPassword, smbDomain) {
-      var url = ''
+      let url = ''
       if (path.substring(0, 1) !== '/') {
         path = '/' + path
       }
@@ -670,7 +669,7 @@ export default {
       return url
     },
     presetupURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'presetup://' + server + path
       } else {
@@ -679,7 +678,7 @@ export default {
       return url
     },
     datastoreclusterURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'datastorecluster://' + server + path
       } else {
@@ -688,7 +687,7 @@ export default {
       return url
     },
     ocfs2URL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'ocfs2://' + server + path
       } else {
@@ -697,7 +696,7 @@ export default {
       return url
     },
     SharedMountPointURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'SharedMountPoint://' + server + path
       } else {
@@ -706,7 +705,7 @@ export default {
       return url
     },
     rbdURL (monitor, pool, id, secret) {
-      var url
+      let url
       if (id !== null && secret !== null) {
         monitor = id + ':' + secret + '@' + monitor
       }
@@ -721,7 +720,7 @@ export default {
       return url
     },
     clvmURL (vgname) {
-      var url
+      let url
       if (vgname.indexOf('://') === -1) {
         url = 'clvm://localhost/' + vgname
       } else {
@@ -730,7 +729,7 @@ export default {
       return url
     },
     clvmNgURL (vgname) {
-      var url
+      let url
       if (vgname.indexOf('://') === -1) {
         url = 'clvm_ng://localhost/' + vgname
       } else {
@@ -739,7 +738,7 @@ export default {
       return url
     },
     vmfsURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'vmfs://' + server + path
       } else {
@@ -748,7 +747,7 @@ export default {
       return url
     },
     iscsiURL (server, iqn, lun) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'iscsi://' + server + iqn + '/' + lun
       } else {
@@ -757,7 +756,7 @@ export default {
       return url
     },
     glusterURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'gluster://' + server + path
       } else {
@@ -766,7 +765,7 @@ export default {
       return url
     },
     powerflexURL (gateway, username, password, pool) {
-      var url = 'powerflex://' + encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' +
+      const url = 'powerflex://' + encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' +
        gateway + '/' + encodeURIComponent(pool)
       return url
     },
@@ -785,7 +784,7 @@ export default {
       this.$emit('close-action')
     },
     linstorURL (server) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'http://' + server
       } else {
@@ -800,7 +799,7 @@ export default {
       this.formRef.value.validate().then(() => {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
-        var params = {
+        const params = {
           scope: values.scope,
           zoneid: values.zone,
           name: values.name,
@@ -816,12 +815,12 @@ export default {
         if (values.scope === 'host') {
           params.hostid = values.host
         }
-        var server = values.server ? values.server : null
-        var path = values.path ? values.path : null
+        let server = values.server ? values.server : null
+        let path = values.path ? values.path : null
         if (path !== null && path.substring(0, 1) !== '/') {
           path = '/' + path
         }
-        var url = ''
+        let url = ''
         if (values.protocol === 'nfs') {
           url = this.nfsURL(server, path)
           if (values.nfsMountOpts) {
@@ -860,10 +859,10 @@ export default {
           server = 'localhost'
           url = this.SharedMountPointURL(server, path)
         } else if (values.protocol === 'CLVM') {
-          var vg = (values.volumegroup.substring(0, 1) !== '/') ? ('/' + values.volumegroup) : values.volumegroup
+          const vg = (values.volumegroup.substring(0, 1) !== '/') ? ('/' + values.volumegroup) : values.volumegroup
           url = this.clvmURL(vg)
         } else if (values.protocol === 'CLVM_NG') {
-          vg = (values.volumegroup.substring(0, 1) !== '/') ? ('/' + values.volumegroup) : values.volumegroup
+          const vg = (values.volumegroup.substring(0, 1) !== '/') ? ('/' + values.volumegroup) : values.volumegroup
           url = this.clvmNgURL(vg)
         } else if (values.protocol === 'RBD') {
           url = this.rbdURL(values.radosmonitor, values.radospool, values.radosuser, values.radossecret)
@@ -878,17 +877,17 @@ export default {
           path += '/' + values.vCenterDataStore
           url = this.vmfsURL(server, path)
         } else if (values.protocol === 'Gluster') {
-          var glustervolume = values.volume
+          let glustervolume = values.volume
           if (glustervolume.substring(0, 1) !== '/') {
             glustervolume = '/' + glustervolume
           }
           url = this.glusterURL(server, glustervolume)
         } else if (values.protocol === 'iscsi') {
-          var iqn = values.iqn
+          let iqn = values.iqn
           if (iqn.substring(0, 1) !== '/') {
             iqn = '/' + iqn
           }
-          var lun = values.lun
+          const lun = values.lun
           url = this.iscsiURL(server, iqn, lun)
         } else if (values.protocol === 'Linstor') {
           params.provider = 'Linstor'

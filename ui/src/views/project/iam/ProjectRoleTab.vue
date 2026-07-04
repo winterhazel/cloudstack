@@ -211,7 +211,7 @@ export default {
       if (this.loading) return
       this.formRef.value.validate().then(() => {
         const values = toRaw(this.form)
-        var params = {}
+        const params = {}
         this.loading = true
         params.projectid = this.resource.id
         params.id = this.selectedRole.id
@@ -252,7 +252,7 @@ export default {
       this.formRef.value.validate().then(() => {
         const values = toRaw(this.form)
         this.loading = true
-        var params = {}
+        const params = {}
         params.projectid = this.resource.id
         for (const key in values) {
           const input = values[key]

@@ -252,7 +252,7 @@ export default {
     }
   },
   data () {
-    var columns = [
+    const columns = [
       {
         key: 'name',
         title: this.$t('label.name'),
@@ -277,7 +277,7 @@ export default {
       page: 1,
       pageStartAfterMap: { 1: '' },
       total: 0,
-      columns: columns,
+      columns,
       selectedRows: [],
       searchPrefix: '',
       showUploadModal: false,
@@ -319,14 +319,14 @@ export default {
     getRoutes () {
       let path = ''
       const routeList = [{
-        path: path,
+        path,
         breadcrumbName: 'root'
       }]
       for (const route of this.browserPath.split('/')) {
         if (route) {
           path = `${path}${route}/`
           routeList.push({
-            path: path,
+            path,
             breadcrumbName: route
           })
         }
@@ -358,7 +358,7 @@ export default {
       }
       this.fetching = true
       this.records = []
-      var stream = this.client.extensions.listObjectsV2WithMetadata(this.resource.name, this.browserPath + this.searchPrefix, false, this.pageStartAfterMap[this.page])
+      const stream = this.client.extensions.listObjectsV2WithMetadata(this.resource.name, this.browserPath + this.searchPrefix, false, this.pageStartAfterMap[this.page])
       stream.on('data', obj => {
         this.records.push(obj)
         if (this.records.length >= 1000) {
@@ -366,7 +366,7 @@ export default {
         }
       })
       stream.on('end', obj => {
-        var total = 0
+        let total = 0
         if (this.records.length > 0) {
           if (this.records.length >= 1000) {
             total = (this.page + 1) * 1000
@@ -416,7 +416,7 @@ export default {
     },
     removeDirectories (directoriesToDelete) {
       for (const directory of directoriesToDelete) {
-        var objectsList = []
+        const objectsList = []
         const stream = this.client.listObjectsV2(this.resource.name, directory, true, '')
         stream.on('data', (obj) => {
           objectsList.push(obj.name)
@@ -472,7 +472,7 @@ export default {
       if (this.uploadDirectory.length !== 0 && !this.uploadDirectory.endsWith('/')) {
         this.uploadDirectory = this.uploadDirectory + '/'
       }
-      var promises = []
+      const promises = []
       while (this.uploadFileList.length > 0) {
         const file = this.uploadFileList.pop()
         const objectName = this.uploadDirectory + file.name

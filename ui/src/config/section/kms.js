@@ -73,7 +73,7 @@ export default {
         }
       ],
       searchFilters: () => {
-        var filters = ['zoneid', 'hsmprofileid']
+        const filters = ['zoneid', 'hsmprofileid']
         if (store.getters.userInfo.roletype === 'Admin') {
           filters.push('domainid', 'account', 'projectid')
         }
@@ -139,7 +139,7 @@ export default {
             return ['Admin'].includes(store.userInfo.roletype)
           },
           args: (record, store) => {
-            var fields = ['domainid', 'account', 'kmskeyid', 'volumeids']
+            let fields = ['domainid', 'account', 'kmskeyid', 'volumeids']
             if (!['Admin'].includes(store.userInfo.roletype)) {
               fields = ['kmskeyid', 'volumeids']
             }
@@ -212,7 +212,7 @@ export default {
         }
       ],
       searchFilters: () => {
-        var filters = ['zoneid']
+        const filters = ['zoneid']
         if (store.getters.userInfo.roletype === 'Admin') {
           filters.push('domainid', 'account', 'projectid')
         }

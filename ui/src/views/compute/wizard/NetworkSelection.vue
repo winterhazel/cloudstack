@@ -285,15 +285,15 @@ export default {
       handler () {
         if (this.items && this.items.length > 0 &&
           this.networksBeforeCreate) {
-          var user = this.$store.getters.userInfo
-          for (var network of this.items) {
+          const user = this.$store.getters.userInfo
+          for (const network of this.items) {
             if (user.account !== network.account ||
               user.domainid !== network.domainid ||
               (new Date()).getTime() - Date.parse(network.created) > 30000) {
               continue
             }
-            var networkFoundInNewList = false
-            for (var oldNetwork of this.networksBeforeCreate) {
+            let networkFoundInNewList = false
+            for (const oldNetwork of this.networksBeforeCreate) {
               if (oldNetwork.id === network.id) {
                 networkFoundInNewList = true
                 break
@@ -313,7 +313,7 @@ export default {
   created () {
     this.vpcs = []
     const projectId = store?.getters?.project?.id || null
-    var params = {}
+    const params = {}
     if (projectId) {
       params.projectid = projectId
     }

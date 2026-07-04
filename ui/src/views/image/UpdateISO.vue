@@ -205,8 +205,8 @@ export default {
       })
       const resourceFields = ['name', 'displaytext', 'passwordenabled', 'isdynamicallyscalable', 'ostypeid', 'forceupdateostype', 'userdataid', 'userdatapolicy']
 
-      for (var field of resourceFields) {
-        var fieldValue = this.resource[field]
+      for (const field of resourceFields) {
+        const fieldValue = this.resource[field]
         if (fieldValue) {
           switch (field) {
             case 'userdataid':

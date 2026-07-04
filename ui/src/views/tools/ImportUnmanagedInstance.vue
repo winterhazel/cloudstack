@@ -674,7 +674,7 @@ export default {
       return this.hypervisor && this.hypervisor === 'kvm' && (this.importsource === 'unmanaged' || this.importsource === 'external')
     },
     domainSelectOptions () {
-      var domains = this.options.domains.map((domain) => {
+      const domains = this.options.domains.map((domain) => {
         return {
           label: domain.path || domain.name,
           value: domain.id,
@@ -688,7 +688,7 @@ export default {
       return domains
     },
     projectSelectOptions () {
-      var projects = this.options.projects.map((project) => {
+      const projects = this.options.projects.map((project) => {
         return {
           label: project.name,
           value: project.id,
@@ -702,7 +702,7 @@ export default {
       return projects
     },
     networkSelectOptions () {
-      var networks = this.options.networks.map((network) => {
+      const networks = this.options.networks.map((network) => {
         return {
           label: network.name + ' (' + network.displaytext + ')',
           value: network.id
@@ -726,11 +726,11 @@ export default {
       })
     },
     dataDisks () {
-      var disks = []
+      const disks = []
       if (this.resource.disk && this.resource.disk.length > 1) {
-        for (var index = 0; index < this.resource.disk.length; ++index) {
+        for (let index = 0; index < this.resource.disk.length; ++index) {
           if (index !== this.selectedRootDiskIndex) {
-            var disk = { ...this.resource.disk[index] }
+            const disk = { ...this.resource.disk[index] }
             disk.size = disk.capacity / (1024 * 1024 * 1024)
             disk.name = disk.label
             disk.meta = this.getMeta(disk, { controller: 'controller', datastorename: 'datastore', position: 'position' })
@@ -741,10 +741,10 @@ export default {
       return disks
     },
     nics () {
-      var nics = []
+      const nics = []
       if (this.resource.nic && this.resource.nic.length > 0) {
-        for (var nicEntry of this.resource.nic) {
-          var nic = { ...nicEntry }
+        for (const nicEntry of this.resource.nic) {
+          const nic = { ...nicEntry }
           nic.name = nic.name || nic.id
           nic.displaytext = nic.name
           if (this.isExternalImport && nic.vlanid === -1) {
@@ -833,8 +833,8 @@ export default {
       })
     },
     getMeta (obj, metaKeys) {
-      var meta = []
-      for (var key in metaKeys) {
+      const meta = []
+      for (const key in metaKeys) {
         if (key in obj) {
           meta.push({ key: metaKeys[key], value: obj[key] })
         }
@@ -931,7 +931,7 @@ export default {
           return
         }
         this.computeOfferings = response.listserviceofferingsresponse.serviceoffering
-        this.computeOfferings.map(i => { this.offeringsMap[i.id] = i })
+        this.computeOfferings.forEach(i => { this.offeringsMap[i.id] = i })
       }).finally(() => {
         this.computeOfferingLoading = false
         this.selectMatchingComputeOffering()
@@ -981,14 +981,14 @@ export default {
       })
     },
     selectMatchingComputeOffering () {
-      var offerings = [...this.computeOfferings]
+      const offerings = [...this.computeOfferings]
       offerings.sort(function (a, b) {
         return a.cpunumber - b.cpunumber
       })
-      for (var offering of offerings) {
-        var cpuNumberMatches = false
-        var cpuSpeedMatches = false
-        var memoryMatches = false
+      for (const offering of offerings) {
+        let cpuNumberMatches = false
+        let cpuSpeedMatches = false
+        let memoryMatches = false
         if (!offering.iscustomized) {
           cpuNumberMatches = offering.cpunumber === this.resource.cpunumber
           cpuSpeedMatches = !this.resource.cpuspeed || offering.cpuspeed === this.resource.cpuspeed
@@ -1022,7 +1022,7 @@ export default {
         this.kvmHostsForConversion = this.kvmHostsForConversion.filter(host => ['Enabled', 'Disabled'].includes(host.resourcestate))
         // Check if any host has VDDK support
         let hasVddkSupport = false
-        this.kvmHostsForConversion.map(host => {
+        this.kvmHostsForConversion.forEach(host => {
           host.name = host.name + ' [Pod=' + host.podname + '] [Cluster=' + host.clustername + ']'
           if (host.instanceconversionsupported !== null && host.instanceconversionsupported !== undefined && host.instanceconversionsupported) {
             host.name = host.name + ' (' + this.$t('label.supported') + ')'
@@ -1142,10 +1142,12 @@ export default {
       }
     },
     resetStorageOptionsForConversion () {
-      this.storageOptionsForConversion = this.switches.forceConvertToPool ? [] : [{
-        id: 'secondary',
-        name: 'Secondary Storage'
-      }]
+      this.storageOptionsForConversion = this.switches.forceConvertToPool
+        ? []
+        : [{
+            id: 'secondary',
+            name: 'Secondary Storage'
+          }]
       this.storageOptionsForConversion.push({
         id: 'primary',
         name: 'Primary Storage'
@@ -1188,7 +1190,7 @@ export default {
       this.resetStorageOptionsForConversion()
     },
     updateSelectedRootDisk () {
-      var rootDisk = this.resource.disk[this.selectedRootDiskIndex]
+      const rootDisk = this.resource.disk[this.selectedRootDiskIndex]
       rootDisk.size = rootDisk.capacity / (1024 * 1024 * 1024)
       rootDisk.name = `${rootDisk.label} (${rootDisk.size} GB)`
       rootDisk.meta = this.getMeta(rootDisk, { controller: 'controller', datastorename: 'datastore', position: 'position' })
@@ -1215,7 +1217,7 @@ export default {
           diskpath: this.diskpath,
           temppath: this.tmppath
         }
-        var importapi = 'importUnmanagedInstance'
+        let importapi = 'importUnmanagedInstance'
         if (this.isExternalImport || this.isDiskImport || this.selectedVmwareVcenter) {
           importapi = 'importVm'
           if (this.isDiskImport) {
@@ -1239,8 +1241,8 @@ export default {
         }
         params.serviceofferingid = values.computeofferingid
         if (this.computeOffering.iscustomized) {
-          var details = [this.cpuNumberKey, this.cpuSpeedKey, this.memoryKey]
-          for (var detail of details) {
+          const details = [this.cpuNumberKey, this.cpuSpeedKey, this.memoryKey]
+          for (const detail of details) {
             if (!(values[detail] || this.computeOffering[detail])) {
               this.$notification.error({
                 message: this.$t('message.request.failed'),
@@ -1254,8 +1256,8 @@ export default {
           }
         }
         if (this.computeOffering.iscustomizediops) {
-          var iopsDetails = [this.minIopsKey, this.maxIopsKey]
-          for (var iopsDetail of iopsDetails) {
+          const iopsDetails = [this.minIopsKey, this.maxIopsKey]
+          for (const iopsDetail of iopsDetails) {
             if (!values[iopsDetail] || values[iopsDetail] < 0) {
               this.$notification.error({
                 message: this.$t('message.request.failed'),
@@ -1273,7 +1275,7 @@ export default {
           }
         }
         if (this.isDiskImport) {
-          var storageType = this.computeOffering.storagetype
+          const storageType = this.computeOffering.storagetype
           if (this.importsource !== storageType) {
             this.$notification.error({
               message: this.$t('message.request.failed'),
@@ -1317,17 +1319,17 @@ export default {
             params.forceconverttopool = values.forceconverttopool
           }
         }
-        var keys = ['hostname', 'domainid', 'projectid', 'account', 'migrateallowed', 'forced', 'osid']
+        const keys = ['hostname', 'domainid', 'projectid', 'account', 'migrateallowed', 'forced', 'osid']
         if (this.templateType !== 'auto') {
           keys.push('templateid')
         }
-        for (var key of keys) {
+        for (const key of keys) {
           if (values[key]) {
             params[key] = values[key]
           }
         }
-        var diskOfferingIndex = 0
-        for (var diskId in this.dataDisksOfferingsMapping) {
+        let diskOfferingIndex = 0
+        for (const diskId in this.dataDisksOfferingsMapping) {
           if (!this.dataDisksOfferingsMapping[diskId]) {
             this.$notification.error({
               message: this.$t('message.request.failed'),
@@ -1339,10 +1341,10 @@ export default {
           params['datadiskofferinglist[' + diskOfferingIndex + '].diskOffering'] = this.dataDisksOfferingsMapping[diskId]
           diskOfferingIndex++
         }
-        var nicNetworkIndex = 0
-        var nicIpIndex = 0
-        var networkcheck = new Set()
-        for (var nicId in this.nicsNetworksMapping) {
+        let nicNetworkIndex = 0
+        let nicIpIndex = 0
+        const networkcheck = new Set()
+        for (const nicId in this.nicsNetworksMapping) {
           if (!this.nicsNetworksMapping[nicId].network) {
             this.$notification.error({
               message: this.$t('message.request.failed'),
@@ -1352,7 +1354,7 @@ export default {
           }
           params['nicnetworklist[' + nicNetworkIndex + '].nic'] = nicId
           params['nicnetworklist[' + nicNetworkIndex + '].network'] = this.nicsNetworksMapping[nicId].network
-          var netId = this.nicsNetworksMapping[nicId].network
+          const netId = this.nicsNetworksMapping[nicId].network
           if (!networkcheck.has(netId)) {
             networkcheck.add(netId)
           } else {
@@ -1380,7 +1382,7 @@ export default {
         const name = params.name
         return new Promise((resolve, reject) => {
           postAPI(importapi, params).then(response => {
-            var jobId
+            let jobId
             if (this.isDiskImport || this.isExternalImport || this.selectedVmwareVcenter) {
               jobId = response.importvmresponse.jobid
             } else {
@@ -1424,8 +1426,8 @@ export default {
       this.$emit('loading-changed', value)
     },
     resetForm () {
-      var fields = ['displayname', 'hostname', 'domainid', 'account', 'projectid', 'computeofferingid']
-      for (var field of fields) {
+      const fields = ['displayname', 'hostname', 'domainid', 'account', 'projectid', 'computeofferingid']
+      for (const field of fields) {
         this.updateFieldValue(field, undefined)
       }
       this.templateType = this.defaultTemplateType()

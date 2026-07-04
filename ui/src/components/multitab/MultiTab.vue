@@ -122,10 +122,10 @@ export default {
         case 'close-all':
           this.closeAll(vkey)
           break
-        default:
         case 'close-that':
           this.closeThat(vkey)
           break
+        default:
       }
     },
     renderTabPaneMenu (e) {

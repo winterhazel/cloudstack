@@ -159,7 +159,7 @@ export default {
     },
     fetchParentSubnets (zoneId) {
       this.loading = true
-      var params = {
+      const params = {
         zoneid: zoneId,
         listall: true
       }

@@ -142,7 +142,7 @@ export default {
       if (!params) {
         return
       }
-      for (var param of params) {
+      for (const param of params) {
         if (!param.options || param.options.length === 0) {
           continue
         }

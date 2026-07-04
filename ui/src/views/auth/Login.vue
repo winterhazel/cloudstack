@@ -475,7 +475,7 @@ export default {
             })
         } else if (this.customActiveKey === 'saml') {
           this.state.loginBtn = false
-          var samlUrl = this.$config.apiBase + '?command=samlSso'
+          let samlUrl = this.$config.apiBase + '?command=samlSso'
           if (values.idp) {
             samlUrl += ('&idpid=' + values.idp)
           }

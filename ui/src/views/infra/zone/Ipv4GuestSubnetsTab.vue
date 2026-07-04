@@ -409,7 +409,7 @@ export default {
         return
       }
 
-      var params = {
+      const params = {
         id: this.selectedIpv4GuestSubnet.id,
         zoneid: this.selectedIpv4GuestSubnet.zoneid,
         domainid: this.addAccountForIpv4GuestSubnet.domain
@@ -532,7 +532,7 @@ export default {
         this.componentLoading = true
         this.addIpv4SubnetModal = false
         this.showAccountForIpv4GuestSubnetFields = false
-        var params = {
+        const params = {
           zoneId: this.resource.id,
           subnet: values.subnet,
           domainid: values.domain,
@@ -580,7 +580,7 @@ export default {
 
         this.componentLoading = true
         this.updateIpv4SubnetModal = false
-        var params = {
+        const params = {
           id: this.selectedIpv4GuestSubnet.id,
           subnet: values.subnet
         }

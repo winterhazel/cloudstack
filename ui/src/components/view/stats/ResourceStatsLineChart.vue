@@ -100,8 +100,8 @@ export default {
     },
     calculateMaxYAxisAndStepSize (chartLines, initialMaxYAxis, incrementValue) {
       const numberOfLabelsOnYaxis = 4
-      var highestValue = 0
-      var maxYAxis = initialMaxYAxis
+      let highestValue = 0
+      let maxYAxis = initialMaxYAxis
       for (const line of chartLines) {
         for (const d of line.data) {
           const currentValue = parseFloat(d.stat)
@@ -132,7 +132,7 @@ export default {
       const endDate = new Date(dateTimes[dateTimes.length - 1])
       const differentDay = startDate.getDate() !== endDate.getDate()
       const differentYear = startDate.getFullYear() !== endDate.getFullYear()
-      var displayFormat = 'HH:mm'
+      let displayFormat = 'HH:mm'
       if (xAxisStepSize < 5 * 60) {
         displayFormat += ':ss'
       }
@@ -145,7 +145,7 @@ export default {
       if (differentYear) {
         displayFormat = 'YYYY-' + displayFormat
       }
-      var chartOptions = {
+      const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
@@ -186,7 +186,7 @@ export default {
     averageDifferenceBetweenTimes (timeList) {
       const oneSecond = 1000 // 1 second represented as milliseconds
       const differences = []
-      var previous = timeList.splice(0, 1)[0]
+      let previous = timeList.splice(0, 1)[0]
       for (const time of timeList) {
         differences.push((time - previous) / oneSecond) // push the difference in seconds
         previous = time

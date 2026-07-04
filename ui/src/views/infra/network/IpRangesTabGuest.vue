@@ -304,7 +304,7 @@ export default {
 
         this.componentLoading = true
         this.addIpv6PrefixModal = false
-        var params = {
+        const params = {
           zoneid: this.resource.zoneid,
           prefix: values.prefix
         }

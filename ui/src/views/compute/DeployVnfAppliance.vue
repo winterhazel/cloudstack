@@ -1380,7 +1380,7 @@ export default {
         })
         this.template = null
         for (const key in this.options.templates) {
-          var template = _.find(_.get(this.options.templates[key], 'template', []), (option) => option.id === vnfAppConfig.templateid)
+          const template = _.find(_.get(this.options.templates[key], 'template', []), (option) => option.id === vnfAppConfig.templateid)
           if (template) {
             this.template = template
             break
@@ -1389,7 +1389,7 @@ export default {
 
         this.iso = null
         for (const key in this.options.isos) {
-          var iso = _.find(_.get(this.options.isos[key], 'iso', []), (option) => option.id === vnfAppConfig.isoid)
+          const iso = _.find(_.get(this.options.isos[key], 'iso', []), (option) => option.id === vnfAppConfig.isoid)
           if (iso) {
             this.iso = iso
             break
@@ -1397,19 +1397,19 @@ export default {
         }
 
         if (vnfAppConfig.hypervisor) {
-          var hypervisorItem = _.find(this.options.hypervisors, (option) => option.name === vnfAppConfig.hypervisor)
+          const hypervisorItem = _.find(this.options.hypervisors, (option) => option.name === vnfAppConfig.hypervisor)
           this.hypervisor = hypervisorItem ? hypervisorItem.name : null
         }
 
         this.serviceOffering = _.find(this.options.serviceOfferings, (option) => option.id === vnfAppConfig.computeofferingid)
         if (this.serviceOffering?.diskofferingid) {
-          if (iso) {
+          if (this.iso) {
             this.diskOffering = _.find(this.options.diskOfferings, (option) => option.id === this.serviceOffering.diskofferingid)
           } else {
             vnfAppConfig.overridediskofferingid = this.serviceOffering.diskofferingid
           }
         }
-        if (!iso && this.diskSelected) {
+        if (!this.iso && this.diskSelected) {
           this.diskOffering = _.find(this.options.diskOfferings, (option) => option.id === vnfAppConfig.diskofferingid)
         }
         if (this.rootDiskSelected?.id) {
@@ -1421,7 +1421,7 @@ export default {
           this.overrideDiskOffering = null
         }
 
-        if (!iso && this.diskSelected) {
+        if (!this.iso && this.diskSelected) {
           this.diskOffering = _.find(this.options.diskOfferings, (option) => option.id === vnfAppConfig.diskofferingid)
         }
         if (this.rootDiskSelected?.id) {
@@ -1599,10 +1599,10 @@ export default {
                     if (!property.qualifiers) {
                       return Promise.resolve()
                     }
-                    var minlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').min
-                    var maxlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').max
-                    var errorMessage = ''
-                    var isPasswordInvalidLength = function () {
+                    const minlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').min
+                    const maxlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').max
+                    let errorMessage = ''
+                    let isPasswordInvalidLength = function () {
                       return false
                     }
                     if (minlength) {
@@ -1671,22 +1671,22 @@ export default {
       ]
     },
     getPropertyQualifiers (qualifiers, type) {
-      var result = ''
+      let result = ''
       switch (type) {
         case 'select':
           result = []
           if (qualifiers && qualifiers.includes('ValueMap')) {
             result = qualifiers.replace('ValueMap', '').substr(1).slice(0, -1).split(',')
-            for (var i = 0; i < result.length; i++) {
+            for (let i = 0; i < result.length; i++) {
               result[i] = result[i].replace(/"/g, '')
             }
           }
           break
-        case 'number-select':
-          var min = 0
-          var max = Number.MAX_SAFE_INTEGER
+        case 'number-select': {
+          let min = 0
+          let max = Number.MAX_SAFE_INTEGER
           if (qualifiers) {
-            var match = qualifiers.match(/MinLen\((\d+)\)/)
+            let match = qualifiers.match(/MinLen\((\d+)\)/)
             if (match) {
               min = parseInt(match[1])
             }
@@ -1695,8 +1695,9 @@ export default {
               max = parseInt(match[1])
             }
           }
-          result = { min: min, max: max }
+          result = { min, max }
           break
+        }
         default:
       }
       return result
@@ -1880,7 +1881,7 @@ export default {
         if (template) {
           this.resetTemplateAssociatedResources()
           this.updateTemplateParameters()
-          var size = template.size / (1024 * 1024 * 1024) || 0 // bytes to GB
+          const size = template.size / (1024 * 1024 * 1024) || 0 // bytes to GB
           this.dataPreFill.minrootdisksize = Math.ceil(size)
           this.updateTemplateLinkedUserData(template.userdataid)
           this.userdataDefaultOverridePolicy = template.userdatapolicy
@@ -1955,14 +1956,15 @@ export default {
       }
       this.form.userdataid = id
       this.userDataParams = []
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json.listuserdataresponse?.userdata || []
         if (resp.length > 0) {
-          var params = resp[0]?.params || null
+          const params = resp[0]?.params || null
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           dataParams.forEach(function (val, index) {
             that.userDataParams.push({
               id: index,
@@ -1978,14 +1980,15 @@ export default {
       }
       this.templateUserDataParams = []
 
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json?.listuserdataresponse?.userdata || []
         if (resp) {
-          var params = resp[0]?.params || null
+          const params = resp[0]?.params || null
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           that.templateUserDataParams = []
           if (dataParams) {
             dataParams.forEach(function (val, index) {
@@ -2108,7 +2111,7 @@ export default {
             })
             return
           }
-          for (var templateVnfNic of this.templateVnfNics) {
+          for (const templateVnfNic of this.templateVnfNics) {
             if (templateVnfNic.required && !keys.includes(String(templateVnfNic.deviceid))) {
               this.$notification.error({
                 message: this.$t('message.request.failed'),
@@ -2136,7 +2139,7 @@ export default {
               nextDeviceId = templateVnfNic.deviceid + 1
             }
           }
-          for (var networkid of values.networkids) {
+          for (const networkid of values.networkids) {
             if (!usedNetworkIds.includes(networkid)) {
               this.$notification.error({
                 message: this.$t('message.request.failed'),
@@ -2254,8 +2257,8 @@ export default {
         // step 6: select network
         if (this.zone.networktype !== 'Basic') {
           if (this.nicToNetworkSelection && this.nicToNetworkSelection.length > 0) {
-            for (var j in this.nicToNetworkSelection) {
-              var nicNetwork = this.nicToNetworkSelection[j]
+            for (const j in this.nicToNetworkSelection) {
+              const nicNetwork = this.nicToNetworkSelection[j]
               createVnfAppData['nicnetworklist[' + j + '].nic'] = nicNetwork.nic
               createVnfAppData['nicnetworklist[' + j + '].network'] = nicNetwork.network
             }
@@ -2327,7 +2330,7 @@ export default {
         // step 8: enter setup
         if ('properties' in values) {
           const keys = Object.keys(values.properties)
-          for (var i = 0; i < keys.length; ++i) {
+          for (let i = 0; i < keys.length; ++i) {
             const propKey = keys[i].split('\\002E').join('.')
             createVnfAppData['properties[' + i + '].key'] = propKey
             createVnfAppData['properties[' + i + '].value'] = values.properties[keys[i]]
@@ -2343,7 +2346,7 @@ export default {
         createVnfAppData = Object.fromEntries(
           Object.entries(createVnfAppData).filter(([key, value]) => value !== undefined))
 
-        var idx = 0
+        let idx = 0
         if (this.templateUserDataValues) {
           for (const [key, value] of Object.entries(this.templateUserDataValues)) {
             createVnfAppData['userdatadetails[' + idx + '].' + `${key}`] = value
@@ -2457,7 +2460,7 @@ export default {
         getAPI(param.list, args).then(json => {
           const zoneResponse = json.listzonesresponse.zone || []
           if (listZoneAllow && listZoneAllow.length > 0) {
-            zoneResponse.map(zone => {
+            zoneResponse.forEach(zone => {
               if (listZoneAllow.includes(zone.id)) {
                 this.zones.push(zone)
               }
@@ -2708,23 +2711,23 @@ export default {
       this.userDataParams = []
     },
     fetchTemplateNics (template) {
-      var nics = []
+      const nics = []
       this.nicToNetworkSelection = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('network-'))
-        for (var key of keys) {
-          var propertyMap = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const propertyMap = JSON.parse(template.deployasisdetails[key])
           nics.push(propertyMap)
         }
         nics.sort(function (a, b) {
           return a.InstanceID - b.InstanceID
         })
         if (this.options.networks && this.options.networks.length > 0) {
-          for (var i = 0; i < nics.length; ++i) {
-            var nic = nics[i]
+          for (let i = 0; i < nics.length; ++i) {
+            const nic = nics[i]
             nic.id = nic.InstanceID
-            var network = this.options.networks[Math.min(i, this.options.networks.length - 1)]
+            const network = this.options.networks[Math.min(i, this.options.networks.length - 1)]
             nic.selectednetworkid = network.id
             nic.selectednetworkname = network.name
             nic.selectednetworktype = network.type
@@ -2747,12 +2750,12 @@ export default {
       return result
     },
     fetchTemplateProperties (template) {
-      var properties = []
+      const properties = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('property-'))
-        for (var key of keys) {
-          var propertyMap = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const propertyMap = JSON.parse(template.deployasisdetails[key])
           properties.push(propertyMap)
         }
         properties.sort(function (a, b) {
@@ -2765,19 +2768,19 @@ export default {
       return template?.vnfnics || []
     },
     fetchTemplateConfigurations (template) {
-      var configurations = []
+      const configurations = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('configuration-'))
-        for (var key of keys) {
-          var configuration = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const configuration = JSON.parse(template.deployasisdetails[key])
           configuration.name = configuration.label
           configuration.displaytext = configuration.label
           configuration.iscustomized = true
           configuration.cpunumber = 0
           configuration.cpuspeed = 0
           configuration.memory = 0
-          for (var hardwareItem of configuration.hardwareItems) {
+          for (const hardwareItem of configuration.hardwareItems) {
             if (hardwareItem.resourceType === 'Processor') {
               configuration.cpunumber = hardwareItem.virtualQuantity
               configuration.cpuspeed = hardwareItem.reservation
@@ -2794,13 +2797,13 @@ export default {
       return configurations
     },
     fetchTemplateLicenses (template) {
-      var licenses = []
+      const licenses = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         const prefix = /eula-\d-/
         keys = keys.filter(key => key.startsWith('eula-')).sort()
-        for (var key of keys) {
-          var license = {
+        for (const key of keys) {
+          const license = {
             id: this.escapePropertyKey(key.replace(' ', '-')),
             name: key.replace(prefix, ''),
             text: template.deployasisdetails[key]
@@ -2866,7 +2869,7 @@ export default {
     },
     updateTemplateConfigurationOfferingDetails (offeringId) {
       this.rootDiskSizeFixed = 0
-      var offering = this.serviceOffering
+      let offering = this.serviceOffering
       if (!offering || offering.id !== offeringId) {
         offering = _.find(this.options.serviceOfferings, (option) => option.id === offeringId)
       }
@@ -2909,9 +2912,9 @@ export default {
       this.nicToNetworkSelection = nicToNetworkSelection
     },
     getSelectedNetworksWithExistingConfig (networks) {
-      for (var i in this.networks) {
-        var n = this.networks[i]
-        for (var c of this.networkConfig) {
+      for (const i in this.networks) {
+        let n = this.networks[i]
+        for (const c of this.networkConfig) {
           if (n.id === c.key) {
             n = { ...n, ...c }
             networks[i] = n

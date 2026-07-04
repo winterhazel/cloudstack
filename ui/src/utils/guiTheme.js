@@ -27,11 +27,11 @@ export async function applyCustomGuiTheme (accountid, domainid) {
   let guiTheme
 
   if (accountid != null) {
-    guiTheme = await fetchGuiTheme({ accountid: accountid })
+    guiTheme = await fetchGuiTheme({ accountid })
   }
 
   if (guiTheme === undefined && domainid != null) {
-    guiTheme = await fetchGuiTheme({ domainid: domainid })
+    guiTheme = await fetchGuiTheme({ domainid })
   }
 
   if (guiTheme === undefined) {

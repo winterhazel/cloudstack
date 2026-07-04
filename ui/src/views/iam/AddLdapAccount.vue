@@ -461,7 +461,7 @@ export default {
     },
     authorizeUsersForSamlSSO (users, entityId) {
       const promises = []
-      for (var i = 0; i < users.length; i++) {
+      for (let i = 0; i < users.length; i++) {
         const params = {}
         params.enable = true
         params.userid = users[i].id

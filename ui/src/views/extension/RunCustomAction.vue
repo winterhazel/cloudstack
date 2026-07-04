@@ -243,10 +243,10 @@ export default {
           resourceid: this.resource.id,
           customactionid: values.customactionid
         }
-        var keys = Object.keys(values)
+        let keys = Object.keys(values)
         keys = keys.filter(k => k !== 'customactionid')
         for (const key of keys) {
-          var value = values[key]
+          let value = values[key]
           if (value !== undefined && value != null &&
               (typeof value !== 'string' || (typeof value === 'string' && value.trim().length > 0))) {
             const fieldDef = this.currentParameters.find(f => f.name === key)

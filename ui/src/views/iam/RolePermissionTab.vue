@@ -153,7 +153,7 @@ export default {
   created () {
     this.apis = Object.keys(this.$store.getters.apis)
       .sort((a, b) => a.localeCompare(b))
-      .map(value => { return { value: value } })
+      .map(value => { return { value } })
     this.fetchData()
   },
   watch: {
@@ -195,8 +195,8 @@ export default {
     updateApis () {
       this.apis = Object.keys(this.$store.getters.apis)
         .sort((a, b) => a.localeCompare(b))
-      var apisSupported = this.rules?.map(rule => rule.rule) || []
-      this.apis = this.apis.filter(api => !apisSupported.includes(api.value)).map(value => { return { value: value } })
+      const apisSupported = this.rules?.map(rule => rule.rule) || []
+      this.apis = this.apis.filter(api => !apisSupported.includes(api.value)).map(value => { return { value } })
     },
     changeOrder () {
       this.updateTable = true

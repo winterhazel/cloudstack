@@ -480,7 +480,7 @@ export default {
       if ('importVsphereStoragePolicies' in this.$store.getters.apis) {
         this.storagePolicies = []
         getAPI('listVsphereStoragePolicies', {
-          zoneid: zoneid
+          zoneid
         }).then(response => {
           this.storagePolicies = response.listvspherestoragepoliciesresponse.StoragePolicy || []
         })

@@ -292,7 +292,7 @@ export default {
       this.copyTemplatesTouched = true
     },
     nfsURL (server, path) {
-      var url
+      let url
       if (path.substring(0, 1) !== '/') {
         path = '/' + path
       }
@@ -304,7 +304,7 @@ export default {
       return url
     },
     smbURL (server, path, smbUsername, smbPassword, smbDomain) {
-      var url = ''
+      let url = ''
       if (path.substring(0, 1) !== '/') {
         path = '/' + path
       }
@@ -321,11 +321,11 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           name: values.name
         }
-        var url = ''
-        var provider = values.provider
+        let url = ''
+        let provider = values.provider
         if (provider === 'NFS') {
           url = this.nfsURL(values.server, values.path)
         }

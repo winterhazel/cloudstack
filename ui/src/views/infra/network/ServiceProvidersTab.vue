@@ -1151,7 +1151,7 @@ export default {
     },
     fetchServiceProvider (name) {
       this.fetchLoading = true
-      getAPI('listNetworkServiceProviders', { physicalnetworkid: this.resource.id, name: name }).then(json => {
+      getAPI('listNetworkServiceProviders', { physicalnetworkid: this.resource.id, name }).then(json => {
         const sps = json.listnetworkserviceprovidersresponse.networkserviceprovider || []
         if (sps.length > 0) {
           for (const sp of sps) {

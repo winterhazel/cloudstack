@@ -186,7 +186,7 @@ export default {
     }
   },
   data () {
-    var columns = [
+    const columns = [
       {
         key: 'name',
         title: this.$t('label.name')
@@ -217,7 +217,7 @@ export default {
       page: parseInt(this.$route.query.browserPage) || 1,
       pageSize: parseInt(this.$route.query.browserPageSize) || 10,
       total: 0,
-      columns: columns,
+      columns,
       migrateModalLoading: false,
       showMigrateModal: false,
       templateIdsToMigrate: [],
@@ -291,14 +291,14 @@ export default {
     getRoutes () {
       let path = ''
       const routeList = [{
-        path: path,
+        path,
         breadcrumbName: 'root'
       }]
       for (const route of this.browserPath.split('/')) {
         if (route) {
           path = `${path}${route}/`
           routeList.push({
-            path: path,
+            path,
             breadcrumbName: route
           })
         }
@@ -327,11 +327,11 @@ export default {
       postAPI('downloadImageStoreObject', params).then(response => {
         const jobId = response.downloadimagestoreobjectresponse.jobid
         this.$pollJob({
-          jobId: jobId,
+          jobId,
           successMethod: (result) => {
             const url = result.jobresult.downloadimagestoreobjectresponse.url
             const name = result.jobresult.downloadimagestoreobjectresponse.name
-            var elem = window.document.createElement('a')
+            const elem = window.document.createElement('a')
             elem.setAttribute('href', new URL(url))
             elem.setAttribute('download', name)
             elem.setAttribute('target', '_blank')

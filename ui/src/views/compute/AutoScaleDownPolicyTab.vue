@@ -452,7 +452,7 @@ export default {
             const provider = services[index].provider[0].name
             getAPI('listCounters', {
               listAll: true,
-              provider: provider
+              provider
             }).then(response => {
               this.countersList = response.counterresponse?.counter || []
             })
@@ -548,7 +548,7 @@ export default {
           this.$pollJob({
             title: this.$t('label.action.delete.condition'),
             description: conditionId,
-            jobId: jobId,
+            jobId,
             successMethod: () => {
               return resolve()
             },

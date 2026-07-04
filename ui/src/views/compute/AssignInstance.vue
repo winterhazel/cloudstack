@@ -109,7 +109,7 @@ export default {
     fetchNetworks () {
       this.selectedNetwork = null
       this.loading = true
-      var params = {
+      const params = {
         domainId: this.selectedDomain,
         listAll: true,
         isrecursive: false,

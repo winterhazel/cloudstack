@@ -54,9 +54,9 @@ export default {
     }
   },
   data () {
-    var pairArray = []
-    for (var key in this.pairs) {
-      pairArray.push({ key: key, value: this.pairs[key] })
+    const pairArray = []
+    for (const key in this.pairs) {
+      pairArray.push({ key, value: this.pairs[key] })
     }
     return {
       dynamicValidateForm: reactive({

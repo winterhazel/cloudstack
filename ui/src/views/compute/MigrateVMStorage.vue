@@ -133,11 +133,11 @@ export default {
       }
     },
     submitForm () {
-      var isUserVm = true
+      let isUserVm = true
       if (this.$route.meta.resourceType !== 'UserVm') {
         isUserVm = false
       }
-      var migrateApi = isUserVm ? 'migrateVirtualMachine' : 'migrateSystemVm'
+      let migrateApi = isUserVm ? 'migrateVirtualMachine' : 'migrateSystemVm'
       if (isUserVm && this.migrateMode === 2) {
         migrateApi = 'migrateVirtualMachineWithVolume'
         this.migrateVm(migrateApi, null, this.volumeToPoolSelection)
@@ -146,11 +146,11 @@ export default {
       this.migrateVm(migrateApi, this.selectedPool.id, null)
     },
     migrateVm (migrateApi, storageId, volumeToPool) {
-      var params = {
+      const params = {
         virtualmachineid: this.resource.id
       }
       if (this.migrateMode === 2) {
-        for (var i = 0; i < volumeToPool.length; i++) {
+        for (let i = 0; i < volumeToPool.length; i++) {
           const mapping = volumeToPool[i]
           params['migrateto[' + i + '].volume'] = mapping.volume
           params['migrateto[' + i + '].pool'] = mapping.pool
@@ -163,7 +163,7 @@ export default {
         this.$pollJob({
           title: `${this.$t('label.migrating')} ${this.resource.name}`,
           description: this.resource.name,
-          jobId: jobId,
+          jobId,
           successMessage: `${this.$t('message.success.migrating')} ${this.resource.name}`,
           successMethod: () => {
             this.closeModal()

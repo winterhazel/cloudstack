@@ -105,7 +105,7 @@ export default {
       this.migrateResources(this.selectedStore.id)
     },
     migrateResources (destStoreId) {
-      var params = {
+      const params = {
         srcpool: this.sourceImageStore.id,
         destpool: destStoreId
       }
@@ -117,7 +117,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.migrating.data'),
           description: '',
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.success.migration'),
           successMethod: () => {
             this.closeModal()

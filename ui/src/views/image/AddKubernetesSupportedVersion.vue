@@ -276,7 +276,7 @@ export default {
       if (this.selectedZone.type === zone.type) {
         return
       }
-      var lastZoneType = this.selectedZone?.type || ''
+      const lastZoneType = this.selectedZone?.type || ''
       if (lastZoneType !== 'Edge') {
         this.nonEdgeDirectDownloadUserSelection = this.form.directdownload
       }

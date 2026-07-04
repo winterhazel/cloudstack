@@ -374,7 +374,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.action.delete.egress.firewall'),
           description: rule.id,
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.success.remove.egress.rule'),
           successMethod: () => {
             if (this.selectedItems.length > 0) {

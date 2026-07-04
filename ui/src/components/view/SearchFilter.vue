@@ -336,7 +336,7 @@ export default {
         if (!this.$isValidUuid(id)) {
           return resolve('')
         }
-        getAPI(apiName, { listAll: true, id: id }).then(json => {
+        getAPI(apiName, { listAll: true, id }).then(json => {
           const items = json && json[responseKey1] && json[responseKey1][responseKey2]
           if (Array.isArray(items) && items.length > 0 && items[0] && items[0][field] !== undefined) {
             resolve(items[0][field])

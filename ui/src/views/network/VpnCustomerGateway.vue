@@ -561,8 +561,8 @@ export default {
           esplifetime: values.esplifetime,
           dpd: values.dpd,
           forceencap: values.forceencap,
-          ikepolicy: ikepolicy,
-          esppolicy: esppolicy,
+          ikepolicy,
+          esppolicy,
           splitconnections: values.splitconnections,
           ikeversion: values.ikeversion
         }

@@ -178,7 +178,7 @@ export default {
     },
     fetchData () {
       this.componentLoading = true
-      var params = {
+      const params = {
         listAll: true
       }
       if (this.$route.fullPath.startsWith('/vpc')) {
@@ -199,7 +199,7 @@ export default {
       if (!this.newRoute) return
 
       this.componentLoading = true
-      var params = {
+      const params = {
         cidr: this.newRoute
       }
       if (this.$route.fullPath.startsWith('/vpc')) {

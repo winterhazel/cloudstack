@@ -595,7 +595,7 @@ export default {
   computed: {
     isPageAllowed () {
       if (this.$route.meta.permission) {
-        for (var apiName of this.$route.meta.permission) {
+        for (const apiName of this.$route.meta.permission) {
           if (!(apiName in this.$store.getters.apis)) {
             return false
           }
@@ -697,7 +697,7 @@ export default {
       }
     },
     viewLoading () {
-      for (var key in this.optionLoading) {
+      for (const key in this.optionLoading) {
         if (this.optionLoading[key]) {
           return true
         }
@@ -1013,10 +1013,10 @@ export default {
       this.loading = true
       const selectedPool = this.options.pools.filter(pool => pool.id === this.poolId)
       const storagetype = selectedPool[0].scope === 'HOST' ? 'local' : 'shared'
-      var params = {
+      const params = {
         zoneid: this.zoneId,
         storageid: this.poolId,
-        storagetype: storagetype,
+        storagetype,
         encrypt: false,
         listall: true
       }
@@ -1173,7 +1173,7 @@ export default {
         variableValue = this.values.selectedProject
       }
 
-      var params = {
+      const params = {
         diskofferingid: this.importForm.selectedDiskoffering,
         domainid: this.importForm.selectedDomain,
         [variableKey]: variableValue,
@@ -1214,16 +1214,16 @@ export default {
       const title = this.managedVolumesSelectedRowKeys.length > 1
         ? this.$t('message.action.unmanage.volumes')
         : this.$t('message.action.unmanage.volume')
-      var volumeNames = []
-      for (var index of this.managedVolumesSelectedRowKeys) {
+      const volumeNames = []
+      for (const index of this.managedVolumesSelectedRowKeys) {
         volumeNames.push(this.managedVolumes[index].name)
       }
       const content = volumeNames.join(', ')
       this.$confirm({
-        title: title,
+        title,
         okText: this.$t('label.ok'),
         okType: 'danger',
-        content: content,
+        content,
         cancelText: this.$t('label.cancel'),
         onOk () {
           self.unmanageVolumes()
@@ -1231,9 +1231,9 @@ export default {
       })
     },
     unmanageVolumes () {
-      for (var index of this.managedVolumesSelectedRowKeys) {
+      for (const index of this.managedVolumesSelectedRowKeys) {
         const vm = this.managedVolumes[index]
-        var params = { id: vm.id }
+        const params = { id: vm.id }
         postAPI('unmanageVolume', params).then(json => {
           const jobId = json.unmanagevolumeresponse.jobid
           this.$pollJob({

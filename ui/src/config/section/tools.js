@@ -105,7 +105,7 @@ export default {
       },
       details: ['name', 'id', 'description', 'scope', 'payloadurl', 'sslverification', 'secretkey', 'state', 'account', 'domainid'],
       searchFilters: () => {
-        var filters = ['state']
+        const filters = ['state']
         if (['Admin', 'DomainAdmin'].includes(store.getters.userInfo.roletype)) {
           filters.push('scope', 'domainid', 'account')
         }

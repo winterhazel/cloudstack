@@ -346,7 +346,7 @@ export default {
         this.form.vpcofferingid = ''
         return
       }
-      for (var zone of this.zones) {
+      for (const zone of this.zones) {
         if (zone.id === value) {
           this.setMTU = zone?.allowuserspecifyvrmtu || false
           this.publicMtuMax = zone?.routerpublicinterfacemaxmtu || 1500
@@ -415,7 +415,7 @@ export default {
         this.updateCidrRule()
         return
       }
-      for (var offering of this.vpcOfferings) {
+      for (const offering of this.vpcOfferings) {
         if (offering.id === value) {
           this.selectedVpcOffering = offering
           this.form.vpcofferingid = offering.id

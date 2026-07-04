@@ -564,7 +564,7 @@ export default {
         getAPI('listNetworkOfferings', {
           id: networkId
         }).then(json => {
-          var networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
+          const networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
           resolve(networkOffering)
         }).catch(e => {
           reject(e)
@@ -575,7 +575,7 @@ export default {
       getAPI('listNetworkOfferings', {
         id: offeringId
       }).then(json => {
-        var networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
+        const networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
         this.displayCollapsible[network.id] = this.showIlb(network, networkOffering)
       }).catch(e => {
         this.$notifyError(e)
@@ -600,10 +600,10 @@ export default {
         vpcid: this.resource.id,
         supportedservices: 'LB'
       }).then(async json => {
-        var lbNetworks = json.listnetworksresponse.network || []
+        const lbNetworks = json.listnetworksresponse.network || []
         if (lbNetworks.length > 0) {
           this.publicLBExists = false
-          for (var idx = 0; idx < lbNetworks.length; idx++) {
+          for (let idx = 0; idx < lbNetworks.length; idx++) {
             const lbNetworkOffering = await this.getNetworkOffering(lbNetworks[idx].networkofferingid)
             const index = lbNetworkOffering.service.map(svc => { return svc.name }).indexOf('Lb')
             if (index !== -1 &&
@@ -628,9 +628,9 @@ export default {
       }
       getAPI('listNetworkOfferings', params).then(json => {
         this.networkOfferings = json.listnetworkofferingsresponse.networkoffering || []
-        var filteredOfferings = []
+        const filteredOfferings = []
         const vpcLbServiceIndex = this.resource.service.map(svc => { return svc.name }).indexOf('Lb')
-        for (var index in this.networkOfferings) {
+        for (const index in this.networkOfferings) {
           const offering = this.networkOfferings[index]
           const idx = offering.service.map(svc => { return svc.name }).indexOf('Lb')
           if (this.publicLBExists && (idx === -1 || this.lbProviderMap.publicLb.vpc.indexOf(offering.service.map(svc => { return svc.provider[0].name })[idx]) === -1)) {
@@ -746,7 +746,7 @@ export default {
         const values = this.handleRemoveFields(formRaw)
 
         this.showCreateNetworkModal = false
-        var params = {
+        const params = {
           vpcid: this.resource.id,
           domainid: this.resource.domainid,
           account: this.resource.account,

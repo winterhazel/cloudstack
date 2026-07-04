@@ -524,7 +524,7 @@ export default {
         this.$pollJob({
           title: this.$t('label.action.release.ip'),
           description: ip.id,
-          jobId: jobId,
+          jobId,
           successMessage: this.$t('message.success.release.ip'),
           successMethod: () => {
             if (this.selectedItems.length > 0) {

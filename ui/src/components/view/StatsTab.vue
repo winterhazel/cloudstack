@@ -466,7 +466,7 @@ export default {
       this.loaded = false
       this.showResourceInfoModal = false
       this.formatPeriod()
-      var params = { id: this.resource.id }
+      const params = { id: this.resource.id }
       if (this.startDate) {
         params.startDate = moment(this.startDate).format()
       }
@@ -480,8 +480,8 @@ export default {
       })
     },
     formatPeriod () {
-      var formatedStartDate = null
-      var formatedEndDate = null
+      let formatedStartDate = null
+      let formatedEndDate = null
       if (this.startDate) {
         formatedStartDate = moment(this.startDate).format('MMM DD, YYYY') + ' at ' + moment(this.startDate).format('HH:mm:ss')
       }
@@ -535,7 +535,7 @@ export default {
       const diskIopsLine = { label: 'IOPS', backgroundColor: blueInRgba, borderColor: blue, data: [], pointRadius: chartPointRadius }
 
       for (const element of vm[0].stats) {
-        var ts = this.$toLocalDate(element.timestamp)
+        const ts = this.$toLocalDate(element.timestamp)
         const currentLabel = ts.split('T')[0] + ' ' + ts.split('T')[1].split('-')[0]
         this.chartLabels.push(currentLabel)
 

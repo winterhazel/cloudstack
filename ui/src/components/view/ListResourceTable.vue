@@ -173,13 +173,13 @@ export default {
         return
       }
       this.loading = true
-      var params = { ...this.params, ...this.options }
+      const params = { ...this.params, ...this.options }
       params.listall = true
       params.response = 'json'
       params.details = 'min'
       getAPI(this.apiName, params).then(json => {
-        var responseName
-        var objectName
+        let responseName
+        let objectName
         for (const key in json) {
           if (key.includes('response')) {
             responseName = key
@@ -203,7 +203,7 @@ export default {
       })
     },
     fetchColumns () {
-      var columns = []
+      const columns = []
       for (const col of this.columns) {
         columns.push({
           key: col,

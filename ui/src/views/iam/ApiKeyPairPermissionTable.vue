@@ -271,7 +271,7 @@ export default {
       }
     },
     getApis () {
-      this.apis = Object.keys(this.$store.getters.apis).sort((a, b) => a.localeCompare(b)).map(value => { return { value: value } })
+      this.apis = Object.keys(this.$store.getters.apis).sort((a, b) => a.localeCompare(b)).map(value => { return { value } })
     },
     onRuleDelete (rule, idx) {
       this.rules.splice(idx, 1)

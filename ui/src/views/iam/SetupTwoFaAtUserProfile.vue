@@ -205,18 +205,18 @@ export default {
       this.formRef.value.validate().then(() => {
         const values = toRaw(this.form)
         this.selectedProvider = values.selectedProvider
-        var provider
+        let provider
         if (this.selectedProvider === 'othertotp') {
           provider = 'totp'
         } else {
           provider = this.selectedProvider
         }
-        postAPI('setupUserTwoFactorAuthentication', { provider: provider }).then(response => {
+        postAPI('setupUserTwoFactorAuthentication', { provider }).then(response => {
           this.pin = response.setupusertwofactorauthenticationresponse.setup2fa.secretcode
           if (this.selectedProvider === 'totp' || this.selectedProvider === 'othertotp') {
             this.username = response.setupusertwofactorauthenticationresponse.setup2fa.username
 
-            var issuer = 'CloudStack'
+            let issuer = 'CloudStack'
             if (store.getters.twoFaIssuer !== '' && store.getters.twoFaIssuer !== undefined) {
               issuer = store.getters.twoFaIssuer
             }
@@ -251,8 +251,8 @@ export default {
     },
     list2FAProviders () {
       getAPI('listUserTwoFactorAuthenticatorProviders', {}).then(response => {
-        var providerlist = response.listusertwofactorauthenticatorprovidersresponse.providers || []
-        var providernames = []
+        const providerlist = response.listusertwofactorauthenticatorprovidersresponse.providers || []
+        const providernames = []
         for (const provider of providerlist) {
           providernames.push(provider.name)
           if (provider.name === 'totp') {

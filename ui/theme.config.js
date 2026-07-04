@@ -64,6 +64,9 @@ const options = {
   generateOnce: false
 }
 
-const createThemeColorReplacerPlugin = () => new AntDesignThemePlugin(options)
+const createThemeColorReplacerPlugin = () => {
+  const plugin = new AntDesignThemePlugin(options)
+  return plugin
+}
 
 module.exports = createThemeColorReplacerPlugin

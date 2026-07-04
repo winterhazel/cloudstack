@@ -179,7 +179,7 @@ export default {
       const params = {}
       params.id = this.resource.id
       params.isrecursive = true
-      var apiName = 'list' + this.offeringType + 's'
+      const apiName = 'list' + this.offeringType + 's'
       getAPI(apiName, params).then(json => {
         const offerings = json[apiName.toLowerCase() + 'response'][this.offeringType.toLowerCase()]
         this.formOffering = offerings[0]
@@ -217,13 +217,13 @@ export default {
     },
     updateDomainSelection () {
       if (!this.formOffering || Object.keys(this.formOffering).length === 0) return
-      var offeringDomainIds = this.formOffering.domainid
+      let offeringDomainIds = this.formOffering.domainid
       this.selectedDomains = []
       if (offeringDomainIds) {
         this.form.ispublic = false
         offeringDomainIds = offeringDomainIds.indexOf(',') !== -1 ? offeringDomainIds.split(',') : [offeringDomainIds]
-        for (var i = 0; i < offeringDomainIds.length; i++) {
-          for (var j = 0; j < this.domains.length; j++) {
+        for (let i = 0; i < offeringDomainIds.length; i++) {
+          for (let j = 0; j < this.domains.length; j++) {
             if (offeringDomainIds[i] === this.domains[j].id) {
               this.selectedDomains.push(j)
             }
@@ -240,12 +240,12 @@ export default {
     },
     updateZoneSelection () {
       if (!this.formOffering || Object.keys(this.formOffering).length === 0) return
-      var offeringZoneIds = this.formOffering.zoneid
+      let offeringZoneIds = this.formOffering.zoneid
       this.selectedZones = []
       if (offeringZoneIds) {
         offeringZoneIds = offeringZoneIds.indexOf(',') !== -1 ? offeringZoneIds.split(',') : [offeringZoneIds]
-        for (var i = 0; i < offeringZoneIds.length; i++) {
-          for (var j = 0; j < this.zones.length; j++) {
+        for (let i = 0; i < offeringZoneIds.length; i++) {
+          for (let j = 0; j < this.zones.length; j++) {
             if (offeringZoneIds[i] === this.zones[j].id) {
               this.selectedZones.push(j)
             }
@@ -263,26 +263,26 @@ export default {
 
         const params = {}
         params.id = this.resource.id
-        var ispublic = values.ispublic
+        const ispublic = values.ispublic
         if (ispublic === true) {
           params.domainid = 'public'
         } else {
-          var domainIndexes = values.domainid
-          var domainId = 'public'
+          const domainIndexes = values.domainid
+          let domainId = 'public'
           if (domainIndexes && domainIndexes.length > 0) {
-            var domainIds = []
-            for (var i = 0; i < domainIndexes.length; i++) {
+            let domainIds = []
+            for (let i = 0; i < domainIndexes.length; i++) {
               domainIds = domainIds.concat(this.domains[domainIndexes[i]].id)
             }
             domainId = domainIds.join(',')
           }
           params.domainid = domainId
         }
-        var zoneIndexes = values.zoneid
-        var zoneId = 'all'
+        const zoneIndexes = values.zoneid
+        let zoneId = 'all'
         if (zoneIndexes && zoneIndexes.length > 0) {
-          var zoneIds = []
-          for (var j = 0; j < zoneIndexes.length; j++) {
+          let zoneIds = []
+          for (let j = 0; j < zoneIndexes.length; j++) {
             zoneIds = zoneIds.concat(this.zones[zoneIndexes[j]].id)
           }
           zoneId = zoneIds.join(',')

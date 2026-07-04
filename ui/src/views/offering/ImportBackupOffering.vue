@@ -231,11 +231,11 @@ export default {
           }
         }
         if (values.ispublic !== true) {
-          var domainIndexes = values.domainid
-          var domainId = null
+          const domainIndexes = values.domainid
+          let domainId = null
           if (domainIndexes && domainIndexes.length > 0) {
-            var domainIds = []
-            for (var i = 0; i < domainIndexes.length; i++) {
+            let domainIds = []
+            for (let i = 0; i < domainIndexes.length; i++) {
               domainIds = domainIds.concat(this.domains.opts[domainIndexes[i]].id)
             }
             domainId = domainIds.join(',')

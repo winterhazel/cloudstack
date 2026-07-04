@@ -754,17 +754,17 @@ export default {
     },
     fetchIpv6NetworkOfferingConfiguration () {
       this.ipv6NetworkOfferingEnabled = false
-      var params = { name: 'ipv6.offering.enabled' }
+      const params = { name: 'ipv6.offering.enabled' }
       getAPI('listConfigurations', params).then(json => {
-        var value = json?.listconfigurationsresponse?.configuration?.[0].value || null
+        const value = json?.listconfigurationsresponse?.configuration?.[0].value || null
         this.ipv6NetworkOfferingEnabled = value === 'true'
       })
     },
     fetchRoutedNetworkConfiguration () {
       this.routedNetworkEnabled = false
-      var params = { name: 'routed.network.vpc.enabled' }
+      const params = { name: 'routed.network.vpc.enabled' }
       getAPI('listConfigurations', params).then(json => {
-        var value = json?.listconfigurationsresponse?.configuration?.[0].value || null
+        const value = json?.listconfigurationsresponse?.configuration?.[0].value || null
         this.routedNetworkEnabled = value === 'true'
         if (!this.routedNetworkEnabled) {
           this.networkmodes.pop()
@@ -812,10 +812,10 @@ export default {
       this.supportedServices = []
       getAPI('listSupportedNetworkServices').then(json => {
         this.supportedServices = json.listsupportednetworkservicesresponse.networkservice
-        for (var i in this.supportedServices) {
-          var networkServiceObj = this.supportedServices[i]
-          var serviceName = networkServiceObj.name
-          var serviceDisplayName = serviceName
+        for (const i in this.supportedServices) {
+          const networkServiceObj = this.supportedServices[i]
+          const serviceName = networkServiceObj.name
+          const serviceDisplayName = serviceName
 
           // Sanitize names
           // switch (serviceName) {
@@ -850,9 +850,9 @@ export default {
           //     serviceDisplayName = serviceName
           //     break
           // }
-          var providers = []
-          for (var j in this.supportedServices[i].provider) {
-            var provider = this.supportedServices[i].provider[j]
+          const providers = []
+          for (const j in this.supportedServices[i].provider) {
+            const provider = this.supportedServices[i].provider[j]
             provider.description = provider.name
             provider.enabled = true
             if (provider.name === 'VpcVirtualRouter') {
@@ -887,11 +887,11 @@ export default {
       this.registeredServicePackageLoading = true
       this.registeredServicePackages = []
       getAPI('listRegisteredServicePackages', {}).then(json => {
-        var servicePackages = json.listregisteredservicepackage.registeredServicepackage
+        let servicePackages = json.listregisteredservicepackage.registeredServicepackage
         if (servicePackages === undefined || servicePackages == null || !servicePackages) {
           servicePackages = json.listregisteredservicepackage
         }
-        for (var i in servicePackages) {
+        for (const i in servicePackages) {
           this.registeredServicePackages.push({
             id: servicePackages[i].id,
             description: servicePackages[i].name,
@@ -904,8 +904,8 @@ export default {
     },
     updateSupportedServices () {
       this.supportedServiceLoading = true
-      var supportedServices = this.supportedServices
-      var self = this
+      let supportedServices = this.supportedServices
+      const self = this
       if (this.provider !== 'NSX' && this.provider !== 'Netris') {
         if (this.networkmode === 'ROUTED' && this.guestType === 'isolated') {
           supportedServices = supportedServices.filter(service => {
@@ -914,10 +914,10 @@ export default {
         }
         supportedServices.forEach(function (svc, index) {
           if (svc.name !== 'Connectivity') {
-            var providers = svc.provider
+            const providers = svc.provider
             providers.forEach(function (provider, providerIndex) {
               if (self.forVpc) { // *** vpc ***
-                var enabledProviders = ['VpcVirtualRouter', 'Netscaler', 'BigSwitchBcf', 'ConfigDrive']
+                const enabledProviders = ['VpcVirtualRouter', 'Netscaler', 'BigSwitchBcf', 'ConfigDrive']
                 if (self.lbType === 'internalLb') {
                   enabledProviders.push('InternalLbVm')
                 }
@@ -944,6 +944,7 @@ export default {
           } else if (this.provider === 'Netris') {
             return Object.keys(this.netrisSupportedServicesMap).includes(svc.name)
           }
+          return false
         })
         supportedServices = supportedServices.map(svc => {
           if (!['Dhcp', 'Dns', 'UserData'].includes(svc.name)) {
@@ -1084,10 +1085,10 @@ export default {
       } else {
         delete this.selectedServiceProviderMap[service]
       }
-      var providers = Object.values(this.selectedServiceProviderMap)
+      const providers = Object.values(this.selectedServiceProviderMap)
       this.isVirtualRouterForAtLeastOneService = false
       this.isVpcVirtualRouterForAtLeastOneService = false
-      var self = this
+      const self = this
       providers.forEach(function (prvdr, idx) {
         if (prvdr === 'VirtualRouter') {
           self.isVirtualRouterForAtLeastOneService = true
@@ -1107,9 +1108,9 @@ export default {
       this.formRef.value.validate().then(() => {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
-        var params = {}
+        const params = {}
 
-        var keys = Object.keys(values)
+        const keys = Object.keys(values)
         const detailsKey = ['promiscuousmode', 'macaddresschanges', 'forgedtransmits', 'maclearning']
         const ignoredKeys = [...detailsKey, 'state', 'status', 'allocationstate', 'forvpc', 'lbType', 'specifyvlan', 'ispublic', 'domainid', 'zoneid', 'egressdefaultpolicy', 'isolation', 'supportspublicaccess']
         keys.forEach(function (key, keyIndex) {
@@ -1194,11 +1195,11 @@ export default {
           }
         }
         if (values.ispublic !== true) {
-          var domainIndexes = values.domainid
-          var domainId = null
+          const domainIndexes = values.domainid
+          let domainId = null
           if (domainIndexes && domainIndexes.length > 0) {
-            var domainIds = []
-            for (var i = 0; i < domainIndexes.length; i++) {
+            let domainIds = []
+            for (let i = 0; i < domainIndexes.length; i++) {
               domainIds = domainIds.concat(this.domains[domainIndexes[i]].id)
             }
             domainId = domainIds.join(',')
@@ -1207,11 +1208,11 @@ export default {
             params.domainid = domainId
           }
         }
-        var zoneIndexes = values.zoneid
-        var zoneId = null
+        const zoneIndexes = values.zoneid
+        let zoneId = null
         if (zoneIndexes && zoneIndexes.length > 0) {
-          var zoneIds = []
-          for (var j = 0; j < zoneIndexes.length; j++) {
+          let zoneIds = []
+          for (let j = 0; j < zoneIndexes.length; j++) {
             zoneIds = zoneIds.concat(this.zones[zoneIndexes[j]].id)
           }
           zoneId = zoneIds.join(',')

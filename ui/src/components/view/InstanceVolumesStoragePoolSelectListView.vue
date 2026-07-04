@@ -172,7 +172,7 @@ export default {
         listAll: true,
         virtualmachineid: this.resource.id
       }).then(response => {
-        var volumes = response.listvolumesresponse.volume
+        const volumes = response.listvolumesresponse.volume
         if (volumes && volumes.length > 0) {
           volumes.sort((a, b) => {
             return b.type.localeCompare(a.type)
@@ -185,9 +185,9 @@ export default {
       })
     },
     resetSelection () {
-      var volumes = this.volumes
+      const volumes = this.volumes
       this.volumes = []
-      for (var volume of volumes) {
+      for (const volume of volumes) {
         if (this.clusterId) {
           volume.selectedstorageid = -1
           volume.selectedstoragename = this.$t('label.auto.assign')
@@ -224,7 +224,7 @@ export default {
       this.updateVolumeToStoragePoolSelection()
     },
     updateVolumeToStoragePoolSelection () {
-      var clusterId = null
+      let clusterId = null
       this.volumeToPoolSelection = []
       this.volumesWithClusterStoragePool = []
       for (const volume of this.volumes) {

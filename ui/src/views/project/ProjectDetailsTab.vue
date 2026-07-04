@@ -53,7 +53,7 @@ export default {
   },
   methods: {
     determineOwner () {
-      var owner = this.dataResource.owner || []
+      let owner = this.dataResource.owner || []
       // If current backend does not support multiple project admins
       if (owner.length === 0) {
         this.dataResource.isCurrentUserProjectAdmin = this.dataResource.account === this.$store.getters.userInfo.account

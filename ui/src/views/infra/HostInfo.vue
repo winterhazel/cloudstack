@@ -251,15 +251,15 @@ export default {
         const implicithosttags = this.host.implicithosttags?.split(',') || []
         const allHostTags = []
         for (const hosttag of hosttags) {
-          var isexplicit = false
-          var isimplicit = false
+          let isexplicit = false
+          let isimplicit = false
           if (explicithosttags.includes(hosttag)) {
             isexplicit = true
           }
           if (implicithosttags.includes(hosttag)) {
             isimplicit = true
           }
-          allHostTags.push({ tag: hosttag, isexplicit: isexplicit, isimplicit: isimplicit })
+          allHostTags.push({ tag: hosttag, isexplicit, isimplicit })
         }
         this.host.allhosttags = allHostTags
       }).catch(error => {

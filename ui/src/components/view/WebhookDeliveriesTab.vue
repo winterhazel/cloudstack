@@ -180,7 +180,7 @@ export default {
   },
   computed: {
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       if (this.device !== 'desktop') {
         sizes.unshift(10)
       }
@@ -276,16 +276,16 @@ export default {
     },
     updateColumns () {
       this.columns = []
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         const key = columnKey
         if (!this.selectedColumnKeys.includes(key)) continue
-        var title = this.$t('label.' + String(key).toLowerCase())
+        let title = this.$t('label.' + String(key).toLowerCase())
         if (key === 'eventtype') {
           title = this.$t('label.event')
         }
         this.columns.push({
-          key: key,
-          title: title,
+          key,
+          title,
           dataIndex: key,
           sorter: (a, b) => { return genericCompare(a[key] || '', b[key] || '') }
         })
@@ -301,7 +301,7 @@ export default {
       const self = this
       const title = (this.selectedRowKeys && this.selectedRowKeys.length > 0) ? this.$t('label.action.delete.webhook.deliveries') : this.$t('label.action.clear.webhook.deliveries')
       this.$confirm({
-        title: title,
+        title,
         okText: this.$t('label.ok'),
         okType: 'danger',
         cancelText: this.$t('label.cancel'),
@@ -318,7 +318,7 @@ export default {
       const promises = []
       this.selectedRowKeys.forEach(id => {
         const params = {
-          id: id
+          id
         }
         promises.push(new Promise((resolve, reject) => {
           postAPI('deleteWebhookDelivery', params).then(json => {
@@ -419,8 +419,8 @@ export default {
       return start
     },
     handleTimeFilterChange () {
-      var start = this.startDate
-      var end = this.endDate
+      let start = this.startDate
+      let end = this.endDate
       switch (this.durationSelectorValue) {
         case 'day':
           start = this.get24hrStartDate()
@@ -441,8 +441,8 @@ export default {
       this.showTimeFilterModal = true
     },
     formatTimeFilterPeriod () {
-      var formatedStartDate = null
-      var formatedEndDate = null
+      let formatedStartDate = null
+      let formatedEndDate = null
       if (this.startDate) {
         formatedStartDate = moment(this.startDate).format('MMM DD, YYYY') + ' at ' + moment(this.startDate).format('HH:mm:ss')
       }

@@ -236,7 +236,7 @@ export default {
         this.pods = response.listpodsresponse.pod ? response.listpodsresponse.pod : []
         for (const pod of this.pods) {
           if (pod && pod.ipranges && pod.ipranges.length > 0) {
-            for (var idx = 0; idx < pod.ipranges.length; idx++) {
+            for (let idx = 0; idx < pod.ipranges.length; idx++) {
               this.items.push({
                 id: pod.id,
                 name: pod.name,

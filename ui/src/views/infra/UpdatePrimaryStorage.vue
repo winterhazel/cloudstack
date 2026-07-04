@@ -197,7 +197,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var params = {
+        const params = {
           id: this.resource.id,
           name: values.name,
           tags: values.tags,

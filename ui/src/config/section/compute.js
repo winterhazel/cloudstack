@@ -44,7 +44,7 @@ export default {
       permission: ['listVirtualMachinesMetrics'],
       resourceType: 'UserVm',
       params: () => {
-        var params = { details: 'group,nics,secgrp,tmpl,servoff,diskoff,iso,volume,affgrp,backoff' }
+        let params = { details: 'group,nics,secgrp,tmpl,servoff,diskoff,iso,volume,affgrp,backoff' }
         if (store.getters.metrics) {
           params = { details: 'all,stats' }
         }
@@ -95,7 +95,7 @@ export default {
       },
       searchFilters: ['name', 'gpuenabled', 'zoneid', 'domainid', 'account', 'groupid', 'arch', 'extensionid', 'tags'],
       details: () => {
-        var fields = ['name', 'displayname', 'id', 'state', 'ipaddress', 'ip6address', 'templatename', 'ostypename',
+        const fields = ['name', 'displayname', 'id', 'state', 'ipaddress', 'ip6address', 'templatename', 'ostypename',
           'serviceofferingname', 'gpucount', 'isdynamicallyscalable', 'haenable', 'hypervisor', 'arch', 'boottype', 'bootmode', 'account',
           'domain', 'zonename', 'userdataid', 'userdataname', 'userdataparams', 'userdatadetails', 'userdatapolicy',
           'hostcontrolstate', 'deleteprotection', 'leaseexpirydate', 'leaseexpiryaction']
@@ -160,7 +160,8 @@ export default {
           groupMap: (selection, values) => { return selection.map(x => { return { id: x, forced: values.forced } }) },
           args: (record, store, group) => {
             return (['Admin'].includes(store.userInfo.roletype) || store.features.allowuserforcestopvm)
-              ? ['forced'] : []
+              ? ['forced']
+              : []
           },
           show: (record) => { return ['Running'].includes(record.state) }
         },
@@ -174,7 +175,7 @@ export default {
           show: (record) => { return ['Running'].includes(record.state) },
           disabled: (record) => { return record.hostcontrolstate === 'Offline' },
           args: (record, store) => {
-            var fields = []
+            const fields = []
             fields.push('forced')
             if (record.hypervisor === 'VMware') {
               if (store.apis.rebootVirtualMachine.params.filter(x => x.name === 'bootintosetup').length > 0) {
@@ -205,7 +206,7 @@ export default {
           docHelp: 'adminguide/virtual_machines.html#virtual-machine-snapshots',
           dataView: true,
           args: (record, store) => {
-            var args = ['virtualmachineid', 'name', 'description', 'snapshotmemory']
+            const args = ['virtualmachineid', 'name', 'description', 'snapshotmemory']
             if (['KVM', 'VMware'].includes(record.hypervisor)) {
               args.push('quiescevm')
             }
@@ -458,7 +459,8 @@ export default {
           groupAction: true,
           args: (record, store, group) => {
             return (['Admin'].includes(store.userInfo.roletype) || store.features.allowuserexpungerecovervm)
-              ? ['expunge'] : []
+              ? ['expunge']
+              : []
           },
           popup: true,
           groupMap: (selection, values) => { return selection.map(x => { return { id: x, expunge: values.expunge } }) },
@@ -562,7 +564,7 @@ export default {
       searchFilters: ['name', 'domainid', 'account', 'state'],
       permission: ['listKubernetesClusters'],
       columns: (store) => {
-        var fields = ['name', 'state', 'clustertype', 'size', 'cpunumber', 'memory', 'kubernetesversionname']
+        const fields = ['name', 'state', 'clustertype', 'size', 'cpunumber', 'memory', 'kubernetesversionname']
         if (['Admin', 'DomainAdmin'].includes(store.userInfo.roletype)) {
           fields.push('account')
         }
@@ -864,7 +866,8 @@ export default {
               return []
             }
             return (['Admin'].includes(store.userInfo.roletype) || store.features.allowuserexpungerecovervm)
-              ? ['cleanup', 'expunge'] : ['cleanup']
+              ? ['cleanup', 'expunge']
+              : ['cleanup']
           },
           groupMap: (selection, values) => { return selection.map(x => { return { id: x, expunge: values.expunge, cleanup: values.cleanup } }) }
         }
@@ -879,7 +882,7 @@ export default {
       permission: ['listAutoScaleVmGroups'],
       searchFilters: ['name', 'zoneid', 'domainid', 'account'],
       columns: (store) => {
-        var fields = ['name', 'state', 'associatednetworkname', 'publicip', 'publicport', 'privateport', 'minmembers', 'maxmembers', 'availablevirtualmachinecount', 'account']
+        const fields = ['name', 'state', 'associatednetworkname', 'publicip', 'publicport', 'privateport', 'minmembers', 'maxmembers', 'availablevirtualmachinecount', 'account']
         if (store.listAllProjects) {
           fields.push('project')
         }
@@ -966,7 +969,7 @@ export default {
           label: 'label.update.autoscale.vmgroup',
           dataView: true,
           args: (record, store) => {
-            var args = ['name']
+            const args = ['name']
             args.push('maxmembers')
             args.push('minmembers')
             if (record.state === 'DISABLED') {
@@ -997,7 +1000,7 @@ export default {
       permission: ['listInstanceGroups'],
       searchFilters: ['name', 'zoneid', 'domainid', 'account'],
       columns: (store) => {
-        var fields = ['name', 'account']
+        const fields = ['name', 'account']
         if (store.listAllProjects) {
           fields.push('project')
         }
@@ -1056,7 +1059,7 @@ export default {
       permission: ['listSSHKeyPairs'],
       searchFilters: ['name', 'domainid', 'account', 'fingerprint'],
       columns: () => {
-        var fields = ['name', 'fingerprint']
+        const fields = ['name', 'fingerprint']
         if (['Admin', 'DomainAdmin'].includes(store.getters.userInfo.roletype)) {
           fields.push('account')
           if (store.getters.listAllProjects) {
@@ -1139,7 +1142,7 @@ export default {
       docHelp: 'adminguide/virtual_machines.html#user-data-and-meta-data',
       permission: ['listUserData'],
       columns: () => {
-        var fields = ['name', 'id']
+        const fields = ['name', 'id']
         if (['Admin', 'DomainAdmin'].includes(store.getters.userInfo.roletype)) {
           fields.push('account')
           if (store.getters.listAllProjects) {
@@ -1222,7 +1225,7 @@ export default {
       docHelp: 'adminguide/virtual_machines.html#user-data-and-meta-data',
       permission: ['listCniConfiguration'],
       columns: () => {
-        var fields = ['name', 'id']
+        const fields = ['name', 'id']
         if (['Admin', 'DomainAdmin'].includes(store.getters.userInfo.roletype)) {
           fields.push('account')
           if (store.getters.listAllProjects) {
@@ -1306,7 +1309,7 @@ export default {
       permission: ['listAffinityGroups'],
       searchFilters: ['name', 'zoneid', 'domainid', 'account', 'type'],
       columns: () => {
-        var fields = ['name', 'type', 'description']
+        const fields = ['name', 'type', 'description']
         if (['Admin', 'DomainAdmin'].includes(store.getters.userInfo.roletype)) {
           fields.push('account')
           if (store.getters.listAllProjects) {

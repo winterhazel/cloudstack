@@ -33,7 +33,7 @@ export default {
   },
   resourceType: 'Extension',
   columns: () => {
-    var fields = ['name', 'state', 'type', 'path',
+    const fields = ['name', 'state', 'type', 'path',
       {
         availability: (record) => {
           if (record.pathready) {

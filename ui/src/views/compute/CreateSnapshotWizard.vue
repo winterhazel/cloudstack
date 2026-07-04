@@ -168,7 +168,7 @@ export default {
                   const snapshotId = result.jobresult.snapshot.id
                   const message = `${this.$t('label.create.snapshot.for.volume')} ${volumeId} ${this.$t('label.with.snapshotid')} ${snapshotId}`
                   this.$notification.success({
-                    message: message,
+                    message,
                     duration: 0
                   })
                 },

@@ -63,7 +63,7 @@ function decodeHtml (html) {
 
 function createFactory (component, options) {
   const plugins = []
-  var {
+  const {
     router = null,
     i18n = null,
     store = null,

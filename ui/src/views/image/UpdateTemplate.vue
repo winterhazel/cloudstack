@@ -297,8 +297,8 @@ export default {
         resourceFields.push('templatetype')
         resourceFields.push('templatetag')
       }
-      for (var field of resourceFields) {
-        var fieldValue = this.resource[field]
+      for (const field of resourceFields) {
+        const fieldValue = this.resource[field]
         if (fieldValue) {
           switch (field) {
             case 'userdataid':
@@ -515,8 +515,8 @@ export default {
         if (response?.listtemplatesresponse?.template?.length > 0) {
           this.details = response.listtemplatesresponse.template[0].details
           if (this.details) {
-            for (var detailsField of this.detailsFields) {
-              var detailValue = this.details?.[detailsField] || null
+            for (const detailsField of this.detailsFields) {
+              const detailValue = this.details?.[detailsField] || null
               if (detailValue) {
                 this.form[detailsField] = detailValue
               }

@@ -1162,7 +1162,7 @@ export default {
     }
   },
   methods: {
-    createPathBasedOnVmType: createPathBasedOnVmType,
+    createPathBasedOnVmType,
     updateResourceAdditionalData () {
       if (!this.resource) return
       this.resourceType = this.$route.meta.resourceType

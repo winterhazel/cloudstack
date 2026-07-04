@@ -231,7 +231,7 @@ export default {
       params.pagesize = 10
       getAPI('listVmwareDcVms', params).then(json => {
         const obj = {
-          params: params,
+          params,
           response: json.listvmwaredcvmsresponse
         }
         this.$emit('listedVmwareUnmanagedInstances', obj)

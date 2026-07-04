@@ -317,12 +317,12 @@ export default {
       if (this.vpc !== null) { // from VPC section
         this.fetchNetworkOfferingData(true)
       } else { // from guest network section
-        var params = {}
+        const params = {}
         this.networkOfferingLoading = true
         if ('listVPCs' in this.$store.getters.apis) {
           getAPI('listVPCs', params).then(json => {
             const listVPCs = json.listvpcsresponse.vpc
-            var vpcAvailable = this.arrayHasItems(listVPCs)
+            const vpcAvailable = this.arrayHasItems(listVPCs)
             if (vpcAvailable === false) {
               this.fetchNetworkOfferingData(false)
             } else {
@@ -336,7 +336,7 @@ export default {
     },
     fetchNetworkOfferingData (forVpc) {
       this.networkOfferingLoading = true
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         guestiptype: 'L2',
         state: 'Enabled'
@@ -371,7 +371,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
         this.actionLoading = true
-        var params = {
+        const params = {
           zoneId: this.selectedZone.id,
           name: values.name,
           displayText: values.displaytext,

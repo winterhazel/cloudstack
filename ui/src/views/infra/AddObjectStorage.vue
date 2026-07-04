@@ -165,11 +165,11 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           name: values.name,
           size: values.size
         }
-        var provider = values.provider
+        const provider = values.provider
 
         data.provider = provider
         data.url = values.url

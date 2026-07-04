@@ -21,7 +21,7 @@ const fs = require('fs')
 const packageJson = fs.readFileSync('./package.json')
 const version = JSON.parse(packageJson).version || 'main'
 const createThemeColorReplacerPlugin = require('./theme.config')
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const TerserPlugin = require('terser-webpack-plugin')
 
 function resolve (dir) {
   return path.join(__dirname, dir)
@@ -47,25 +47,34 @@ const vueConfig = {
   configureWebpack: {
     plugins: [
       // Ignore all locale files of moment.js
-      new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-      new webpack.IgnorePlugin(/@antv\/g2/),
+      new webpack.IgnorePlugin({ resourceRegExp: /^\.\/locale$/, contextRegExp: /moment$/ }),
+      new webpack.IgnorePlugin({ resourceRegExp: /@antv\/g2/ }),
       new webpack.DefinePlugin({
-        'process.env': {
-          PACKAGE_VERSION: '"' + version + '"'
-        }
+        'process.env.PACKAGE_VERSION': '"' + version + '"'
       })
     ],
+    resolve: {
+      fallback: {
+        stream: require.resolve('stream-browserify'),
+        path: require.resolve('path-browserify'),
+        https: require.resolve('https-browserify'),
+        http: require.resolve('stream-http'),
+        timers: require.resolve('timers-browserify'),
+        crypto: require.resolve('crypto-browserify'),
+        url: require.resolve('url/'),
+        util: false,
+        fs: false
+      }
+    },
     optimization: {
       minimizer: [
-        new UglifyJsPlugin({
-          cache: true,
-          parallel: true,
-          uglifyOptions: {
+        new TerserPlugin({
+          terserOptions: {
             compress: false,
             ecma: 6,
             mangle: true
           },
-          sourceMap: true
+          extractComments: false
         })
       ],
       splitChunks: {
@@ -92,33 +101,29 @@ const vueConfig = {
       .set('@static', resolve('src/static'))
 
     // do not emit errors as a warning
-    config.module.rule('eslint').use('eslint-loader').tap(
-      opts => ({ ...opts, emitWarning: false })
-    )
+    if (config.plugins.has('eslint')) {
+      config.plugin('eslint').tap(([options]) => {
+        options.emitWarning = false
+        return [options]
+      })
+    }
 
     const svgRule = config.module.rule('svg')
     svgRule.uses.clear()
 
     svgRule
+      .oneOf('inline')
+      .resourceQuery(/inline/)
+      .type('javascript/auto')
       .use('vue-loader')
       .loader('vue-loader')
       .end()
       .use('vue-svg-loader')
       .loader('vue-svg-loader')
-
-    /* svgRule.oneOf('inline')
-      .resourceQuery(/inline/)
-      .use('vue-svg-loader')
-      .loader('vue-svg-loader')
       .end()
       .end()
       .oneOf('external')
-      .use('file-loader')
-      .loader('file-loader')
-      .options({
-        name: 'assets/[name].[hash:8].[ext]'
-      })
-    */
+      .type('asset/resource')
   },
 
   css: {
@@ -149,14 +154,15 @@ const vueConfig = {
         }
       }
     },
-    https: process.env.HTTPS_KEY ? {
-      key: process.env.HTTPS_KEY ? fs.readFileSync(process.env.HTTPS_KEY) : undefined,
-      cert: process.env.HTTPS_CERT ? fs.readFileSync(process.env.HTTPS_CERT) : undefined,
-      ca: process.env.HTTPS_CA ? fs.readFileSync(process.env.HTTPS_CA) : undefined,
-      dhparam: process.env.HTTPS_DHPARAM ? fs.readFileSync(process.env.HTTPS_DHPARAM) : undefined
-    } : false,
-    public: process.env.PUBLIC_HOST || undefined,
-    allowedHosts: process.env.ALLOWED_HOSTS ? JSON.parse(process.env.ALLOWED_HOSTS) : undefined
+    https: process.env.HTTPS_KEY
+      ? {
+          key: process.env.HTTPS_KEY ? fs.readFileSync(process.env.HTTPS_KEY) : undefined,
+          cert: process.env.HTTPS_CERT ? fs.readFileSync(process.env.HTTPS_CERT) : undefined,
+          ca: process.env.HTTPS_CA ? fs.readFileSync(process.env.HTTPS_CA) : undefined,
+          dhparam: process.env.HTTPS_DHPARAM ? fs.readFileSync(process.env.HTTPS_DHPARAM) : undefined
+        }
+      : false,
+    allowedHosts: process.env.ALLOWED_HOSTS ? JSON.parse(process.env.ALLOWED_HOSTS) : 'all'
   },
 
   lintOnSave: undefined,

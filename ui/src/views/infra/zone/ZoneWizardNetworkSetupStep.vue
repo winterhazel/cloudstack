@@ -567,7 +567,7 @@ export default {
       return fields
     },
     filteredPodFields () {
-      var fields = [...this.podFields]
+      let fields = [...this.podFields]
       if (this.isEdgeZone) {
         fields = fields.filter(x => !['podReservedGateway', 'podReservedNetmask', 'podReservedStartIp', 'podReservedStopIp'].includes(x.key))
         return fields

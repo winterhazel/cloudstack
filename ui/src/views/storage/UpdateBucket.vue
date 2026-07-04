@@ -131,7 +131,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           id: this.resource.id,
           quota: values.quota,
           encryption: values.encryption,

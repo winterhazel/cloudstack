@@ -180,7 +180,7 @@ export default {
         }
       }
       return this.detailOptions[this.newKey].map(value => {
-        return { value: value }
+        return { value }
       })
     }
   },
@@ -245,7 +245,7 @@ export default {
       if (!values) {
         return
       }
-      var data = values.map(value => { return { value: value } })
+      const data = values.map(value => { return { value } })
       return data
     },
     onAddInputChange (val, obj) {
@@ -258,12 +258,12 @@ export default {
         this.resource.project && this.resource.projectid === this.$store.getters.project.id
     },
     getDetailsParam (details) {
-      var params = {}
-      var filteredDetails = details
+      const params = {}
+      let filteredDetails = details
       if (this.resource.readonlydetails && filteredDetails) {
         filteredDetails = []
-        var readOnlyDetailNames = this.resource.readonlydetails.split(',').map(item => item.trim())
-        for (var detail of this.details) {
+        const readOnlyDetailNames = this.resource.readonlydetails.split(',').map(item => item.trim())
+        for (const detail of this.details) {
           if (!readOnlyDetailNames.includes(detail.name)) {
             filteredDetails.push(detail)
           }
@@ -279,7 +279,7 @@ export default {
       return params
     },
     runApi () {
-      var apiName = ''
+      let apiName = ''
       if (this.resourceType === 'UserVm') {
         apiName = 'updateVirtualMachine'
       } else if (this.resourceType === 'Template') {
@@ -293,11 +293,11 @@ export default {
         return
       }
 
-      var params = { id: this.resource.id }
+      let params = { id: this.resource.id }
       params = Object.assign(params, this.getDetailsParam(this.details))
       this.loading = true
       postAPI(apiName, params).then(json => {
-        var details = {}
+        let details = {}
         if (this.resourceType === 'UserVm' && json.updatevirtualmachineresponse.virtualmachine.details) {
           details = json.updatevirtualmachineresponse.virtualmachine.details
         } else if (this.resourceType === 'Template' && json.updatetemplateresponse.template.details) {

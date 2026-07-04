@@ -158,9 +158,7 @@ export default {
     filterItems () {
       if (this.appliedFilterStatus?.length > 0) {
         this.filteredItems = this.selectedItems.filter(item => {
-          if (this.appliedFilterStatus.includes(item.status)) {
-            return item
-          }
+          return this.appliedFilterStatus.includes(item.status)
         })
       }
     },

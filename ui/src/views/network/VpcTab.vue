@@ -654,7 +654,7 @@ export default {
         listAll: true,
         networkfilter: 'Account'
       }).then(json => {
-        var networks = json.listnetworksresponse.network || []
+        const networks = json.listnetworksresponse.network || []
         for (const network of networks) {
           if (network.type === 'Isolated' || network.type === 'L2') {
             this.associatedNetworks.push(network)

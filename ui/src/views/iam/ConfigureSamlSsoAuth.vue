@@ -111,7 +111,8 @@ export default {
           this.$emit('refresh-data')
           this.$notification.success({
             message: values.samlEnable ? this.$t('label.saml.enable') : this.$t('label.saml.disable'),
-            description: values.samlEnable ? `${this.$t('message.success.enable.saml.auth')} ${this.$t('label.for')} ${this.resource.username}`
+            description: values.samlEnable
+              ? `${this.$t('message.success.enable.saml.auth')} ${this.$t('label.for')} ${this.resource.username}`
               : `${this.$t('message.success.disable.saml.auth')} ${this.$t('label.for')} ${this.resource.username}`
           })
           this.handleClose()

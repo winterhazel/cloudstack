@@ -190,7 +190,7 @@ export default {
           return
         }
 
-        var rules = this.rulesCsvToJson(this.rulesCsv)
+        const rules = this.rulesCsvToJson(this.rulesCsv)
         rules.forEach(function (values, index) {
           for (const key in values) {
             params['rules[' + index + '].' + key] = values[key]
@@ -226,20 +226,20 @@ export default {
     rulesCsvToJson (rulesCsv) {
       const columnDelimiter = ','
       const lineDelimiter = '\n'
-      var lines = rulesCsv.split(lineDelimiter)
-      var result = []
+      let lines = rulesCsv.split(lineDelimiter)
+      const result = []
       if (lines.length === 0) {
         return result
       }
-      var headers = lines[0].split(columnDelimiter)
+      const headers = lines[0].split(columnDelimiter)
       lines = lines.slice(1) // Remove header
 
-      lines.map((line, indexLine) => {
+      lines.forEach((line) => {
         if (line.trim() === '') return // Empty line
-        var obj = {}
-        var currentline = line.trim().split(columnDelimiter)
+        const obj = {}
+        const currentline = line.trim().split(columnDelimiter)
 
-        headers.map((header, indexHeader) => {
+        headers.forEach((header, indexHeader) => {
           if (indexHeader === 2 && currentline.length > 3) {
             if (currentline[indexHeader].startsWith('"')) {
               obj[header.trim()] = currentline[indexHeader].substr(1)
@@ -251,7 +251,7 @@ export default {
               obj[header.trim()] += columnDelimiter + currentline[i]
             }
 
-            var lastColumn = currentline[currentline.length - 1]
+            const lastColumn = currentline[currentline.length - 1]
             if (lastColumn.endsWith('"')) {
               obj[header.trim()] += columnDelimiter + lastColumn.substr(0, lastColumn.length - 1)
             } else {
@@ -289,11 +289,11 @@ export default {
     readCsvFile (file) {
       return new Promise((resolve, reject) => {
         if (window.FileReader) {
-          var reader = new FileReader()
+          const reader = new FileReader()
           reader.onload = (event) => {
             this.rulesCsv = event.target.result
-            var lines = this.rulesCsv.split('\n')
-            var headers = lines[0].split(',')
+            const lines = this.rulesCsv.split('\n')
+            const headers = lines[0].split(',')
             if (headers.length !== 3) {
               resolve(false)
             } else if (!(headers[0].trim() === 'rule' && headers[1].trim() === 'permission' && headers[2].trim() === 'description')) {

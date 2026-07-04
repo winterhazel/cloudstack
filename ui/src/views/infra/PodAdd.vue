@@ -252,7 +252,11 @@ export default {
     },
     returnPlaceholder (field) {
       this.params.find(i => {
-        if (i.name === field) this.placeholder[field] = i.description
+        if (i.name === field) {
+          this.placeholder[field] = i.description
+          return true
+        }
+        return false
       })
     }
   }

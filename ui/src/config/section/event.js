@@ -24,7 +24,7 @@ export default {
   docHelp: 'adminguide/events.html',
   permission: ['listEvents'],
   columns: () => {
-    var fields = ['level', 'type', 'state', 'description', 'resource', 'username', 'account']
+    const fields = ['level', 'type', 'state', 'description', 'resource', 'username', 'account']
     if (store.getters.listAllProjects) {
       fields.push('project')
     }

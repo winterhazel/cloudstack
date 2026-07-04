@@ -280,9 +280,11 @@ export default {
             }
           }
           if (!hasJobId) {
-            var message = this.action.successMessage ? this.$t(this.action.successMessage) : this.$t(this.action.label) +
+            let message = this.action.successMessage
+              ? this.$t(this.action.successMessage)
+              : this.$t(this.action.label) +
               (resourceName ? ' - ' + resourceName : '')
-            var duration = 2
+            let duration = 2
             if (this.action.additionalMessage) {
               message = message + ' - ' + this.$t(this.action.successMessage)
               duration = 5
@@ -290,7 +292,7 @@ export default {
             this.$message.success({
               content: message,
               key: this.action.label + resourceName,
-              duration: duration
+              duration
             })
             this.parentFetchData()
           }
@@ -308,7 +310,7 @@ export default {
       })
     },
     fillEditFormFieldValues () {
-      this.action.paramFields.map(field => {
+      this.action.paramFields.forEach(field => {
         let fieldName = null
         if (field.type === 'uuid' ||
           field.type === 'list' ||

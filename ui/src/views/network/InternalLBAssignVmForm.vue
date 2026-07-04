@@ -161,7 +161,7 @@ export default {
         page: this.page,
         pagesize: this.pageSize
       }).then(response => {
-        var vms = response.listvirtualmachinesresponse.virtualmachine || []
+        const vms = response.listvirtualmachinesresponse.virtualmachine || []
         this.vms = this.differenceBy(vms, this.assignedVMs, 'id')
         this.vmCounts = this.vms.length || 0
         this.vms.forEach((vm, index) => {
@@ -207,9 +207,9 @@ export default {
       if (this.fetchLoading) {
         return
       }
-      var j = 0
+      let j = 0
       this.params = {}
-      for (var i = 0; i < this.iLb.virtualmachineid.length; i++) {
+      for (let i = 0; i < this.iLb.virtualmachineid.length; i++) {
         if (this.iLb.virtualmachineid[i] !== null) {
           this.params['vmidipmap[' + j + '].vmid'] = this.iLb.virtualmachineid[i]
           this.params['vmidipmap[' + j + '].vmip'] = this.iLb.vmguestip[i]

@@ -53,7 +53,7 @@ export default {
   methods: {
     getText () {
       if (this.displayText && this.text) {
-        var state = this.text
+        let state = this.text
         switch (state.toLowerCase()) {
           case 'running':
             state = this.$t('state.running')
@@ -112,7 +112,7 @@ export default {
       return ''
     },
     getBadgeStatus (state) {
-      var status = 'default'
+      let status = 'default'
       switch (state.toLowerCase()) {
         case 'active':
         case 'backedup':

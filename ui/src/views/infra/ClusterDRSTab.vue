@@ -211,7 +211,7 @@ export default {
           dataIndex: 'eventid'
         }
       ],
-      generatedPlanMigrationColumns: generatedPlanMigrationColumns,
+      generatedPlanMigrationColumns,
       migrationColumns: generatedPlanMigrationColumns.concat([
         {
           key: 'jobstatus',
@@ -251,9 +251,9 @@ export default {
     executeDrsPlan () {
       if (this.generatedMigrations.length === 0) return
 
-      var params = { id: this.resource.id }
+      const params = { id: this.resource.id }
 
-      for (var i = 0; i < this.generatedMigrations.length; i++) {
+      for (let i = 0; i < this.generatedMigrations.length; i++) {
         const mapping = this.generatedMigrations[i]
         params['migrateto[' + i + '].vm'] = mapping.virtualmachineid
         params['migrateto[' + i + '].host'] = mapping.destinationhostid

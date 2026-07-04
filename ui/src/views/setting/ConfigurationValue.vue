@@ -276,7 +276,7 @@ export default {
       let configRecordEntry = this.configrecord
       this.valueLoading = true
       this.editableValueKey = null
-      var newValue = this.editableValue
+      let newValue = this.editableValue
       if (configrecord.type === 'Range') {
         newValue = newValue / 100
       }
@@ -331,7 +331,7 @@ export default {
         configRecordEntry = json.resetconfigurationresponse.configuration
         this.editableValue = this.getEditableValue(configRecordEntry)
         this.actualValue = this.editableValue
-        var newValue = this.editableValue
+        let newValue = this.editableValue
         if (configrecord.type === 'Range') {
           newValue = newValue / 100
         }

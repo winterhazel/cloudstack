@@ -153,7 +153,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           name: values.name,
           objectstorageid: values.objectstore,
           quota: values.quota,

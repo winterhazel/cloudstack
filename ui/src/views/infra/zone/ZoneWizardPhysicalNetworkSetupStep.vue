@@ -434,7 +434,7 @@ export default {
         return { type: item, label: '' }
       })
       this.count = 1
-      this.physicalNetworks = [{ key: this.randomKeyTraffic(this.count), name: 'Physical Network 1', isolationMethod: 'VLAN', traffics: traffics, tags: null }]
+      this.physicalNetworks = [{ key: this.randomKeyTraffic(this.count), name: 'Physical Network 1', isolationMethod: 'VLAN', traffics, tags: null }]
     }
     if (this.isAdvancedZone) {
       this.availableTrafficToAdd.push('guest')
@@ -564,8 +564,8 @@ export default {
     },
     editTraffic (key, traffic, $event) {
       this.trafficInEdit = {
-        key: key,
-        traffic: traffic
+        key,
+        traffic
       }
       this.showEditTraffic = true
       const fields = {}

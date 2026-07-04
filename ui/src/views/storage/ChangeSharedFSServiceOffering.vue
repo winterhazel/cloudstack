@@ -130,7 +130,7 @@ export default {
     fetchServiceOfferings () {
       this.fetchCapabilities()
       this.serviceofferingLoading = true
-      var params = {
+      const params = {
         zoneid: this.resource.zoneid,
         listall: true,
         domainid: this.owner.domainid
@@ -141,9 +141,9 @@ export default {
         params.account = this.owner.account
       }
       getAPI('listServiceOfferings', params).then(json => {
-        var items = json.listserviceofferingsresponse.serviceoffering || []
+        const items = json.listserviceofferingsresponse.serviceoffering || []
         if (items != null) {
-          for (var i = 0; i < items.length; i++) {
+          for (let i = 0; i < items.length; i++) {
             if (items[i].iscustomized === false && items[i].offerha === true &&
                 items[i].cpunumber >= this.minCpu && items[i].memory >= this.minMemory) {
               this.serviceofferings.push(items[i])
@@ -164,7 +164,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           id: this.resource.id,
           serviceofferingid: values.serviceofferingid
         }

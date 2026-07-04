@@ -25,11 +25,11 @@ export default {
   docHelp: 'adminguide/storage.html#object-storage',
   permission: ['listObjectStoragePools'],
   columns: () => {
-    var fields = ['name', 'url', 'providername']
+    const fields = ['name', 'url', 'providername']
     return fields
   },
   details: () => {
-    var fields = ['name', 'id', 'url', 'providername', 'storagetotal', 'storageallocated', 'storageused']
+    const fields = ['name', 'id', 'url', 'providername', 'storagetotal', 'storageallocated', 'storageused']
     return fields
   },
   resourceType: 'ObjectStorage',

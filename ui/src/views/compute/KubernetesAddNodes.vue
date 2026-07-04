@@ -113,8 +113,8 @@ export default {
       return new Promise((resolve) => {
         this.volumes = []
         getAPI('listVirtualMachines', {
-          accountId: accountId,
-          domainId: domainId,
+          accountId,
+          domainId,
           details: 'min',
           listall: 'true',
           networkid: this.resource.networkid

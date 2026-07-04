@@ -317,7 +317,7 @@ export default {
       getAPI('listVmwareDcs', {
         zoneid: this.form.zoneid
       }).then(response => {
-        var vmwaredcs = response.listvmwaredcsresponse.VMwareDC
+        const vmwaredcs = response.listvmwaredcsresponse.VMwareDC
         if (vmwaredcs !== null) {
           this.form.host = vmwaredcs[0].vcenter
           this.form.datacenter = vmwaredcs[0].name
@@ -350,22 +350,22 @@ export default {
       })
     },
     addCluster (values) {
-      var clustername = values.clustername
-      var url = ''
+      let clustername = values.clustername
+      let url = ''
       if (values.hypervisor === 'VMware') {
         clustername = `${this.form.host}/${this.form.datacenter}/${clustername}`
         url = `http://${clustername}`
       }
       this.loading = true
       this.parentToggleLoading()
-      var data = {
+      const data = {
         zoneid: values.zoneid,
         hypervisor: values.hypervisor,
         clustertype: this.clustertype,
         podid: values.podid,
-        clustername: clustername,
+        clustername,
         arch: values.arch,
-        url: url
+        url
       }
       if (values.ovm3pool) {
         data.ovm3pool = values.ovm3pool

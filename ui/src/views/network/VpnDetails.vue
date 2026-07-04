@@ -210,7 +210,8 @@ export default {
         listAll: true
       }).then(response => {
         this.remoteAccessVpn = response.listremoteaccessvpnsresponse.remoteaccessvpn
-          ? response.listremoteaccessvpnsresponse.remoteaccessvpn[0] : null
+          ? response.listremoteaccessvpnsresponse.remoteaccessvpn[0]
+          : null
       }).catch(error => {
         console.log(error)
         this.$notifyError(error)

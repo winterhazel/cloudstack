@@ -150,8 +150,8 @@ export default {
   computed: {
     tableSource () {
       return this.tablerows.map(row => {
-        var disk = { ...row, disabled: this.diskOfferings && this.diskOfferings.length === 0 }
-        var item = this.items.find(item => item.id === row.id)
+        const disk = { ...row, disabled: this.diskOfferings && this.diskOfferings.length === 0 }
+        const item = this.items.find(item => item.id === row.id)
         disk.name = `${item.name} (${item.size} GB)`
         return disk
       })
@@ -195,7 +195,7 @@ export default {
     },
     orderDiskOfferings () {
       this.loading = true
-      this.items.map(x => {
+      this.items.forEach(x => {
         this.custom[x.id] = this.diskOfferings.find(offering => offering.id === x.diskofferingid)?.iscustomized
         this.customIops[x.id] = this.diskOfferings.find(offering => offering.id === x.diskofferingid)?.iscustomizediops || false
       })
@@ -264,7 +264,7 @@ export default {
     },
     sendValues () {
       const data = {}
-      for (var x in this.values) {
+      for (const x in this.values) {
         data[x] = this.values[x]
       }
       this.$emit('select-volumes-disk-offering', data)

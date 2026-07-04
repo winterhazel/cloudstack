@@ -298,7 +298,8 @@ export default {
         listAll: true
       }).then(response => {
         this.accounts = response.listaccountsresponse.account
-          ? response.listaccountsresponse.account : []
+          ? response.listaccountsresponse.account
+          : []
         if (this.accounts.length > 0) {
           this.form.account = this.accounts[0].name
         } else {
@@ -318,7 +319,8 @@ export default {
         details: 'min'
       }).then(response => {
         this.projects = response.listprojectsresponse.project
-          ? response.listprojectsresponse.project : []
+          ? response.listprojectsresponse.project
+          : []
         if (this.projects.length > 0) {
           this.form.project = this.projects[0].id
         } else {

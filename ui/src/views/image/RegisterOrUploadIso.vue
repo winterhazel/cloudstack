@@ -547,10 +547,11 @@ export default {
             continue
           }
           switch (key) {
-            case 'zoneid':
-              var zone = this.zoneList.filter(zone => zone.id === input)
+            case 'zoneid': {
+              const zone = this.zoneList.filter(zone => zone.id === input)
               params[key] = zone[0].id
               break
+            }
             case 'ostypeid':
               params[key] = input
               break

@@ -471,7 +471,7 @@ export default {
     },
     fetchDomainAccounts (domainid) {
       getAPI('listAccounts', {
-        domainid: domainid
+        domainid
       }).then(response => {
         // Clean up the selected account from a previous domain
         this.form.account = null

@@ -415,7 +415,7 @@ const user = {
           getAPI('listApis').then(response => {
             const apis = {}
             const apiList = response.listapisresponse.api
-            for (var idx = 0; idx < apiList.length; idx++) {
+            for (let idx = 0; idx < apiList.length; idx++) {
               const api = apiList[idx]
               const apiName = api.name
               apis[apiName] = {
@@ -430,7 +430,7 @@ const user = {
             loadFeatures(apis).then(() => {
               resolve(apis)
               store.dispatch('GenerateRoutes', { apis }).then(() => {
-                store.getters.addRouters.map(route => {
+                store.getters.addRouters.forEach(route => {
                   router.addRoute(route)
                 })
               })
@@ -509,7 +509,7 @@ const user = {
 
     Logout ({ commit, state }) {
       return new Promise((resolve) => {
-        var cloudianUrl = null
+        let cloudianUrl = null
         if (state.cloudian.url && state.cloudian.enabled) {
           cloudianUrl = state.cloudian.url + 'logout.htm?redirect=' + encodeURIComponent(window.location.href)
         }
@@ -580,10 +580,10 @@ const user = {
     },
     ProjectView ({ commit }, projectid) {
       return new Promise((resolve, reject) => {
-        getAPI('listApis', { projectid: projectid }).then(response => {
+        getAPI('listApis', { projectid }).then(response => {
           const apis = {}
           const apiList = response.listapisresponse.api
-          for (var idx = 0; idx < apiList.length; idx++) {
+          for (let idx = 0; idx < apiList.length; idx++) {
             const api = apiList[idx]
             const apiName = api.name
             apis[apiName] = {
@@ -594,7 +594,7 @@ const user = {
           commit('SET_APIS', apis)
           resolve(apis)
           store.dispatch('GenerateRoutes', { apis }).then(() => {
-            store.getters.addRouters.map(route => {
+            store.getters.addRouters.forEach(route => {
               router.addRoute(route)
             })
           })

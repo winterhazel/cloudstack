@@ -1513,7 +1513,7 @@ export default {
         })
         this.template = null
         for (const key in this.options.templates) {
-          var template = _.find(_.get(this.options.templates[key], 'template', []), (option) => option.id === vmgroupConfig.templateid)
+          const template = _.find(_.get(this.options.templates[key], 'template', []), (option) => option.id === vmgroupConfig.templateid)
           if (template) {
             this.template = template
             break
@@ -1672,7 +1672,7 @@ export default {
         index: this.currentStep,
         title,
         step,
-        detail: detail,
+        detail,
         status: STATUS_PROCESS
       })
       this.setStepStatus(STATUS_PROCESS)
@@ -1761,10 +1761,10 @@ export default {
                     if (!property.qualifiers) {
                       return Promise.resolve()
                     }
-                    var minlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').min
-                    var maxlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').max
-                    var errorMessage = ''
-                    var isPasswordInvalidLength = function () {
+                    const minlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').min
+                    const maxlength = this.getPropertyQualifiers(property.qualifiers, 'number-select').max
+                    let errorMessage = ''
+                    let isPasswordInvalidLength = function () {
                       return false
                     }
                     if (minlength) {
@@ -1833,22 +1833,22 @@ export default {
       ]
     },
     getPropertyQualifiers (qualifiers, type) {
-      var result = ''
+      let result = ''
       switch (type) {
         case 'select':
           result = []
           if (qualifiers && qualifiers.includes('ValueMap')) {
             result = qualifiers.replace('ValueMap', '').substr(1).slice(0, -1).split(',')
-            for (var i = 0; i < result.length; i++) {
+            for (let i = 0; i < result.length; i++) {
               result[i] = result[i].replace(/"/g, '')
             }
           }
           break
-        case 'number-select':
-          var min = 0
-          var max = Number.MAX_SAFE_INTEGER
+        case 'number-select': {
+          let min = 0
+          let max = Number.MAX_SAFE_INTEGER
           if (qualifiers) {
-            var match = qualifiers.match(/MinLen\((\d+)\)/)
+            let match = qualifiers.match(/MinLen\((\d+)\)/)
             if (match) {
               min = parseInt(match[1])
             }
@@ -1857,8 +1857,9 @@ export default {
               max = parseInt(match[1])
             }
           }
-          result = { min: min, max: max }
+          result = { min, max }
           break
+        }
         default:
       }
       return result
@@ -2076,7 +2077,7 @@ export default {
         }
         if (template) {
           this.resetTemplateAssociatedResources()
-          var size = template.size / (1024 * 1024 * 1024) || 0 // bytes to GB
+          const size = template.size / (1024 * 1024 * 1024) || 0 // bytes to GB
           this.dataPreFill.minrootdisksize = Math.ceil(size)
           this.updateTemplateLinkedUserData(this.template.userdataid)
           this.userdataDefaultOverridePolicy = this.template.userdatapolicy
@@ -2181,7 +2182,7 @@ export default {
       this.scaleUpConditions = this.scaleUpConditions.filter(condition => condition.counterid !== this.newScaleUpCondition.counterid)
       this.scaleUpConditions.push({
         counterid: this.newScaleUpCondition.counterid,
-        countername: countername,
+        countername,
         relationaloperator: this.newScaleUpCondition.relationaloperator,
         threshold: this.newScaleUpCondition.threshold
       })
@@ -2224,7 +2225,7 @@ export default {
       this.scaleDownConditions = this.scaleDownConditions.filter(condition => condition.counterid !== this.newScaleDownCondition.counterid)
       this.scaleDownConditions.push({
         counterid: this.newScaleDownCondition.counterid,
-        countername: countername,
+        countername,
         relationaloperator: this.newScaleDownCondition.relationaloperator,
         threshold: this.newScaleDownCondition.threshold
       })
@@ -2251,14 +2252,15 @@ export default {
       }
       this.form.userdataid = id
       this.userDataParams = []
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json?.listuserdataresponse?.userdata || []
         if (resp) {
-          var params = resp[0].params
+          const params = resp[0].params
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           dataParams.forEach(function (val, index) {
             that.userDataParams.push({
               id: index,
@@ -2274,14 +2276,15 @@ export default {
       }
       this.templateUserDataParams = []
 
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json?.listuserdataresponse?.userdata || []
         if (resp) {
-          var params = resp[0].params
+          const params = resp[0].params
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           that.templateUserDataParams = []
           if (dataParams) {
             dataParams.forEach(function (val, index) {
@@ -2330,7 +2333,7 @@ export default {
         if (createVmGroupData.autoscaleuserid) {
           params.autoscaleuserid = createVmGroupData.autoscaleuserid
         }
-        var i = 0
+        let i = 0
         if (createVmGroupData.snmpcommunity) {
           params['counterparam[' + i + '].name'] = 'snmpcommunity'
           params['counterparam[' + i + '].value'] = createVmGroupData.snmpcommunity
@@ -2341,7 +2344,7 @@ export default {
           params['counterparam[' + i + '].value'] = createVmGroupData.snmpport
           i++
         }
-        var j = 0
+        let j = 0
         if (createVmGroupData.rootdisksize) {
           params['otherdeployparams[' + j + '].name'] = 'rootdisksize'
           params['otherdeployparams[' + j + '].value'] = createVmGroupData.rootdisksize
@@ -2405,9 +2408,9 @@ export default {
     createCondition (counterid, relationaloperator, threshold) {
       return new Promise((resolve, reject) => {
         const params = {
-          counterid: counterid,
-          relationaloperator: relationaloperator,
-          threshold: threshold
+          counterid,
+          relationaloperator,
+          threshold
         }
         postAPI('createCondition', params).then(async json => {
           const jobId = json.conditionresponse.jobid
@@ -2431,10 +2434,10 @@ export default {
     createScalePolicy (action, name, conditionIds, duration, quiettime) {
       return new Promise((resolve, reject) => {
         const params = {
-          name: name,
-          action: action,
-          duration: duration,
-          quiettime: quiettime,
+          name,
+          action,
+          duration,
+          quiettime,
           conditionids: conditionIds
         }
         postAPI('createAutoScalePolicy', params).then(async json => {
@@ -2727,8 +2730,8 @@ export default {
         // step 6: select network
         if (this.zone.networktype !== 'Basic') {
           if (this.nicToNetworkSelection && this.nicToNetworkSelection.length > 0) {
-            for (var j in this.nicToNetworkSelection) {
-              var nicNetwork = this.nicToNetworkSelection[j]
+            for (const j in this.nicToNetworkSelection) {
+              const nicNetwork = this.nicToNetworkSelection[j]
               createVmGroupData['nicnetworklist[' + j + '].nic'] = nicNetwork.nic
               createVmGroupData['nicnetworklist[' + j + '].network'] = nicNetwork.network
             }
@@ -2770,7 +2773,7 @@ export default {
           Object.entries(createVmGroupData).filter(([key, value]) => value !== undefined))
 
         const createVmGroupUserDataDetails = {}
-        var idx = 0
+        let idx = 0
         if (this.templateUserDataValues) {
           for (const [key, value] of Object.entries(this.templateUserDataValues)) {
             createVmGroupUserDataDetails['userdatadetails[' + idx + '].' + `${key}`] = value
@@ -2796,7 +2799,7 @@ export default {
           this.setStepStatus(STATUS_FINISH)
           this.currentStep++
           this.addStepDetail('message.creating.autoscale.scaleup.conditions', 'createScaleUpConditions', policy.name)
-          var scaleUpConditionIds = []
+          const scaleUpConditionIds = []
           for (const condition of policy.conditions) {
             const newCondition = await this.createCondition(condition.counterid, condition.relationaloperator, condition.threshold)
             scaleUpConditionIds.push(newCondition.id)
@@ -2814,7 +2817,7 @@ export default {
           this.setStepStatus(STATUS_FINISH)
           this.currentStep++
           this.addStepDetail('message.creating.autoscale.scaledown.conditions', 'createScaleDownConditions', policy.name)
-          var scaleDownConditionIds = []
+          const scaleDownConditionIds = []
           for (const condition of policy.conditions) {
             const newCondition = await this.createCondition(condition.counterid, condition.relationaloperator, condition.threshold)
             scaleDownConditionIds.push(newCondition.id)
@@ -2900,7 +2903,7 @@ export default {
         getAPI(param.list, args).then(json => {
           const zoneResponse = (json.listzonesresponse.zone || []).filter(item => item.securitygroupsenabled === false)
           if (listZoneAllow && listZoneAllow.length > 0) {
-            zoneResponse.map(zone => {
+            zoneResponse.forEach(zone => {
               if (listZoneAllow.includes(zone.id)) {
                 this.zones.push(zone)
               }
@@ -3109,23 +3112,23 @@ export default {
       this.userDataParams = []
     },
     fetchTemplateNics (template) {
-      var nics = []
+      const nics = []
       this.nicToNetworkSelection = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('network-'))
-        for (var key of keys) {
-          var propertyMap = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const propertyMap = JSON.parse(template.deployasisdetails[key])
           nics.push(propertyMap)
         }
         nics.sort(function (a, b) {
           return a.InstanceID - b.InstanceID
         })
         if (this.options.networks && this.options.networks.length > 0) {
-          for (var i = 0; i < nics.length; ++i) {
-            var nic = nics[i]
+          for (let i = 0; i < nics.length; ++i) {
+            const nic = nics[i]
             nic.id = nic.InstanceID
-            var network = this.options.networks[Math.min(i, this.options.networks.length - 1)]
+            const network = this.options.networks[Math.min(i, this.options.networks.length - 1)]
             nic.selectednetworkid = network.id
             nic.selectednetworkname = network.name
             this.nicToNetworkSelection.push({ nic: nic.id, network: network.id })
@@ -3145,12 +3148,12 @@ export default {
       return result
     },
     fetchTemplateProperties (template) {
-      var properties = []
+      const properties = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('property-'))
-        for (var key of keys) {
-          var propertyMap = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const propertyMap = JSON.parse(template.deployasisdetails[key])
           properties.push(propertyMap)
         }
         properties.sort(function (a, b) {
@@ -3160,19 +3163,19 @@ export default {
       return this.groupBy(properties, 'category')
     },
     fetchTemplateConfigurations (template) {
-      var configurations = []
+      const configurations = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         keys = keys.filter(key => key.startsWith('configuration-'))
-        for (var key of keys) {
-          var configuration = JSON.parse(template.deployasisdetails[key])
+        for (const key of keys) {
+          const configuration = JSON.parse(template.deployasisdetails[key])
           configuration.name = configuration.label
           configuration.displaytext = configuration.label
           configuration.iscustomized = true
           configuration.cpunumber = 0
           configuration.cpuspeed = 0
           configuration.memory = 0
-          for (var hardwareItem of configuration.hardwareItems) {
+          for (const hardwareItem of configuration.hardwareItems) {
             if (hardwareItem.resourceType === 'Processor') {
               configuration.cpunumber = hardwareItem.virtualQuantity
               configuration.cpuspeed = hardwareItem.reservation
@@ -3189,13 +3192,13 @@ export default {
       return configurations
     },
     fetchTemplateLicenses (template) {
-      var licenses = []
+      const licenses = []
       if (template && template.deployasisdetails && Object.keys(template.deployasisdetails).length > 0) {
-        var keys = Object.keys(template.deployasisdetails)
+        let keys = Object.keys(template.deployasisdetails)
         const prefix = /eula-\d-/
         keys = keys.filter(key => key.startsWith('eula-')).sort()
-        for (var key of keys) {
-          var license = {
+        for (const key of keys) {
+          const license = {
             id: this.escapePropertyKey(key.replace(' ', '-')),
             name: key.replace(prefix, ''),
             text: template.deployasisdetails[key]
@@ -3260,7 +3263,7 @@ export default {
     },
     updateTemplateConfigurationOfferingDetails (offeringId) {
       this.rootDiskSizeFixed = 0
-      var offering = this.serviceOffering
+      let offering = this.serviceOffering
       if (!offering || offering.id !== offeringId) {
         offering = _.find(this.options.serviceOfferings, (option) => option.id === offeringId)
       }

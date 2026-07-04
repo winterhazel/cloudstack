@@ -402,7 +402,7 @@ export default {
       }
 
       keys = Object.keys(data[0])
-      for (var i = 1; i < data.length; ++i) {
+      for (let i = 1; i < data.length; ++i) {
         const rowKeys = Object.keys(data[i])
         keys = keys.concat(rowKeys.filter(k => !keys.includes(k)))
       }
@@ -419,7 +419,7 @@ export default {
           }
 
           if (key === 'tags') {
-            var tags = '"'
+            let tags = '"'
             if (item[key].length > 0) {
               item[key].forEach(tag => {
                 tags += '(' + tag.key + ',' + tag.value + ')'

@@ -755,9 +755,9 @@ export default {
       this.fetchData()
     })
     eventBus.on('update-bulk-job-status', (args) => {
-      var { items, action } = args
+      const { items, action } = args
       for (const item of items) {
-        this.$store.getters.headerNotices.map(function (j) {
+        this.$store.getters.headerNotices.forEach(function (j) {
           if (j.jobid === item.jobid) {
             j.bulkAction = action
           }
@@ -766,16 +766,12 @@ export default {
     })
 
     eventBus.on('update-resource-state', (args) => {
-      var {
-        selectedItems,
-        resource,
-        state,
-        jobid
-      } = args
+      const { selectedItems, state, jobid } = args
+      let { resource } = args
       if (selectedItems.length === 0) {
         return
       }
-      var tempResource = []
+      let tempResource = []
       this.selectedItems = selectedItems
       if (selectedItems && resource) {
         if (resource.includes(',')) {
@@ -784,8 +780,8 @@ export default {
         } else {
           tempResource.push(resource)
         }
-        for (var r = 0; r < tempResource.length; r++) {
-          var objIndex = 0
+        for (let r = 0; r < tempResource.length; r++) {
+          let objIndex = 0
           if (this.$route.path.includes('/template') || this.$route.path.includes('/iso')) {
             objIndex = selectedItems.findIndex(obj => (obj.zoneid === tempResource[r]))
           } else if (this.$route.path.includes('/router')) {
@@ -872,7 +868,7 @@ export default {
             key: tagKey,
             value: tagValue,
             isTag: true,
-            tagIdx: tagIdx
+            tagIdx
           })
         }
       }
@@ -886,7 +882,7 @@ export default {
       return this.selectedRowKeys.length > 0
     },
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       if (this.device !== 'desktop') {
         sizes.unshift(10)
       }
@@ -1065,7 +1061,7 @@ export default {
       }
 
       const customRender = {}
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         let key = columnKey
         let title = columnKey === 'cidr' && this.columnKeys.includes('ip6cidr') ? 'ipv4.cidr' : columnKey
         if (typeof columnKey === 'object') {
@@ -1080,7 +1076,7 @@ export default {
           }
         }
         this.columns.push({
-          key: key,
+          key,
           title: this.$t('label.' + String(title).toLowerCase()),
           dataIndex: key,
           sorter: (a, b) => genericCompare(a[key] || '', b[key] || '')
@@ -1188,15 +1184,15 @@ export default {
       }
 
       callAPI(this.apiName, params).then(json => {
-        var responseName
-        var objectName
+        let responseName
+        let objectName
         for (const key in json) {
           if (key.includes('response')) {
             responseName = key
             break
           }
         }
-        var apiItemCount = 0
+        let apiItemCount = 0
         for (const key in json[responseName]) {
           if (key === 'count') {
             apiItemCount = json[responseName].count
@@ -1229,7 +1225,7 @@ export default {
 
         if (this.apiName === 'listProjects' && this.items.length > 0) {
           this.$store.commit('RELOAD_ALL_PROJECTS', this.items)
-          this.columns.map(col => {
+          this.columns.forEach(col => {
             if (col.title === 'Account') {
               col.title = this.$t('label.project.owner')
             }
@@ -1237,7 +1233,7 @@ export default {
         }
 
         if (this.apiName === 'listAnnotations') {
-          this.columns.map(col => {
+          this.columns.forEach(col => {
             if (col.title === 'label.entityid') {
               col.title = this.$t('label.annotation.entity')
             } else if (col.title === 'label.entitytype') {
@@ -1378,7 +1374,7 @@ export default {
       this.resource = action.resource
       this.actionConfirmText = ''
       this.$emit('change-resource', this.resource)
-      var paramFields = this.currentAction.params
+      const paramFields = this.currentAction.params
       paramFields.sort(function (a, b) {
         if (a.name === 'name' && b.name !== 'name') { return -1 }
         if (a.name !== 'name' && b.name === 'name') { return -1 }
@@ -1420,7 +1416,7 @@ export default {
     getArgs (action, isGroupAction, paramFields) {
       const self = this
       if ('args' in action) {
-        var args = action.args
+        let args = action.args
         if (typeof action.args === 'function') {
           args = action.args(action.resource, this.$store.getters, isGroupAction)
         }
@@ -1451,7 +1447,7 @@ export default {
     },
     getFilters (action, isGroupAction, paramFields) {
       if ('filters' in action) {
-        var filters = action.filters
+        let filters = action.filters
         if (typeof action.filters === 'function') {
           filters = action.filters(action.resource, this.$store.getters, isGroupAction)
         }
@@ -1487,21 +1483,21 @@ export default {
       if (this.currentAction.mapping && param.name in this.currentAction.mapping && !this.currentAction.mapping[param.name].api) {
         return
       }
-      var paramName = param.name
-      var extractedParamName = paramName.replace('ids', '').replace('id', '').toLowerCase()
+      const paramName = param.name
+      let extractedParamName = paramName.replace('ids', '').replace('id', '').toLowerCase()
       if (extractedParamName.endsWith('ory')) {
         extractedParamName = extractedParamName.slice(0, -3) + 'orie'
       }
-      var params = { listall: true }
+      let params = { listall: true }
       for (const filter in filters) {
         params[filter] = filters[filter]
       }
       const possibleName = 'list' + extractedParamName + 's'
-      var showIcon = false
+      let showIcon = false
       if (this.$showIcon(extractedParamName)) {
         showIcon = true
       }
-      var possibleApi
+      let possibleApi
       if (this.currentAction.mapping && param.name in this.currentAction.mapping && this.currentAction.mapping[param.name].api) {
         possibleApi = this.currentAction.mapping[param.name].api
         if (this.currentAction.mapping[param.name].params) {
@@ -1632,7 +1628,7 @@ export default {
             resolve(true)
           },
           loadingMessage: `${this.$t(action.label)} - ${resourceName}`,
-          showLoading: showLoading,
+          showLoading,
           catchMessage: this.$t('error.fetching.async.job.result'),
           action,
           bulkAction: `${this.selectedItems.length > 0}` && this.showGroupActionModal,
@@ -1641,7 +1637,7 @@ export default {
       })
     },
     fillEditFormFieldValues () {
-      this.currentAction.paramFields.map(field => {
+      this.currentAction.paramFields.forEach(field => {
         let fieldValue = null
         let fieldName = null
         if (field.type === 'list' || field.name === 'account') {
@@ -1705,12 +1701,12 @@ export default {
           const values = toRaw(this.form)
           this.actionLoading = true
           const itemsNameMap = {}
-          this.items.map(x => {
+          this.items.forEach(x => {
             itemsNameMap[x.id] = x.name || x.displaytext || x.id
           })
           const paramsList = this.currentAction.groupMap(this.selectedRowKeys, values, this.items)
           for (const params of paramsList) {
-            var resourceName = itemsNameMap[params.id]
+            const resourceName = itemsNameMap[params.id]
             // Using a method for this since it's an async call and don't want wrong prarms to be passed
             this.promises.push(this.callGroupApi(params, resourceName))
           }
@@ -1748,7 +1744,7 @@ export default {
       })
     },
     getDataIdentifier (params) {
-      var dataIdentifier = ''
+      let dataIdentifier = ''
       dataIdentifier = params.id || params.username || params.name || params.vmsnapshotid || params.ids
       return dataIdentifier
     },
@@ -1913,11 +1909,11 @@ export default {
         const resourceName = params.displayname || params.displaytext || params.name || params.hostname || params.username ||
           params.ipaddress || params.virtualmachinename || this.resource.name || this.resource.ipaddress || this.resource.id
 
-        var hasJobId = false
+        let hasJobId = false
         this.actionLoading = true
         const args = [action.api, params]
         postAPI(...args).then(json => {
-          var response = this.handleResponse(json, resourceName, this.getDataIdentifier(params), action)
+          const response = this.handleResponse(json, resourceName, this.getDataIdentifier(params), action)
           if (!response) {
             this.fetchData()
             this.closeAction()

@@ -226,24 +226,24 @@ export default {
     getNewImage (img) {
       return new Promise((resolve, reject) => {
         img.onload = function () {
-          var canvas = document.createElement('canvas')
-          var ctx = canvas.getContext('2d')
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
           ctx.imageSmoothingQuality = 'high'
           canvas.height = 52
           canvas.width = 52
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-          var base64Canvas = canvas.toDataURL('image/png', 1).split(';base64,')[1]
+          const base64Canvas = canvas.toDataURL('image/png', 1).split(';base64,')[1]
           resolve(base64Canvas)
           return base64Canvas
         }
       })
     },
     async uploadIcon () {
-      var base64Canvas = ''
+      let base64Canvas = ''
       const resourceType = this.$getResourceType()
       const resourceid = this.resource.id
       if (this.options.img) {
-        var newImage = new Image()
+        const newImage = new Image()
         newImage.src = await this.getResourceIcon()
         base64Canvas = await this.getNewImage(newImage)
       }

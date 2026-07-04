@@ -227,7 +227,7 @@ export default {
       })
     },
     removeIpRange (id) {
-      postAPI('deleteVlanIpRange', { id: id }).then(json => {
+      postAPI('deleteVlanIpRange', { id }).then(json => {
         const message = `${this.$t('message.success.delete')} ${this.$t('label.ip.range')}`
         this.$message.success(message)
       }).catch((error) => {
@@ -264,10 +264,10 @@ export default {
 
         this.componentLoading = true
         this.showUpdateForm = false
-        var params = {
+        const params = {
           id: this.selectedItem.id
         }
-        var ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
+        const ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
         for (const key of ipRangeKeys) {
           params[key] = values[key]
         }

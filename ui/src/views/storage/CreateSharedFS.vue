@@ -297,7 +297,7 @@ export default {
       this.zoneLoading = true
       const params = { showicon: true }
       getAPI('listZones', params).then(json => {
-        var listZones = json.listzonesresponse.zone
+        let listZones = json.listzonesresponse.zone
         if (listZones) {
           this.zones = []
           listZones = listZones.filter(x => (x.allocationstate === 'Enabled' && x.networktype === 'Advanced' && x.securitygroupsenabled === false))
@@ -320,7 +320,7 @@ export default {
     fetchServiceOfferings () {
       this.serviceofferingLoading = true
       this.serviceofferings = []
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         listall: true,
         domainid: this.owner.domainid
@@ -331,9 +331,9 @@ export default {
         params.account = this.owner.account
       }
       getAPI('listServiceOfferings', params).then(json => {
-        var items = json.listserviceofferingsresponse.serviceoffering || []
+        const items = json.listserviceofferingsresponse.serviceoffering || []
         if (items != null) {
-          for (var i = 0; i < items.length; i++) {
+          for (let i = 0; i < items.length; i++) {
             if (items[i].iscustomized === false && items[i].offerha === true &&
                 items[i].cpunumber >= this.minCpu && items[i].memory >= this.minMemory) {
               this.serviceofferings.push(items[i])
@@ -348,7 +348,7 @@ export default {
     fetchDiskOfferings () {
       this.diskofferingLoading = true
       this.form.diskofferingid = null
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         listall: true,
         domainid: this.owner.domainid
@@ -370,7 +370,7 @@ export default {
     fetchNetworks () {
       this.networkLoading = true
       this.form.networkid = null
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         canusefordeploy: true,
         domainid: this.owner.domainid
@@ -402,7 +402,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           name: values.name,
           description: values.description,
           zoneid: values.zoneid,

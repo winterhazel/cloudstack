@@ -47,7 +47,7 @@ import quota from '@/config/section/plugin/quota'
 import cloudian from '@/config/section/plugin/cloudian'
 
 function generateRouterMap (section) {
-  var map = {
+  const map = {
     name: section.name,
     path: '/' + section.name,
     hidden: 'show' in section ? !section.show() : section.hidden,
@@ -68,8 +68,8 @@ function generateRouterMap (section) {
       if ('show' in child && !child.show()) {
         continue
       }
-      var component = child.component ? child.component : shallowRef(AutogenView)
-      var route = {
+      const component = child.component ? child.component : shallowRef(AutogenView)
+      const route = {
         name: child.name,
         path: '/' + child.name,
         hidden: child.hidden,
@@ -91,7 +91,7 @@ function generateRouterMap (section) {
           tabs: child.tabs,
           customParamHandler: child.customParamHandler
         },
-        component: component,
+        component,
         hideChildrenInMenu: true,
         children: [
           {
@@ -111,7 +111,7 @@ function generateRouterMap (section) {
               tabs: child.tabs,
               actions: child.actions ? child.actions : []
             },
-            component: component
+            component
           }
         ]
       }
@@ -276,7 +276,7 @@ export function asyncRouterMap () {
 
   const plugins = vueProps.$config.plugins
   if (plugins && plugins.length > 0) {
-    plugins.map(plugin => {
+    plugins.forEach(plugin => {
       if (!plugin.isExternalLink && plugin.path) {
         routerMap[0].children.push({
           path: '/plugins/' + plugin.name,

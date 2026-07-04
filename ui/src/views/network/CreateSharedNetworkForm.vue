@@ -685,7 +685,7 @@ export default {
       }
       this.formPhysicalNetworkLoading = true
       getAPI('listPhysicalNetworks', params).then(json => {
-        var networks = json.listphysicalnetworksresponse.physicalnetwork
+        const networks = json.listphysicalnetworksresponse.physicalnetwork
         if (this.arrayHasItems(networks)) {
           for (const network of networks) {
             promises.push(this.addPhysicalNetworkForGuestTrafficType(network))
@@ -715,7 +715,7 @@ export default {
       params.physicalnetworkid = physicalNetwork.id
       return new Promise((resolve, reject) => {
         getAPI('listTrafficTypes', params).then(json => {
-          var trafficTypes = json.listtraffictypesresponse.traffictype
+          const trafficTypes = json.listtraffictypesresponse.traffictype
           if (this.arrayHasItems(trafficTypes)) {
             for (const type of trafficTypes) {
               if (type.traffictype === 'Guest' && physicalNetwork.isolationmethods !== 'NSX') {
@@ -775,7 +775,7 @@ export default {
         return
       }
       this.networkOfferingLoading = true
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         state: 'Enabled'
       }
@@ -835,7 +835,7 @@ export default {
         return
       }
       this.networkLoading = true
-      var params = {
+      const params = {
         zoneid: this.selectedZone.id,
         networkfilter: 'Account'
       }
@@ -864,12 +864,13 @@ export default {
         }
         default:
         {
+          // intentionally empty
         }
       }
       this.handleNetworkChange(null)
       this.networks = []
       getAPI('listNetworks', params).then(json => {
-        var networks = json.listnetworksresponse.network || []
+        const networks = json.listnetworksresponse.network || []
         for (const network of networks) {
           if (network.type === 'Isolated' || network.type === 'L2') {
             this.networks.push(network)
@@ -885,16 +886,16 @@ export default {
       this.selectedNetwork = selectedNetwork
     },
     networkServiceProviderMap (id) {
-      getAPI('listNetworkOfferings', { id: id }).then(json => {
-        var networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
+      getAPI('listNetworkOfferings', { id }).then(json => {
+        const networkOffering = json.listnetworkofferingsresponse.networkoffering[0]
         const services = networkOffering.service
         this.selectedServiceProviderMap = {}
         for (const svc of services) {
           this.selectedServiceProviderMap[svc.name] = svc.provider[0].name
         }
-        var providers = Object.values(this.selectedServiceProviderMap)
+        const providers = Object.values(this.selectedServiceProviderMap)
         this.isVirtualRouterForAtLeastOneService = false
-        var self = this
+        const self = this
         providers.forEach(function (prvdr, idx) {
           if (prvdr === 'VirtualRouter') {
             self.isVirtualRouterForAtLeastOneService = true
@@ -1013,7 +1014,7 @@ export default {
           return
         }
         this.actionLoading = true
-        var params = {
+        const params = {
           zoneId: this.selectedZone.id,
           name: values.name,
           displayText: values.displaytext,
@@ -1056,7 +1057,7 @@ export default {
           params.acltype = 'account' // acl type is "account" for regular users
         }
         // IPv4 (begin)
-        var usefulFields = ['gateway', 'netmask', 'startip', 'endip', 'routerip', 'dns1', 'dns2']
+        let usefulFields = ['gateway', 'netmask', 'startip', 'endip', 'routerip', 'dns1', 'dns2']
         // IPv4 (end)
 
         // IPv6 (begin)
@@ -1065,12 +1066,12 @@ export default {
 
         usefulFields.push('networkdomain')
 
-        for (var field of usefulFields) {
+        for (const field of usefulFields) {
           if (this.isValidTextValueForKey(values, field)) {
             params[field] = values[field]
           }
         }
-        var hideipaddressusage = this.parseBooleanValueForKey(values, 'hideipaddressusage')
+        const hideipaddressusage = this.parseBooleanValueForKey(values, 'hideipaddressusage')
         if (hideipaddressusage) {
           params.hideipaddressusage = true
         }

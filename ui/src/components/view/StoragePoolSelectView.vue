@@ -198,7 +198,7 @@ export default {
           this.handleStoragePoolsFetchComplete()
         })
       } else {
-        var params = {
+        const params = {
           zoneid: this.resource.zoneid,
           keyword: this.searchQuery,
           page: this.page,

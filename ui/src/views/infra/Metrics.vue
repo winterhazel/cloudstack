@@ -116,7 +116,7 @@ export default {
   },
   methods: {
     fetchDbMetrics () {
-      var metrics
+      let metrics
       getAPI('listDbMetrics').then(json => {
         metrics = this.mapToArray(json.listdbmetricsresponse.dbMetrics)
         this.dbMetrics = metrics
@@ -124,7 +124,7 @@ export default {
       return metrics
     },
     fetchUsageMetrics () {
-      var metrics
+      let metrics
       getAPI('listUsageServerMetrics').then(json => {
         metrics = this.mapToArray(json.listusageservermetricsresponse.usageMetrics)
         this.usageMetrics = metrics
@@ -133,14 +133,14 @@ export default {
     },
     mapToArray (map) {
       /* eslint-disable no-unused-vars */
-      var array = []
-      for (var key in map) {
+      const array = []
+      for (const key in map) {
         if (key === 'replicas') {
         // we don't display replica's at this stage as usually they are not used,
         // only some people experimenting with galera use them.
         } else if (key === 'dbloadaverages') {
           map[key].forEach(function (value, i) {
-            var metric = {}
+            const metric = {}
             if (i === 0) {
               metric.name = 'queries/second over the latest stats collection period'
             } else {
@@ -150,22 +150,22 @@ export default {
             array.push(metric)
           })
         } else if (key === 'connections') {
-          var metric = {}
+          const metric = {}
           metric.name = 'connection attempts since start'
           metric.value = map[key]
           array.push(metric)
         } else if (key === 'uptime') {
-          metric = {}
+          const metric = {}
           metric.name = 'uptime in seconds'
           metric.value = map[key]
           array.push(metric)
         } else if (key === 'collectiontime' || key === 'lastheartbeat' || key === 'lastsuccessfuljob') {
-          metric = {}
+          const metric = {}
           metric.name = key
           metric.value = this.$toLocaleDate(map[key]) // needs a conversion
           array.push(metric)
         } else {
-          metric = {}
+          const metric = {}
           metric.name = key
           metric.value = map[key]
           array.push(metric)

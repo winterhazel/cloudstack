@@ -397,7 +397,7 @@ export default {
     }
   },
   data () {
-    var selectedColumnKeys = ['account', 'domain', 'usageType', 'usageid', 'startdate', 'enddate', 'rawusage', 'description']
+    const selectedColumnKeys = ['account', 'domain', 'usageType', 'usageid', 'startdate', 'enddate', 'rawusage', 'description']
     return {
       serverMetricsLoading: true,
       serverStats: {},
@@ -408,7 +408,7 @@ export default {
       columnKeys: [...selectedColumnKeys,
         'zone', 'virtualmachinename', 'cpunumber', 'cpuspeed', 'memory', 'project', 'templateid', 'offeringid', 'size', 'type', 'vpcname'
       ],
-      selectedColumnKeys: selectedColumnKeys,
+      selectedColumnKeys,
       selectedColumns: [],
       columns: [],
       page: 1,
@@ -591,7 +591,7 @@ export default {
     getParams (page, pageSize) {
       const formRaw = toRaw(this.form)
       const values = this.handleRemoveFields(formRaw)
-      var params = {
+      const params = {
         page: page || this.page,
         pagesize: pageSize || this.pageSize
       }
@@ -624,7 +624,7 @@ export default {
     listUsageRecords () {
       this.tableLoading = true
       this.loading = true
-      var params = this.getParams()
+      const params = this.getParams()
       if (!(params.startdate && params.enddate)) {
         this.tableLoading = false
         this.loading = false
@@ -635,7 +635,7 @@ export default {
           this.usageRecords = json?.listusagerecordsresponse?.usagerecord || []
           this.totalUsageRecords = json?.listusagerecordsresponse?.count || 0
           let count = 1
-          for (var record of this.usageRecords) {
+          for (const record of this.usageRecords) {
             // Set id to ensure a unique value of rowKey to avoid duplicates
             record.id = count++
           }
@@ -661,7 +661,7 @@ export default {
             }
           })]
           this.usageTypeMap = {}
-          for (var usageType of this.usageTypes) {
+          for (const usageType of this.usageTypes) {
             this.usageTypeMap[usageType.id] = usageType.value
           }
         }
@@ -688,11 +688,11 @@ export default {
     },
     updateColumns () {
       this.columns = []
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         if (!this.selectedColumnKeys.includes(columnKey)) continue
-        var title
-        var dataIndex = columnKey
-        var resizable = true
+        let title
+        let dataIndex = columnKey
+        const resizable = true
         switch (columnKey) {
           case 'templateid':
             title = this.$t('label.templatename')
@@ -715,9 +715,9 @@ export default {
         }
         this.columns.push({
           key: columnKey,
-          title: title,
-          dataIndex: dataIndex,
-          resizable: resizable
+          title,
+          dataIndex,
+          resizable
         })
       }
       this.columns.push({
@@ -737,7 +737,7 @@ export default {
         this.downloadPercent = 0
         this.downloadStatus = 'active'
         this.loading = true
-        var params = this.getParams(1, 0) // to get count
+        const params = this.getParams(1, 0) // to get count
         getAPI('listUsageRecords', params).then(json => {
           if (Object.getOwnPropertyNames(json.listusagerecordsresponse).length === 0 || json.listusagerecordsresponse.count === 0) {
             this.$notifyError({
@@ -748,14 +748,14 @@ export default {
             this.downloadStatus = 'exception'
             this.downloadModal = false
           } else {
-            var totalRecords = json.listusagerecordsresponse.count
+            const totalRecords = json.listusagerecordsresponse.count
             this.downloadTotalRecords = totalRecords
-            var pageSize = 500
-            var totalPages = Math.ceil(totalRecords / pageSize)
-            var records = []
-            var promises = []
-            for (var i = 1; i <= totalPages; i++) {
-              var p = this.fetchUsageRecords({ ...params, page: i, pagesize: pageSize }).then(data => {
+            const pageSize = 500
+            const totalPages = Math.ceil(totalRecords / pageSize)
+            let records = []
+            const promises = []
+            for (let i = 1; i <= totalPages; i++) {
+              const p = this.fetchUsageRecords({ ...params, page: i, pagesize: pageSize }).then(data => {
                 records = records.concat(data)
                 this.downloadPercent = Math.round((records.length / totalRecords) * 100)
                 this.downloadedRecords += records.length
@@ -781,7 +781,7 @@ export default {
       })
     },
     downloadCsv (records, filename) {
-      var csv = toCsv({ keys: this.usageRecordKeys, data: records })
+      const csv = toCsv({ keys: this.usageRecordKeys, data: records })
       const hiddenElement = document.createElement('a')
       hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv)
       hiddenElement.target = '_blank'
@@ -801,7 +801,7 @@ export default {
     getAllUsageRecordColumns () {
       getAPI('listApis', { name: 'listUsageRecords' }).then(json => {
         if (json && json.listapisresponse && json.listapisresponse.api) {
-          var apiResponse = json.listapisresponse.api.filter(x => x.name === 'listUsageRecords')[0].response
+          const apiResponse = json.listapisresponse.api.filter(x => x.name === 'listUsageRecords')[0].response
           this.usageRecordKeys = []
           apiResponse.forEach(x => {
             if (x && x.name) {
@@ -825,7 +825,7 @@ export default {
       })
     },
     purgeUsageRecords () {
-      var params = {
+      const params = {
         interval: this.purgeDays
       }
       postAPI('removeRawUsageRecords', params).then(json => {

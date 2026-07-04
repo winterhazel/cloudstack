@@ -101,7 +101,7 @@ export default {
   },
   computed: {
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       return [...new Set(sizes)].sort(function (a, b) {
         return a - b
       }).map(String)

@@ -90,7 +90,7 @@ export default {
   },
   computed: {
     pageSizeOptions () {
-      var sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
+      const sizes = [20, 50, 100, 200, this.$store.getters.defaultListViewPageSize]
       if (this.device !== 'desktop') {
         sizes.unshift(10)
       }
@@ -160,7 +160,7 @@ export default {
     },
     updateColumns () {
       this.columns = []
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         if (!this.selectedColumnKeys.includes(columnKey)) continue
         this.columns.push({
           key: columnKey,

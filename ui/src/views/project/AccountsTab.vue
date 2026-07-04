@@ -253,7 +253,7 @@ export default {
       this.updateProject(record, params, title, loading)
     },
     promoteAccount (record) {
-      var title = this.$t('label.make.project.owner')
+      let title = this.$t('label.make.project.owner')
       const loading = this.$message.loading(title + `${this.$t('label.in.progress.for')} ` + record.account, 0)
       const params = {}
 
@@ -270,7 +270,7 @@ export default {
       this.updateProject(record, params, title, loading)
     },
     demoteAccount (record) {
-      var title = this.$t('label.demote.project.owner')
+      let title = this.$t('label.demote.project.owner')
       const loading = this.$message.loading(title + `${this.$t('label.in.progress.for')} ` + record.account, 0)
       const params = {}
       if (record.userid) {

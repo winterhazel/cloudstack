@@ -36,7 +36,7 @@ export default {
       permission: ['listNetworks'],
       resourceType: 'Network',
       columns: () => {
-        var fields = ['name', 'state', 'type', 'vpcname', 'cidr', 'ip6cidr', 'broadcasturi', 'domainpath']
+        let fields = ['name', 'state', 'type', 'vpcname', 'cidr', 'ip6cidr', 'broadcasturi', 'domainpath']
         if (!isAdmin()) {
           fields = fields.filter(function (e) { return e !== 'broadcasturi' })
         }
@@ -173,7 +173,7 @@ export default {
               (record.type === 'Shared' && record.specifyvlan && !['Admin'].includes(user.userInfo.roletype))
           },
           args: (record, store, isGroupAction) => {
-            var fields = []
+            const fields = []
             if (isGroupAction || record.vpcid == null) {
               fields.push('cleanup')
             }
@@ -231,7 +231,7 @@ export default {
       permission: ['listVPCs'],
       resourceType: 'Vpc',
       columns: () => {
-        var fields = ['name', 'state', 'displaytext', 'cidr', 'account']
+        const fields = ['name', 'state', 'displaytext', 'cidr', 'account']
         if (store.getters.listAllProjects) {
           fields.push('project')
         }
@@ -297,7 +297,7 @@ export default {
           message: (record) => { return record.redundantvpcrouter ? 'message.restart.vpc' : 'message.restart.vpc.remark' },
           dataView: true,
           args: (record) => {
-            var fields = ['cleanup']
+            const fields = ['cleanup']
             if (!record.redundantvpcrouter) {
               fields.push('makeredundant')
             }
@@ -408,7 +408,7 @@ export default {
       },
       searchFilters: ['name', 'zoneid', 'domainid', 'account', 'groupid', 'tags'],
       details: () => {
-        var fields = ['name', 'displayname', 'id', 'state', 'ipaddress', 'ip6address', 'templatename', 'ostypename',
+        const fields = ['name', 'displayname', 'id', 'state', 'ipaddress', 'ip6address', 'templatename', 'ostypename',
           'serviceofferingname', 'isdynamicallyscalable', 'haenable', 'hypervisor', 'boottype', 'bootmode', 'account',
           'domain', 'zonename', 'userdataid', 'userdataname', 'userdataparams', 'userdatadetails', 'userdatapolicy', 'hostcontrolstate']
         const listZoneHaveSGEnabled = store.getters.zones.filter(zone => zone.securitygroupsenabled === true)
@@ -476,7 +476,7 @@ export default {
           show: (record) => { return ['Running'].includes(record.state) },
           disabled: (record) => { return record.hostcontrolstate === 'Offline' },
           args: (record, store) => {
-            var fields = []
+            const fields = []
             fields.push('forced')
             if (record.hypervisor === 'VMware') {
               if (store.apis.rebootVirtualMachine.params.filter(x => x.name === 'bootintosetup').length > 0) {
@@ -497,8 +497,8 @@ export default {
           dataView: true,
           args: ['virtualmachineid', 'templateid'],
           filters: (record) => {
-            var filters = {}
-            var filterParams = {}
+            const filters = {}
+            const filterParams = {}
             filterParams.hypervisortype = record.hypervisor
             filterParams.zoneid = record.zoneid
             filters.templateid = filterParams
@@ -637,7 +637,7 @@ export default {
           message: 'message.detach.iso.confirm',
           dataView: true,
           args: (record, store) => {
-            var args = ['virtualmachineid']
+            const args = ['virtualmachineid']
             if (record && record.hypervisor && record.hypervisor === 'VMware') {
               args.push('forced')
             }
@@ -777,7 +777,8 @@ export default {
           groupAction: true,
           args: (record, store, group) => {
             return (['Admin'].includes(store.userInfo.roletype) || store.features.allowuserexpungerecovervm)
-              ? ['expunge'] : []
+              ? ['expunge']
+              : []
           },
           popup: true,
           groupMap: (selection, values) => { return selection.map(x => { return { id: x, expunge: values.expunge } }) },
@@ -795,7 +796,7 @@ export default {
       searchFilters: ['ipaddress', 'zoneid', 'account', 'domainid', 'vlanid', 'tags'],
       resourceType: 'PublicIpAddress',
       columns: () => {
-        var fields = ['ipaddress', 'state', 'associatednetworkname', 'vpcname', 'virtualmachinename', 'allocated', 'account']
+        const fields = ['ipaddress', 'state', 'associatednetworkname', 'vpcname', 'virtualmachinename', 'allocated', 'account']
         if (store.getters.listAllProjects) {
           fields.push('project')
         }
@@ -977,7 +978,7 @@ export default {
           docHelp: 'adminguide/networking_and_traffic.html#adding-a-private-gateway-to-a-vpc',
           listView: true,
           args: (record, store) => {
-            var fields = ['vpcid', 'physicalnetworkid', 'vlan', 'ipaddress', 'gateway', 'netmask', 'sourcenatsupported', 'aclid']
+            const fields = ['vpcid', 'physicalnetworkid', 'vlan', 'ipaddress', 'gateway', 'netmask', 'sourcenatsupported', 'aclid']
             if (store.apis.createPrivateGateway.params.filter(x => x.name === 'bypassvlanoverlapcheck').length > 0) {
               fields.push('bypassvlanoverlapcheck')
             }
@@ -1250,7 +1251,7 @@ export default {
       icon: 'lock-outlined',
       permission: ['listVpnCustomerGateways'],
       columns: () => {
-        var fields = ['name', 'gateway', 'cidrlist', 'ipsecpsk', 'account']
+        const fields = ['name', 'gateway', 'cidrlist', 'ipsecpsk', 'account']
         if (store.getters.listAllProjects) {
           fields.push('project')
         }

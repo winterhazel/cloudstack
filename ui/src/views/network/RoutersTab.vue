@@ -121,7 +121,7 @@ export default {
   },
   methods: {
     fetchData () {
-      var params = {
+      const params = {
         listAll: true
       }
       if (this.$route.fullPath.startsWith('/vpc')) {

@@ -176,12 +176,12 @@ export default {
       })
     },
     checkConfigurationAndGetHealthChecks (performFreshChecks) {
-      var params = { name: 'router.health.checks.enabled' }
+      const params = { name: 'router.health.checks.enabled' }
       this.loading = true
       getAPI('listConfigurations', params).then(json => {
         this.routerHealthChecksEnabled = false
         if (json.listconfigurationsresponse.configuration !== null) {
-          var config = json.listconfigurationsresponse.configuration[0]
+          const config = json.listconfigurationsresponse.configuration[0]
           if (config && config.name === params.name) {
             this.routerHealthChecksEnabled = config.value === 'true'
           }
@@ -196,7 +196,7 @@ export default {
       })
     },
     getHealthChecks (performFreshChecks) {
-      var params = { routerid: this.resource.id }
+      const params = { routerid: this.resource.id }
       if (performFreshChecks) {
         params.performfreshchecks = performFreshChecks
       }

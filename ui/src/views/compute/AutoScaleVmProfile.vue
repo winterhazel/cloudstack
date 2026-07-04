@@ -545,13 +545,13 @@ export default {
       if (this.loading) return
       this.loading = true
 
-      var params = {
+      const params = {
         id: this.profileid
       }
-      var i = 0
-      var j = 0
-      for (var index = 0; index < this.allParams.length; index++) {
-        var param = { ...this.allParams[index] }
+      let i = 0
+      let j = 0
+      for (let index = 0; index < this.allParams.length; index++) {
+        const param = { ...this.allParams[index] }
         if (this.counterParams.includes(param.name) && param.name !== paramNameToAdd && param.name !== paramNameToRemove) {
           params['counterparam[' + i + '].name'] = param.name
           params['counterparam[' + i + '].value'] = param.value

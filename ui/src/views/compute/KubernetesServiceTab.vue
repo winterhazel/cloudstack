@@ -387,7 +387,7 @@ export default {
       this.clusterConfigLoading = true
       this.clusterConfig = ''
       if (!this.isObjectEmpty(this.resource)) {
-        var params = {}
+        const params = {}
         params.id = this.resource.id
         getAPI('getKubernetesClusterConfig', params).then(json => {
           const config = json.getkubernetesclusterconfigresponse.clusterconfig
@@ -415,7 +415,7 @@ export default {
       this.versionLoading = true
       if (!this.isObjectEmpty(this.resource) && this.isValidValueForKey(this.resource, 'kubernetesversionid') &&
         this.resource.kubernetesversionid !== '') {
-        var params = {}
+        const params = {}
         params.id = this.resource.kubernetesversionid
         getAPI('listKubernetesSupportedVersions', params).then(json => {
           const versionObjs = json.listkubernetessupportedversionsresponse.kubernetessupportedversion
@@ -436,11 +436,11 @@ export default {
     },
     fetchInstances () {
       this.instanceLoading = true
-      var defaultNodes = this.resource.virtualmachines.filter(x => !x.isexternalnode && !x.isetcdnode)
-      var externalNodes = this.resource.virtualmachines.filter(x => x.isexternalnode)
-      var etcdNodes = this.resource.virtualmachines.filter(x => x.isetcdnode)
+      const defaultNodes = this.resource.virtualmachines.filter(x => !x.isexternalnode && !x.isetcdnode)
+      const externalNodes = this.resource.virtualmachines.filter(x => x.isexternalnode)
+      const etcdNodes = this.resource.virtualmachines.filter(x => x.isetcdnode)
       this.virtualmachines = defaultNodes.concat(externalNodes).concat(etcdNodes)
-      this.virtualmachines.map(x => { x.ipaddress = x.nic[0].ipaddress })
+      this.virtualmachines.forEach(x => { x.ipaddress = x.nic[0].ipaddress })
       this.instanceLoading = false
     },
     fetchNetwork () {
@@ -466,7 +466,7 @@ export default {
         return
       }
       this.networkLoading = true
-      var params = {
+      const params = {
         listAll: true,
         forvirtualnetwork: true
       }
@@ -494,19 +494,19 @@ export default {
     fetchEtcdSshPort () {
       const params = {}
       params.name = 'cloud.kubernetes.etcd.node.start.port'
-      var apiName = 'listConfigurations'
+      const apiName = 'listConfigurations'
       getAPI(apiName, params).then(json => {
         const configResponse = json.listconfigurationsresponse.configuration
         this.etcdSshPort = configResponse[0]?.value
       })
     },
     downloadKubernetesClusterConfig () {
-      var blob = new Blob([this.clusterConfig], { type: 'text/plain' })
-      var filename = 'kube.conf'
+      const blob = new Blob([this.clusterConfig], { type: 'text/plain' })
+      const filename = 'kube.conf'
       if (window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, filename)
       } else {
-        var elem = window.document.createElement('a')
+        const elem = window.document.createElement('a')
         elem.href = window.URL.createObjectURL(blob)
         elem.download = filename
         document.body.appendChild(elem)

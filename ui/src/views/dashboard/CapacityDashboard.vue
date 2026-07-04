@@ -417,15 +417,15 @@ export default {
       return 'normal'
     },
     displayPercentUsedOrAllocated (used, allocated, total) {
-      var value = this.displayAllocatedCompute ? allocated : used
+      const value = this.displayAllocatedCompute ? allocated : used
       return parseFloat(100.0 * value / total)
     },
     displayPercentFormatUsedOrAllocated (used, allocated, total) {
-      var value = this.displayAllocatedCompute ? allocated : used
+      const value = this.displayAllocatedCompute ? allocated : used
       return parseFloat(100.0 * value / total).toFixed(2) + '%'
     },
     displayDataUsedOrAllocated (dataType, used, allocated) {
-      var value = this.displayAllocatedCompute ? allocated : used
+      const value = this.displayAllocatedCompute ? allocated : used
       return this.displayData(dataType, value)
     },
     displayData (dataType, value) {

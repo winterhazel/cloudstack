@@ -80,35 +80,41 @@
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",
-    "@vue/cli": "^4.4.1",
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-plugin-router": "~4.5.0",
-    "@vue/cli-plugin-unit-jest": "~4.5.0",
-    "@vue/cli-plugin-vuex": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
+    "@babel/eslint-parser": "^7.29.7",
+    "@vue/cli": "^5.0.9",
+    "@vue/cli-plugin-babel": "^5.0.9",
+    "@vue/cli-plugin-eslint": "^5.0.9",
+    "@vue/cli-plugin-router": "^5.0.9",
+    "@vue/cli-plugin-unit-jest": "^5.0.9",
+    "@vue/cli-plugin-vuex": "^5.0.9",
+    "@vue/cli-service": "^5.0.9",
     "@vue/compiler-sfc": "^3.2.31",
-    "@vue/eslint-config-standard": "^5.1.2",
+    "@vue/eslint-config-standard": "^8.0.1",
     "@vue/test-utils": "^2.0.0-0",
-    "babel-eslint": "^10.1.0",
     "babel-jest": "^26.6.3",
     "babel-plugin-import": "^1.13.3",
-    "eslint": "^6.7.2",
+    "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "eslint-plugin-vue": "^7.0.0",
+    "eslint-plugin-vue": "^9.33.0",
+    "https-browserify": "^1.0.0",
     "less": "^3.0.4",
     "less-loader": "^5.0.0",
     "nan": "2.18.0",
     "node-gyp": "10.0.1",
+    "path-browserify": "^1.0.1",
+    "postcss": "^8.5.16",
     "sass": "^1.49.9",
     "sass-loader": "^8.0.2",
-    "uglifyjs-webpack-plugin": "^2.2.0",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "terser-webpack-plugin": "^5.6.1",
+    "timers-browserify": "^2.0.12",
+    "url": "^0.11.4",
     "vue-jest": "^5.0.0-0",
     "vue-svg-loader": "^0.17.0-beta.2",
-    "webpack": "^4.46.0"
+    "webpack": "^5.108.4"
   },
   "resolutions": {
     "nan": "2.18.0"
@@ -123,18 +129,19 @@
       "@vue/standard"
     ],
     "parserOptions": {
-      "parser": "babel-eslint"
+      "parser": "@babel/eslint-parser"
     },
     "rules": {
       "generator-star-spacing": "off",
       "no-mixed-operators": 0,
       "vue/max-attributes-per-line": [
-        2,
+        "error",
         {
-          "singleline": 5,
+          "singleline": {
+            "max": 5
+          },
           "multiline": {
-            "max": 1,
-            "allowFirstLine": false
+            "max": 1
           }
         }
       ],
@@ -148,6 +155,10 @@
       "vue/no-use-v-if-with-v-for": 0,
       "vue/html-closing-bracket-newline": 0,
       "vue/no-parsing-error": 0,
+      "vue/multi-word-component-names": 0,
+      "vue/no-useless-template-attributes": 0,
+      "vue/no-reserved-component-names": 0,
+      "vue/no-v-text-v-html-on-component": 0,
       "no-console": 0,
       "no-tabs": 0,
       "quotes": [
@@ -185,11 +196,6 @@
       }
     ]
   },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
   "jest": {
     "testEnvironment": "node"
   },
@@ -197,5 +203,18 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 10"
-  ]
+  ],
+  "allowScripts": {
+    "@apollo/protobufjs@1.2.2": true,
+    "@fortawesome/fontawesome-common-types@6.5.2": true,
+    "@fortawesome/fontawesome-svg-core@6.5.2": true,
+    "@fortawesome/free-brands-svg-icons@6.5.2": true,
+    "@fortawesome/free-solid-svg-icons@6.5.2": true,
+    "core-js@2.6.12": true,
+    "core-js@3.23.3": true,
+    "core-js-pure@3.23.3": true,
+    "deasync@0.1.26": true,
+    "ejs@2.7.4": true,
+    "yorkie@2.0.0": true
+  }
 }

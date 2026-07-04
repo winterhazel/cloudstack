@@ -128,7 +128,7 @@ export default {
         quota: quotaBalance.startquota,
         credit: null
       })
-      credits.map(item => {
+      credits.forEach(item => {
         dataSource.push({
           date: moment(item.updated_on).format(this.pattern),
           quota: null,

@@ -493,7 +493,7 @@ export default {
           expandedKeys.push(parent.id)
           return {
             ...parent,
-            children: children
+            children
           }
         }
         return parent
@@ -541,7 +541,7 @@ export default {
     },
     updateColumns () {
       this.columns = []
-      for (var columnKey of this.columnKeys) {
+      for (const columnKey of this.columnKeys) {
         if (!this.selectedColumnKeys.includes(columnKey)) continue
         this.columns.push({
           key: columnKey,

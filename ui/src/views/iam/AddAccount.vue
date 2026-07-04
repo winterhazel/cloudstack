@@ -254,7 +254,7 @@ export default {
   },
   methods: {
     initForm () {
-      var domId = this.$route.query.domainid || this.$store.getters.userInfo.domainid
+      const domId = this.$route.query.domainid || this.$store.getters.userInfo.domainid
       this.formRef = ref()
       this.form = reactive({
         domainid: domId
@@ -347,9 +347,9 @@ export default {
         listAll: true,
         details: 'min',
         pagesize: 100,
-        page: page
+        page
       }
-      var count
+      let count
       getAPI(apiToCall, params).then(json => {
         const listDomains = json.listdomainsresponse.domain
         count = json.listdomainsresponse.count
@@ -432,7 +432,7 @@ export default {
           })
           const users = response.createaccountresponse.account.user
           if (values.samlenable && users) {
-            for (var i = 0; i < users.length; i++) {
+            for (let i = 0; i < users.length; i++) {
               postAPI('authorizeSamlSso', {
                 enable: values.samlenable,
                 entityid: values.samlentity,

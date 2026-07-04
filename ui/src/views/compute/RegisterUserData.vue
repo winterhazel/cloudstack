@@ -236,7 +236,7 @@ export default {
         }
         console.log(params)
         if (values.params != null && values.params.length > 0) {
-          var userdataparams = values.params.join(',')
+          const userdataparams = values.params.join(',')
           params.params = userdataparams
         }
 

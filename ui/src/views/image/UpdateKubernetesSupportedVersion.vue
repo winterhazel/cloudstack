@@ -95,9 +95,9 @@ export default {
       })
     },
     fetchData () {
-      var selectedState = 0
+      let selectedState = 0
       if (!this.isObjectEmpty(this.resource)) {
-        for (var i = 0; i < this.states.length; ++i) {
+        for (let i = 0; i < this.states.length; ++i) {
           if (this.states[i].id === this.resource.state) {
             selectedState = i
             break

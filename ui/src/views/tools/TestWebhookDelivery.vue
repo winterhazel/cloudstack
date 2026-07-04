@@ -88,8 +88,8 @@ export default {
       if (!this.response.startdate || !this.response.enddate) {
         return ''
       }
-      var start = Date.parse(this.response.startdate)
-      var end = Date.parse(this.response.enddate)
+      const start = Date.parse(this.response.startdate)
+      const end = Date.parse(this.response.enddate)
       return (end - start) + ''
     }
   },

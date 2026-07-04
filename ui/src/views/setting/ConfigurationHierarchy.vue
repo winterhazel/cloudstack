@@ -60,7 +60,7 @@ export default {
   },
   computed: {
     hierarchyExists () {
-      for (var c of this.config) {
+      for (const c of this.config) {
         if (c.children) {
           return true
         }

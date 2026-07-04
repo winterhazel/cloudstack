@@ -1101,7 +1101,7 @@ export default {
         if (json.listconfigurationsresponse.configuration[0].value) {
           vSwitchEnabled = true
         }
-        this.$emit('fieldsChanged', { vSwitchEnabled: vSwitchEnabled })
+        this.$emit('fieldsChanged', { vSwitchEnabled })
       })
     },
     fetchDvSwitchConfig () {
@@ -1110,7 +1110,7 @@ export default {
         if (json.listconfigurationsresponse.configuration[0].value) {
           dvSwitchEnabled = true
         }
-        this.$emit('fieldsChanged', { dvSwitchEnabled: dvSwitchEnabled })
+        this.$emit('fieldsChanged', { dvSwitchEnabled })
       })
     },
     fetchProvider () {
@@ -1146,7 +1146,7 @@ export default {
       this.primaryStorageProviders = []
       getAPI('listStorageProviders', { type: 'primary' }).then(json => {
         this.primaryStorageProviders = json.liststorageprovidersresponse.dataStoreProvider || []
-        this.primaryStorageProviders.map((item, idx) => { this.primaryStorageProviders[idx].id = item.name })
+        this.primaryStorageProviders.forEach((item, idx) => { this.primaryStorageProviders[idx].id = item.name })
       })
     },
     submitLaunchZone () {

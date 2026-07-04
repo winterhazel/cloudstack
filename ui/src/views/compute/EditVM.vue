@@ -292,7 +292,7 @@ export default {
       const params = {}
       params.id = this.resource.serviceofferingid
       params.isrecursive = true
-      var apiName = 'listServiceOfferings'
+      const apiName = 'listServiceOfferings'
       getAPI(apiName, params).then(json => {
         const offerings = json?.listserviceofferingsresponse?.serviceoffering || []
         this.serviceOffering = offerings[0] || {}
@@ -304,7 +304,7 @@ export default {
       params.isrecursive = true
       params.templatefilter = 'all'
       params.isready = true
-      var apiName = 'listTemplates'
+      const apiName = 'listTemplates'
       getAPI(apiName, params).then(json => {
         const templateResponses = json.listtemplatesresponse.template
         this.template = templateResponses[0]
@@ -314,7 +314,7 @@ export default {
       const params = {}
       params.name = 'enable.dynamic.scale.vm'
       params.zoneid = this.resource.zoneid
-      var apiName = 'listConfigurations'
+      const apiName = 'listConfigurations'
       getAPI(apiName, params).then(json => {
         const configResponse = json.listconfigurationsresponse.configuration
         this.dynamicScalingVmConfig = configResponse[0]?.value === 'true'

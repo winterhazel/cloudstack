@@ -22,7 +22,7 @@ function getDefaultLatestKubernetesIsoParams (arch) {
     name: 'v1.33.1-calico-' + arch,
     semanticversion: '1.33.1',
     url: BASE_KUBERNETES_ISO_URL + 'setup-v1.33.1-calico-' + arch + '.iso',
-    arch: arch,
+    arch,
     mincpunumber: 2,
     minmemory: 2048
   }
@@ -53,13 +53,13 @@ export async function getLatestKubernetesIsoParams (arch) {
       const m = h.match(/setup-(?:v)?(\d+\.\d+\.\d+)(?:-calico)?(?:-(x86_64|arm64))?/i)
       return m
         ? {
-          name: h.replace('.iso', ''),
-          semanticversion: m[1],
-          url: new URL(h, BASE_KUBERNETES_ISO_URL).toString(),
-          arch: m[2] || arch,
-          mincpunumber: 2,
-          minmemory: 2048
-        }
+            name: h.replace('.iso', ''),
+            semanticversion: m[1],
+            url: new URL(h, BASE_KUBERNETES_ISO_URL).toString(),
+            arch: m[2] || arch,
+            mincpunumber: 2,
+            minmemory: 2048
+          }
         : null
     }).filter(Boolean)
 

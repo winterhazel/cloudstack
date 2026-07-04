@@ -152,7 +152,7 @@ export default {
         return
       }
       this.instanceLoading = true
-      var params = {
+      const params = {
         id: this.resource.virtualmachineid,
         listall: true
       }
@@ -170,7 +170,7 @@ export default {
         return
       }
       this.volumeLoading = true
-      var params = {
+      const params = {
         id: this.resource.volumeid,
         listsystemvms: 'true',
         listall: true

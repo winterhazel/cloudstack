@@ -122,7 +122,7 @@ export default {
       this.updateNicToNetworkSelection()
     },
     updateNicToNetworkSelection () {
-      var nicToNetworkSelection = []
+      const nicToNetworkSelection = []
       for (const nic of this.nics) {
         if (nic.selectednetworkid && nic.selectednetworkid !== -1) {
           nicToNetworkSelection.push({ nic: nic.id, network: nic.selectednetworkid })

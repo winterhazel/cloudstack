@@ -135,7 +135,7 @@ export default {
   computed: {
     tableSource () {
       return this.items.map(item => {
-        var disk = { ...item, disabled: this.validOfferings[item.id] && this.validOfferings[item.id].length === 0 }
+        const disk = { ...item, disabled: this.validOfferings[item.id] && this.validOfferings[item.id].length === 0 }
         disk.name = `${item.name} (${item.size} GB)`
         return disk
       })
@@ -224,11 +224,11 @@ export default {
     sendValues () {
       const data = {}
       if (this.selectionEnabled) {
-        this.selectedRowKeys.map(x => {
+        this.selectedRowKeys.forEach(x => {
           data[x] = this.values[x]
         })
       } else {
-        for (var x in this.values) {
+        for (const x in this.values) {
           data[x] = this.values[x]
         }
       }

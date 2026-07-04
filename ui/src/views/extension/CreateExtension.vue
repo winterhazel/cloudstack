@@ -139,7 +139,7 @@ export default {
   },
   computed: {
     safeName () {
-      var value = this.form.name
+      const value = this.form.name
       if (!value || value.length === 0) {
         return ''
       }
@@ -178,7 +178,7 @@ export default {
       if (this.pathModified) {
         return
       }
-      var value = this.safeName
+      const value = this.safeName
       if (value.length === 0) {
         this.form.path = undefined
         return
@@ -199,7 +199,7 @@ export default {
         if (values.description) {
           params.description = values.description
         }
-        var path = values.path
+        let path = values.path
         if (!path) {
           path = this.safeName + '.sh'
         }

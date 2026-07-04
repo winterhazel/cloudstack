@@ -115,7 +115,7 @@ export default {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
 
-        var data = {
+        const data = {
           virtualmachineid: this.resource.id,
           name: this.form.name,
           description: this.form.description,

@@ -390,17 +390,17 @@ export default {
     },
     fetchIpv6NetworkOfferingConfiguration () {
       this.ipv6NetworkOfferingEnabled = false
-      var params = { name: 'ipv6.offering.enabled' }
+      const params = { name: 'ipv6.offering.enabled' }
       getAPI('listConfigurations', params).then(json => {
-        var value = json?.listconfigurationsresponse?.configuration?.[0].value || null
+        const value = json?.listconfigurationsresponse?.configuration?.[0].value || null
         this.ipv6NetworkOfferingEnabled = value === 'true'
       })
     },
     fetchRoutedNetworkConfiguration () {
       this.routedNetworkEnabled = false
-      var params = { name: 'routed.network.vpc.enabled' }
+      const params = { name: 'routed.network.vpc.enabled' }
       getAPI('listConfigurations', params).then(json => {
-        var value = json?.listconfigurationsresponse?.configuration?.[0].value || null
+        const value = json?.listconfigurationsresponse?.configuration?.[0].value || null
         this.routedNetworkEnabled = value === 'true'
         if (!this.routedNetworkEnabled) {
           this.networkmodes.pop()
@@ -432,7 +432,7 @@ export default {
       })
     },
     fetchSupportedServiceData () {
-      var services = []
+      let services = []
       if (this.provider === 'NSX') {
         services.push({
           name: 'Dhcp',
@@ -610,10 +610,10 @@ export default {
           })
         }
       }
-      for (var i in services) {
+      for (const i in services) {
         services[i].description = services[i].name
       }
-      var self = this
+      const self = this
       setTimeout(() => {
         self.supportedServices = services
         self.supportedServiceLoading = false
@@ -686,15 +686,15 @@ export default {
       this.formRef.value.validate().then(() => {
         const formRaw = toRaw(this.form)
         const values = this.handleRemoveFields(formRaw)
-        var params = {}
+        const params = {}
         params.name = values.name
         params.displaytext = values.displaytext
         if (values.ispublic !== true) {
-          var domainIndexes = values.domainid
-          var domainId = null
+          const domainIndexes = values.domainid
+          let domainId = null
           if (domainIndexes && domainIndexes.length > 0) {
-            var domainIds = []
-            for (var i = 0; i < domainIndexes.length; i++) {
+            let domainIds = []
+            for (let i = 0; i < domainIndexes.length; i++) {
               domainIds = domainIds.concat(this.domains[domainIndexes[i]].id)
             }
             domainId = domainIds.join(',')
@@ -703,11 +703,11 @@ export default {
             params.domainid = domainId
           }
         }
-        var zoneIndexes = values.zoneid
-        var zoneId = null
+        const zoneIndexes = values.zoneid
+        let zoneId = null
         if (zoneIndexes && zoneIndexes.length > 0) {
-          var zoneIds = []
-          for (var j = 0; j < zoneIndexes.length; j++) {
+          let zoneIds = []
+          for (let j = 0; j < zoneIndexes.length; j++) {
             zoneIds = zoneIds.concat(this.zones[zoneIndexes[j]].id)
           }
           zoneId = zoneIds.join(',')
@@ -734,12 +734,12 @@ export default {
         }
         params.routingmode = values.routingmode
         if (this.selectedServiceProviderMap != null) {
-          var supportedServices = Object.keys(this.selectedServiceProviderMap)
+          const supportedServices = Object.keys(this.selectedServiceProviderMap)
           params.supportedservices = []
           if (!this.forNsx) {
             params.supportedservices = supportedServices.join(',')
           }
-          for (var k in supportedServices) {
+          for (const k in supportedServices) {
             params['serviceProviderList[' + k + '].service'] = supportedServices[k]
             params['serviceProviderList[' + k + '].provider'] = this.selectedServiceProviderMap[supportedServices[k]]
           }

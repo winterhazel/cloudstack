@@ -63,7 +63,7 @@ export default {
   },
   created () {
     if (this.resourceType) {
-      var routePrefix = this.$getRouteFromResourceType(this.resourceType)
+      const routePrefix = this.$getRouteFromResourceType(this.resourceType)
       if (routePrefix && this.resourceId && this.resourceType !== 'QuotaTariff') {
         this.resourceRoute = '/' + routePrefix + '/' + this.resourceId
       }

@@ -668,7 +668,7 @@ export default {
       this.zoneLoading = true
       params.showicon = true
       getAPI('listZones', params).then(json => {
-        var listZones = json.listzonesresponse.zone
+        let listZones = json.listzonesresponse.zone
         if (listZones) {
           listZones = listZones.filter(x => x.allocationstate === 'Enabled')
           this.zones = this.zones.concat(listZones)
@@ -705,7 +705,7 @@ export default {
       getAPI('listKubernetesSupportedVersions', params).then(json => {
         const versionObjs = json.listkubernetessupportedversionsresponse.kubernetessupportedversion
         if (this.arrayHasItems(versionObjs)) {
-          for (var i = 0; i < versionObjs.length; i++) {
+          for (let i = 0; i < versionObjs.length; i++) {
             if (versionObjs[i].state === 'Enabled' && versionObjs[i].isostate === 'Ready') {
               this.kubernetesVersions.push(versionObjs[i])
             }
@@ -728,15 +728,15 @@ export default {
       const params = {}
       this.serviceOfferingLoading = true
       getAPI('listServiceOfferings', params).then(json => {
-        var items = json.listserviceofferingsresponse.serviceoffering
-        var minCpu = 2
-        var minMemory = 2048
+        const items = json.listserviceofferingsresponse.serviceoffering
+        let minCpu = 2
+        let minMemory = 2048
         if (!this.isObjectEmpty(this.selectedKubernetesVersion)) {
           minCpu = this.selectedKubernetesVersion.mincpunumber
           minMemory = this.selectedKubernetesVersion.minmemory
         }
         if (items != null) {
-          for (var i = 0; i < items.length; i++) {
+          for (let i = 0; i < items.length; i++) {
             if (items[i].iscustomized === false &&
                 items[i].cpunumber >= minCpu && items[i].memory >= minMemory) {
               this.serviceOfferings.push(items[i])
@@ -778,13 +778,13 @@ export default {
       this.fetchAffinityGroups()
     },
     fetchCksTemplates () {
-      var filters = []
+      let filters = []
       if (this.isAdminOrDomainAdmin()) {
         filters = ['all']
       } else {
         filters = ['self', 'featured', 'community']
       }
-      var ckstemplates = []
+      const ckstemplates = []
       for (const filtername of filters) {
         const params = {
           templatefilter: filtername,
@@ -793,7 +793,7 @@ export default {
         }
         this.templateLoading = true
         getAPI('listTemplates', params).then(json => {
-          var templates = json?.listtemplatesresponse?.template || []
+          const templates = json?.listtemplatesresponse?.template || []
           ckstemplates.push(...templates)
         }).finally(() => {
           this.templateLoading = false
@@ -815,7 +815,7 @@ export default {
       this.networkLoading = true
       this.networks = []
       getAPI('listNetworks', params).then(json => {
-        var listNetworks = json.listnetworksresponse.network
+        let listNetworks = json.listnetworksresponse.network
         if (this.arrayHasItems(listNetworks)) {
           listNetworks = listNetworks.filter(n => n.type !== 'L2')
           this.networks = listNetworks
@@ -841,7 +841,7 @@ export default {
       getAPI('listSSHKeyPairs', params).then(json => {
         const listKeyPairs = json.listsshkeypairsresponse.sshkeypair
         if (this.arrayHasItems(listKeyPairs)) {
-          for (var i = 0; i < listKeyPairs.length; i++) {
+          for (let i = 0; i < listKeyPairs.length; i++) {
             this.keyPairs.push({
               id: listKeyPairs[i].name,
               description: listKeyPairs[i].name
@@ -931,14 +931,15 @@ export default {
       }
       this.form.cniconfigurationid = id
       this.cniConfigParams = []
-      getAPI('listCniConfiguration', { id: id }).then(json => {
+      getAPI('listCniConfiguration', { id }).then(json => {
         const resp = json?.listcniconfigurationresponse?.cniconfig || []
         if (resp) {
-          var params = resp[0].params
+          const params = resp[0].params
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           dataParams.forEach(function (val, index) {
             that.cniConfigParams.push({
               id: index,
@@ -973,7 +974,7 @@ export default {
         if (values.hypervisor !== null) {
           params.hypervisor = this.selectedZoneHypervisors[values.hypervisor].name.toLowerCase()
         }
-        var advancedOfferings = 0
+        let advancedOfferings = 0
         if (this.isValidValueForKey(values, 'advancedmode') && values.advancedmode && this.isValidValueForKey(values, 'controlofferingid') && this.arrayHasItems(this.serviceOfferings) && this.serviceOfferings[values.controlofferingid].id != null) {
           params['nodeofferings[' + advancedOfferings + '].node'] = 'control'
           params['nodeofferings[' + advancedOfferings + '].offering'] = this.serviceOfferings[values.controlofferingid].id
@@ -992,7 +993,7 @@ export default {
             advancedOfferings++
           }
         }
-        var advancedTemplates = 0
+        let advancedTemplates = 0
         if (this.isValidValueForKey(values, 'advancedmode') && values.advancedmode && this.isValidValueForKey(values, 'controltemplateid') && this.arrayHasItems(this.templates) && this.templates[values.controltemplateid].id != null) {
           params['nodetemplates[' + advancedTemplates + '].node'] = 'control'
           params['nodetemplates[' + advancedTemplates + '].template'] = this.templates[values.controltemplateid].id
@@ -1056,7 +1057,7 @@ export default {
           params.enablecsi = values.enablecsi
         }
 
-        var idx = 0
+        let idx = 0
         if (this.cniConfigValues) {
           for (const [key, value] of Object.entries(this.cniConfigValues)) {
             params['cniconfigdetails[' + idx + '].' + `${key}`] = value

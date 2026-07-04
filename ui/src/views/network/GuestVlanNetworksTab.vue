@@ -111,7 +111,7 @@ export default {
   },
   methods: {
     fetchData () {
-      var params = {
+      const params = {
         id: this.resource.id
       }
       this.fetchLoading = true

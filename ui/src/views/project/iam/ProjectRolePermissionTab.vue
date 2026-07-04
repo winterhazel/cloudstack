@@ -137,7 +137,7 @@ export default {
   mounted () {
     this.apis = Object.keys(this.$store.getters.apis)
       .sort((a, b) => a.localeCompare(b))
-      .map(value => { return { value: value } })
+      .map(value => { return { value } })
     this.fetchData()
   },
   watch: {

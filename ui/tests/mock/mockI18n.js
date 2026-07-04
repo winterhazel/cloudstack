@@ -20,8 +20,8 @@ import { createI18n } from 'vue-i18n'
 const mockI18n = {
   mock: (locale = 'en', messages = {}) => {
     return createI18n({
-      locale: locale,
-      messages: messages
+      locale,
+      messages
     })
   }
 }

@@ -246,7 +246,7 @@ export default {
       params.isrecursive = true
       params.templatefilter = 'all'
       params.isready = true
-      var apiName = 'listTemplates'
+      const apiName = 'listTemplates'
       getAPI(apiName, params).then(json => {
         const templateResponses = json.listtemplatesresponse.template
         this.template = templateResponses[0]
@@ -260,14 +260,15 @@ export default {
       }
       this.templateUserDataParams = []
 
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json?.listuserdataresponse?.userdata || []
         if (resp) {
-          var params = resp[0].params
+          const params = resp[0].params
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           that.templateUserDataParams = []
           if (dataParams) {
             dataParams.forEach(function (val, index) {
@@ -304,14 +305,15 @@ export default {
       }
       this.form.userdataid = id
       this.userDataParams = []
-      getAPI('listUserData', { id: id }).then(json => {
+      getAPI('listUserData', { id }).then(json => {
         const resp = json?.listuserdataresponse?.userdata || []
         if (resp.length > 0) {
-          var params = resp[0].params
+          const params = resp[0].params
+          let dataParams
           if (params) {
-            var dataParams = params.split(',')
+            dataParams = params.split(',')
           }
-          var that = this
+          const that = this
           dataParams.forEach(function (val, index) {
             that.userDataParams.push({
               id: index,
@@ -347,7 +349,7 @@ export default {
       if (values.userdataid) {
         params.userdataid = values.userdataid
       }
-      var idx = 0
+      let idx = 0
       if (this.templateUserDataValues) {
         for (const [key, value] of Object.entries(this.templateUserDataValues)) {
           params['userdatadetails[' + idx + '].' + `${key}`] = value

@@ -126,11 +126,11 @@ export default {
       return (limit === 'Unlimited') ? 0 : (total / limit) * 100
     },
     addTaggedUsageToList (taggedResource) {
-      var type = this.resourceTypeToNameMap['' + taggedResource.resourcetype]
+      const type = this.resourceTypeToNameMap['' + taggedResource.resourcetype]
       if (!type) {
         return
       }
-      var typeResourceList = []
+      let typeResourceList = []
       if (this.taggedUsage[type]) {
         typeResourceList = this.taggedUsage[type]
       }
@@ -155,14 +155,14 @@ export default {
       if (!this.resource || !this.resource.taggedresources) {
         return
       }
-      for (var taggedResource of this.resource.taggedresources) {
+      for (const taggedResource of this.resource.taggedresources) {
         this.addTaggedUsageToList(taggedResource)
       }
-      for (var i in this.taggedUsage) {
-        var tags = _.map(this.taggedUsage[i], 'tag')
-        var tagsAsString = '#' + tags.join(', #')
+      for (const i in this.taggedUsage) {
+        const tags = _.map(this.taggedUsage[i], 'tag')
+        const tagsAsString = '#' + tags.join(', #')
         this.tagData[i] = {
-          tags: tags,
+          tags,
           tagsasstring: tagsAsString
         }
       }

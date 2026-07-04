@@ -573,7 +573,7 @@ export default {
         return
       }
 
-      var params = {
+      const params = {
         id: this.selectedItem.id,
         zoneid: this.selectedItem.zoneid,
         domainid: this.addAccount.domain
@@ -651,11 +651,11 @@ export default {
         const values = toRaw(this.form)
         this.componentLoading = true
         this.addIpRangeModal = false
-        var ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
+        let ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
         if (values.iptype === 'ip6') {
           ipRangeKeys = ['ip6gateway', 'ip6cidr']
         }
-        var params = {}
+        const params = {}
         for (const key of ipRangeKeys) {
           params[key] = values[key]
         }
@@ -706,11 +706,11 @@ export default {
 
         this.componentLoading = true
         this.updateIpRangeModal = false
-        var params = {
+        const params = {
           id: this.selectedItem.id,
           forsystemvms: values.forsystemvms
         }
-        var ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
+        let ipRangeKeys = ['gateway', 'netmask', 'startip', 'endip']
         if (this.selectedItem.ip6gateway && !this.selectedItem.gateway) {
           ipRangeKeys = ['ip6gateway', 'ip6cidr']
         }

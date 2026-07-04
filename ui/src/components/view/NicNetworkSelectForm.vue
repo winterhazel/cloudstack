@@ -141,7 +141,7 @@ export default {
   methods: {
     fetchNetworks () {
       this.loading = true
-      var params = {
+      const params = {
         zoneid: this.zoneid,
         keyword: this.searchQuery,
         page: this.page,

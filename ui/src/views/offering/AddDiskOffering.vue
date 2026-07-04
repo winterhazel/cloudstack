@@ -69,7 +69,7 @@ export default {
       if (this.loading) return
 
       this.$refs.formRef.validate().then((values) => {
-        var params = {
+        const params = {
           name: values.name,
           displaytext: values.displaytext,
           storageType: values.storagetype,
@@ -83,7 +83,7 @@ export default {
           params.disksize = values.disksize
         }
         if (values.qostype === 'storage') {
-          var customIops = values.iscustomizeddiskiops === true
+          const customIops = values.iscustomizeddiskiops === true
           params.customizediops = customIops
           if (!customIops) {
             if (values.diskiopsmin != null && values.diskiopsmin.length > 0) {
@@ -117,16 +117,16 @@ export default {
           }
         }
         if (values.tags != null && values.tags.length > 0) {
-          var tags = values.tags.join(',')
+          const tags = values.tags.join(',')
           params.tags = tags
         }
         if (values.ispublic !== true) {
-          var domainIndexes = values.domainid
-          var domainId = null
+          const domainIndexes = values.domainid
+          let domainId = null
           if (domainIndexes && domainIndexes.length > 0) {
-            var domainIds = []
+            const domainIds = []
             const domains = this.$refs.formRef.domains
-            for (var i = 0; i < domainIndexes.length; i++) {
+            for (let i = 0; i < domainIndexes.length; i++) {
               domainIds.push(domains[domainIndexes[i]].id)
             }
             domainId = domainIds.join(',')
@@ -135,12 +135,12 @@ export default {
             params.domainid = domainId
           }
         }
-        var zoneIndexes = values.zoneid
-        var zoneId = null
+        const zoneIndexes = values.zoneid
+        let zoneId = null
         if (zoneIndexes && zoneIndexes.length > 0) {
-          var zoneIds = []
+          const zoneIds = []
           const zones = this.$refs.formRef.zones
-          for (var j = 0; j < zoneIndexes.length; j++) {
+          for (let j = 0; j < zoneIndexes.length; j++) {
             zoneIds.push(zones[zoneIndexes[j]].id)
           }
           zoneId = zoneIds.join(',')

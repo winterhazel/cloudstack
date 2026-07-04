@@ -159,7 +159,7 @@ export default {
   computed: {
     tableSource () {
       return this.items.map(item => {
-        var nic = { ...item, disabled: this.validNetworks[item.id] && this.validNetworks[item.id].length === 0 }
+        const nic = { ...item, disabled: this.validNetworks[item.id] && this.validNetworks[item.id].length === 0 }
         nic.name = item.displaytext || item.name
         return nic
       })
@@ -213,7 +213,7 @@ export default {
         return
       }
       this.loading = true
-      var params = {
+      const params = {
         zoneid: this.zoneId,
         listall: true
       }
@@ -301,16 +301,16 @@ export default {
     sendValues () {
       const data = {}
       if (this.selectionEnabled) {
-        this.selectedRowKeys.map(x => {
-          var d = { network: this.values[x] }
+        this.selectedRowKeys.forEach(x => {
+          const d = { network: this.values[x] }
           if (this.ipAddresses[x]) {
             d.ipAddress = this.ipAddresses[x]
           }
           data[x] = d
         })
       } else {
-        for (var x in this.values) {
-          var d = { network: this.values[x] }
+        for (const x in this.values) {
+          const d = { network: this.values[x] }
           if (this.ipAddresses[x] != null && this.ipAddresses[x] !== undefined) {
             d.ipAddress = this.ipAddresses[x]
           }

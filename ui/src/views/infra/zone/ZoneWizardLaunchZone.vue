@@ -1497,7 +1497,7 @@ export default {
         }
       }
 
-      var server = this.prefillContent?.primaryStorageServer || null
+      let server = this.prefillContent?.primaryStorageServer || null
       let url = ''
       const protocol = this.prefillContent.primaryStorageProtocol
 
@@ -2456,7 +2456,7 @@ export default {
       return url
     },
     linstorURL (server) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'http://' + server
       } else {
@@ -2465,7 +2465,7 @@ export default {
       return url
     },
     datastoreclusterURL (server, path) {
-      var url
+      let url
       if (server.indexOf('://') === -1) {
         url = 'datastorecluster://' + server + path
       } else {
@@ -2483,7 +2483,7 @@ export default {
       return url
     },
     powerflexURL (gateway, username, password, pool) {
-      var url = 'powerflex://' + encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' +
+      const url = 'powerflex://' + encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' +
        gateway + '/' + encodeURIComponent(pool)
       return url
     }

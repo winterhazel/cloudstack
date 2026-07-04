@@ -123,7 +123,7 @@ export default {
         })
       }
 
-      this.items.map((item) => {
+      this.items.forEach((item) => {
         dataItems.push({
           key: item.id,
           name: item.name,

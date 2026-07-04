@@ -456,7 +456,7 @@ export default {
         }
       }
       return this.vnfDetailOptions[this.newKey].map(value => {
-        return { value: value }
+        return { value }
       })
     }
   },
@@ -578,8 +578,8 @@ export default {
       this.updateVnfTemplateNics()
     },
     deleteVnfNic (record) {
-      for (var index = 0; index < this.vnfNics.length; index++) {
-        var nic = this.vnfNics[index]
+      for (let index = 0; index < this.vnfNics.length; index++) {
+        const nic = this.vnfNics[index]
         if (nic.deviceid === record.deviceid) {
           this.vnfNics.splice(index, 1)
           break
@@ -599,7 +599,7 @@ export default {
       if (!values) {
         return
       }
-      var data = values.map(value => { return { value: value } })
+      const data = values.map(value => { return { value } })
       return data
     },
     editVnfNic () {
@@ -611,8 +611,8 @@ export default {
         return
       }
       if (this.updateVnfNic && this.updateVnfNic.name) {
-        for (var index = 0; index < this.vnfNics.length; index++) {
-          var nic = this.vnfNics[index]
+        for (let index = 0; index < this.vnfNics.length; index++) {
+          const nic = this.vnfNics[index]
           if (nic.deviceid === this.updateVnfNic.deviceid) {
             this.vnfNics[index] = this.updateVnfNic
           }
@@ -624,8 +624,8 @@ export default {
       const deviceid = record.deviceid
       let currentNic = null
       let previousNic = null
-      for (var index = 0; index < this.vnfNics.length; index++) {
-        var nic = this.vnfNics[index]
+      for (let index = 0; index < this.vnfNics.length; index++) {
+        const nic = this.vnfNics[index]
         if (nic.deviceid === record.deviceid) {
           currentNic = JSON.parse(JSON.stringify(nic))
           this.vnfNics[index] = currentNic
@@ -652,8 +652,8 @@ export default {
       const deviceid = record.deviceid
       let currentNic = null
       let nextNic = null
-      for (var index = 0; index < this.vnfNics.length; index++) {
-        var nic = this.vnfNics[index]
+      for (let index = 0; index < this.vnfNics.length; index++) {
+        const nic = this.vnfNics[index]
         if (nic.deviceid === record.deviceid) {
           currentNic = JSON.parse(JSON.stringify(nic))
           this.vnfNics[index] = currentNic
@@ -708,8 +708,8 @@ export default {
         if (this.vnfNics.length === 0) {
           params.cleanupvnfnics = true
         }
-        for (var index = 0; index < this.vnfNics.length; index++) {
-          var nic = this.vnfNics[index]
+        for (let index = 0; index < this.vnfNics.length; index++) {
+          const nic = this.vnfNics[index]
           params['vnfnics[' + i + '].deviceid'] = nic.deviceid
           params['vnfnics[' + i + '].name'] = nic.name
           params['vnfnics[' + i + '].required'] = nic.required

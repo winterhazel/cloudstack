@@ -246,7 +246,7 @@ export default {
         return
       }
 
-      this.networks.filter((item, index) => {
+      this.networks.forEach((item, index) => {
         if (item.key === key) {
           this.networks[index][name] = value
         }

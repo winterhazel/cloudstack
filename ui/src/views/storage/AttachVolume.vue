@@ -109,7 +109,7 @@ export default {
       })
     },
     fetchData () {
-      var params = {
+      const params = {
         zoneid: this.resource.zoneid,
         details: 'min'
       }
@@ -124,7 +124,7 @@ export default {
       }
 
       this.loading = true
-      var vmStates = ['Running', 'Stopped']
+      const vmStates = ['Running', 'Stopped']
       vmStates.forEach((state) => {
         params.state = state
         getAPI('listVirtualMachines', params).then(response => {

@@ -103,7 +103,7 @@ export default {
       getAPI('listHosts', {
         type: 'routing',
         details: 'min',
-        hypervisor: hypervisor,
+        hypervisor,
         page: currentPage,
         pagesize: pageSize
       }).then(json => {

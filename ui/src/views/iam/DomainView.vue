@@ -234,7 +234,7 @@ export default {
       })
       this.action.paramFields = []
       if (action.args) {
-        var args = action.args
+        let args = action.args
         if (typeof action.args === 'function') {
           args = action.args(action.resource, this.$store.getters)
         }

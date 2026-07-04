@@ -357,7 +357,7 @@ export default {
       this.showSecondaryIpModal = true
       this.selectedNicId = nicId
       getAPI('listNics', {
-        nicId: nicId,
+        nicId,
         keyword: '',
         virtualmachineid: this.vm.id
       }).then(response => {
@@ -368,7 +368,7 @@ export default {
       this.listIps.loading = true
       this.listIps.opts = []
       getAPI('listPublicIpAddresses', {
-        networkid: networkid,
+        networkid,
         allocatedonly: false,
         forvirtualnetwork: false
       }).then(json => {

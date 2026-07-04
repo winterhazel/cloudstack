@@ -150,12 +150,12 @@ export default {
       if (!this.response.startdate || !this.response.enddate) {
         return ''
       }
-      var duration = Date.parse(this.response.enddate) - Date.parse(this.response.startdate)
+      const duration = Date.parse(this.response.enddate) - Date.parse(this.response.startdate)
       return (duration > 0 ? duration / 1000.0 : 0) + ''
     },
     computedOverlayStyle () {
-      var opacity = this.testDeliveryIntervalCounter <= 10.0 ? 0 : 0.3
-      var width = this.testDeliveryIntervalCounter
+      const opacity = this.testDeliveryIntervalCounter <= 10.0 ? 0 : 0.3
+      const width = this.testDeliveryIntervalCounter
       return 'opacity: ' + opacity + '; width: ' + width + '%;'
     }
   },
@@ -175,7 +175,7 @@ export default {
       this.response = {}
       this.loading = true
       this.$emit('change-loading', this.loading)
-      var params = {}
+      const params = {}
       if (this.resource) {
         params.webhookid = this.resource.id
       }

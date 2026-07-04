@@ -76,7 +76,7 @@ export const pollJobPlugin = {
         const { jobId, resourceId } = args
         const fullPath = this.$route.fullPath
         const path = this.$route.path
-        var jobs = this.$store.getters.headerNotices.map(job => {
+        const jobs = this.$store.getters.headerNotices.map(job => {
           if (job.key === jobId) {
             if (resourceId && !path.includes(resourceId)) {
               job.path = path + '/' + resourceId
@@ -95,7 +95,7 @@ export const pollJobPlugin = {
         eventBus.emit('update-job-details', { jobId, resourceId })
         if (result.jobstatus === 1) {
           if (showSuccessMessage) {
-            var content = successMessage
+            let content = successMessage
             if (successMessage === 'Success' && action && action.label) {
               content = i18n.global.t(action.label)
             }
@@ -134,11 +134,11 @@ export const pollJobPlugin = {
               duration: 1
             })
           }
-          var errMessage = errorMessage
+          let errMessage = errorMessage
           if (action && action.label) {
             errMessage = i18n.global.t(action.label)
           }
-          var desc = result.jobresult.errortext
+          let desc = result.jobresult.errortext
           if (name) {
             desc = `(${name}) ${desc}`
           }
@@ -159,7 +159,7 @@ export const pollJobPlugin = {
             description: desc,
             key: jobId,
             duration: 0,
-            onClose: onClose
+            onClose
           })
           store.dispatch('AddHeaderNotice', {
             key: jobId,
@@ -218,8 +218,8 @@ export const notifierPlugin = {
   install (app) {
     app.config.globalProperties.$notifyError = function (error) {
       console.log(error)
-      var msg = i18n.global.t('message.request.failed')
-      var desc = ''
+      let msg = i18n.global.t('message.request.failed')
+      let desc = ''
       if (error && error.response) {
         if (error.response.status) {
           msg = `${i18n.global.t('message.request.failed')} (${error.response.status})`
@@ -323,10 +323,10 @@ export const toLocaleDatePlugin = {
 export const configUtilPlugin = {
   install (app) {
     app.config.globalProperties.$applyDocHelpMappings = function (docHelp) {
-      var docHelpMappings = this.$config.docHelpMappings
+      const docHelpMappings = this.$config.docHelpMappings
       if (docHelp && docHelpMappings &&
         docHelpMappings.constructor === Object && Object.keys(docHelpMappings).length > 0) {
-        for (var key in docHelpMappings) {
+        for (const key in docHelpMappings) {
           if (docHelp.includes(key) && docHelp !== docHelpMappings[key]) {
             docHelp = docHelp.replace(key, docHelpMappings[key])
             break
@@ -341,7 +341,7 @@ export const configUtilPlugin = {
 export const showIconPlugin = {
   install (app) {
     app.config.globalProperties.$showIcon = function (resource) {
-      var resourceType = this.$route.path.split('/')[1]
+      let resourceType = this.$route.path.split('/')[1]
       if (resource) {
         resourceType = resource
       }
@@ -429,9 +429,9 @@ export const resourceTypePlugin = {
     }
 
     app.config.globalProperties.$getIconFromResourceType = function (resourceType) {
-      var routePath = this.$getRouteFromResourceType(resourceType)
+      const routePath = this.$getRouteFromResourceType(resourceType)
       if (!routePath) return ''
-      var route = this.$router.resolve('/' + routePath)
+      const route = this.$router.resolve('/' + routePath)
       if (routePath === 'kubernetes') {
         return route?.meta?.icon[0]
       }
@@ -443,9 +443,9 @@ export const resourceTypePlugin = {
 export const apiMetaUtilPlugin = {
   install (app) {
     app.config.globalProperties.$getApiParams = function () {
-      var apiParams = {}
-      for (var argument of arguments) {
-        var apiConfig = this.$store.getters.apis[argument] || {}
+      const apiParams = {}
+      for (const argument of arguments) {
+        const apiConfig = this.$store.getters.apis[argument] || {}
         if (apiConfig && apiConfig.params) {
           apiConfig.params.forEach(param => {
             apiParams[param.name] = param

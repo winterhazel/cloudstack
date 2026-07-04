@@ -286,7 +286,7 @@ export default {
             if (!resource || resource.length === 0) {
               this.treeVerticalData.push(dataGenerate[i])
             } else {
-              this.treeVerticalData.filter((item, index) => {
+              this.treeVerticalData.forEach((item, index) => {
                 if (item.id === dataGenerate[i].id) {
                   // replace all value of tree data
                   Object.keys(dataGenerate[i]).forEach((value, idx) => {

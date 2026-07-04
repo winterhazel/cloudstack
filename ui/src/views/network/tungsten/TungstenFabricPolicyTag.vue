@@ -247,7 +247,7 @@ export default {
           this.$pollJob({
             jobId: json.applytungstenfabrictagresponse.jobid,
             title: this.$t('label.apply.tungsten.tag'),
-            description: description,
+            description,
             successMessage: `${this.$t('message.success.apply.tungsten.tag')}`,
             successMethod: () => {
               this.fetchData()
