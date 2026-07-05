@@ -61,7 +61,7 @@
             :animated="false"
             :defaultActiveKey="tabs[0].name"
             @change="onTabChange" >
-            <template v-for="tab in tabs" :tab="$t('label.' + tab.name)" :key="tab.name">
+            <template v-for="tab in tabs" :key="tab.name">
               <a-tab-pane :tab="$t('label.' + tab.name)" :key="tab.name" v-if="checkShowTabDetail(tab)">
                 <keep-alive>
                   <component

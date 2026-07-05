@@ -64,7 +64,7 @@
           </a-select>
         </a-form-item>
         <a-form-item name="account" ref="account" v-if="isAdminOrDomainAdmin() && !isObjectEmpty(selectedDomain) && selectedDomain.id !== null">
-          <template #label :title="apiParams.account.description">
+          <template #label>
             {{ $t('label.account') }}
             <a-tooltip>
               <info-circle-outlined style="color: rgba(0,0,0,.45)" />

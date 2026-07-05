@@ -61,7 +61,7 @@
           </a-radio-group>
         </a-form-item>
         <a-form-item name="domainid" ref="domainid" v-if="isAdminOrDomainAdmin && ['Domain', 'Local'].includes(form.scope)">
-          <template #label :title="apiParams.domainid.description">
+          <template #label>
             {{ $t('label.domainid') }}
             <a-tooltip>
               <info-circle-outlined style="color: rgba(0,0,0,.45)" />

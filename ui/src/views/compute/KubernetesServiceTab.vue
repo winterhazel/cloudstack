@@ -137,13 +137,13 @@
           :pagination="false"
         >
           <template #bodyCell="{ column, text, record, index }">
-            <template v-if="column.key === 'name'" :name="text">
+            <template v-if="column.key === 'name'">
               <router-link :to="{ path: '/vm/' + record.id }">{{ record.name }}</router-link>
             </template>
             <template v-if="column.key === 'state'">
               <status :text="text ? text : ''" displayText />
             </template>
-            <template v-if="column.key === 'port'" :name="text" :record="record">
+            <template v-if="column.key === 'port'">
               <div v-if="network.type === 'Shared' || network.ip4routing">
                 {{ cksSshPortSharedNetwork }}
               </div>

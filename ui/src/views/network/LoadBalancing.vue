@@ -559,7 +559,7 @@
               <status :text="text ? text : ''" displayText></status>
             </template>
 
-            <template v-if="column.key === 'actions'" style="text-align: center" :text="text">
+            <template v-if="column.key === 'actions'">
               <a-checkbox v-model:value="record.id" @change="e => fetchNics(e, index)" />
             </template>
           </template>

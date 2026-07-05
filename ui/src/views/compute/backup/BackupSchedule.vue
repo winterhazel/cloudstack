@@ -24,8 +24,8 @@
       :rowKey="record => record.intervaltype"
       :pagination="false"
       :loading="loading">
-      <template #bodyCell="{ column, text, record }">
-        <template v-if="column.key === 'icon'" :name="text">
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'icon'">
           <label class="interval-icon">
             <span v-if="record.intervaltype==='HOURLY'">
               <clock-circle-outlined />
@@ -41,16 +41,16 @@
             </span>
           </label>
         </template>
-        <template v-if="column.key === 'intervaltype'" :name="text">
+        <template v-if="column.key === 'intervaltype'">
           <label>{{ record.intervaltype }}</label>
         </template>
-        <template v-if="column.key === 'time'" :name="text">
+        <template v-if="column.key === 'time'">
           <label class="interval-content">
             <span v-if="record.intervaltype==='HOURLY'">{{ record.schedule + ' ' + $t('label.min.past.hour') }}</span>
             <span v-else>{{ record.schedule.split(':')[1] + ':' + record.schedule.split(':')[0] }}</span>
           </label>
         </template>
-        <template v-if="column.key === 'interval'" :name="text">
+        <template v-if="column.key === 'interval'">
           <span v-if="record.intervaltype==='WEEKLY'">
             {{ `${$t('label.every')} ${$t(listDayOfWeek[record.schedule.split(':')[2] - 1])}` }}
           </span>
@@ -58,16 +58,16 @@
             {{ `${$t('label.day')} ${record.schedule.split(':')[2]} ${$t('label.of.month')}` }}
           </span>
         </template>
-        <template v-if="column.key === 'quiescevm'" :name="text">
+        <template v-if="column.key === 'quiescevm'">
           <label>
             <check-outlined v-if="record.quiescevm" />
             <close-outlined v-else />
           </label>
         </template>
-        <template v-if="column.key === 'timezone'" :name="text">
+        <template v-if="column.key === 'timezone'">
           <label>{{ getTimeZone(record.timezone) }}</label>
         </template>
-        <template v-if="column.key === 'actions'" class="account-button-action" :name="text">
+        <template v-if="column.key === 'actions'">
           <tooltip-button
             tooltipPlacement="top"
             :tooltip="$t('label.delete')"

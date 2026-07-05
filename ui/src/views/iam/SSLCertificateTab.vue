@@ -40,7 +40,7 @@
           v-if="!quickview"
         >
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'actions'" class="cert-button-action">
+            <template v-if="column.key === 'actions'">
               <tooltip-button
                 tooltipPlacement="top"
                 :tooltip="$t('label.quickview')"

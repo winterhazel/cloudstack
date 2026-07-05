@@ -334,7 +334,6 @@
       </template>
       <template
         v-if="column.key === 'ipaddress'"
-        href="javascript:;"
       >
         <router-link
           v-if="['/publicip', '/privategw'].includes($route.path)"
@@ -358,7 +357,6 @@
       </template>
       <template
         v-if="column.key === 'ip6address'"
-        href="javascript:;"
       >
         <span>{{ ipV6Address(text, record) }}</span>
       </template>

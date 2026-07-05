@@ -94,8 +94,7 @@
               style="overflow-y: auto"
             >
               <template
-                #expandedRowRender="{ record } "
-                style="margin: 0">
+                #expandedRowRender="{ record }">
                 <a-form-item :label="$t('label.delete.volumes')" v-if="listVolumes[record.id].opts.length > 0">
                   <a-select
                     mode="multiple"
