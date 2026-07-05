@@ -206,18 +206,5 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 10"
-  ],
-  "allowScripts": {
-    "@apollo/protobufjs@1.2.2": true,
-    "@fortawesome/fontawesome-common-types@6.5.2": true,
-    "@fortawesome/fontawesome-svg-core@6.5.2": true,
-    "@fortawesome/free-brands-svg-icons@6.5.2": true,
-    "@fortawesome/free-solid-svg-icons@6.5.2": true,
-    "core-js@2.6.12": true,
-    "core-js@3.23.3": true,
-    "core-js-pure@3.23.3": true,
-    "deasync@0.1.26": true,
-    "ejs@2.7.4": true,
-    "yorkie@2.0.0": true
-  }
+  ]
 }
