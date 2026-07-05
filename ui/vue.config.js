@@ -63,7 +63,8 @@ const vueConfig = {
         crypto: require.resolve('crypto-browserify'),
         url: require.resolve('url/'),
         util: false,
-        fs: false
+        fs: false,
+        vm: false
       }
     },
     optimization: {
@@ -129,12 +130,17 @@ const vueConfig = {
   css: {
     loaderOptions: {
       less: {
-        modifyVars: {
-          // https://ant.design/docs/spec/colors
-          // https://vue.ant.design/docs/vue/customize-theme/
-          'root-entry-name': 'default'
-        },
-        javascriptEnabled: true
+        lessOptions: {
+          modifyVars: {
+            // https://ant.design/docs/spec/colors
+            // https://vue.ant.design/docs/vue/customize-theme/
+            'root-entry-name': 'default'
+          },
+          javascriptEnabled: true
+        }
+      },
+      sass: {
+        api: 'modern'
       }
     }
   },

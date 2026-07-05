@@ -680,5 +680,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/style/components/view/StatsTab.scss';
+@use '@/style/components/view/StatsTab';
 </style>

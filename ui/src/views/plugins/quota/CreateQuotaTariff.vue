@@ -247,5 +247,5 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/style/objects/form.scss';
+@use '@/style/objects/form';
 </style>
