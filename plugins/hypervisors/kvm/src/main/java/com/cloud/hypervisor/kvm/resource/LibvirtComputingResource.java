@@ -7265,7 +7265,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         QemuImgFile parent = new QemuImgFile(storagePool.getLocalPathFor(parentTo.getPath()), QemuImg.PhysicalDiskFormat.QCOW2);
         QemuImgFile child = new QemuImgFile(childLocalPath, QemuImg.PhysicalDiskFormat.QCOW2);
 
-        logger.debug("Committing child delta [{}] into parent delta [{}].", parentTo, deltaMergeTreeTO.getChild());
+        logger.debug("Committing child delta [{}] into parent delta [{}].", deltaMergeTreeTO.getChild(), parentTo);
         qemuImg.commit(child, parent, true);
 
         List<QemuImgFile> grandChildren = deltaMergeTreeTO.getGrandChildren().stream()

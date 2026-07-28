@@ -204,6 +204,26 @@ public class InternalBackupJoinVO {
         return scheduleId;
     }
 
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setVolumeId(long volumeId) {
+        this.volumeId = volumeId;
+    }
+
+    public void setStoragePoolDeltaPath(String storagePoolDeltaPath) {
+        this.storagePoolDeltaPath = storagePoolDeltaPath;
+    }
+
+    public void setStoragePoolParentPath(String storagePoolParentPath) {
+        this.storagePoolParentPath = storagePoolParentPath;
+    }
+
     @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(this, ToStringStyle.JSON_STYLE);
