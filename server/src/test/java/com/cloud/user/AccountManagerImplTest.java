@@ -429,7 +429,7 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
         accountManagerImpl.getKeys(_getkeyscmd);
     }
 
-    @Test(expected = CloudRuntimeException.class)
+    @Test
     public void getKeysFailsWhenAccessingApiKeyPairIsNotFound() {
         Mockito.doReturn(1L).when(_getkeyscmd).getId();
         Mockito.doReturn(userVoMock).when(accountManagerImpl).getActiveUser(1L);
@@ -439,7 +439,9 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
         Mockito.doReturn("invalidApiKey").when(accountManagerImpl).getAccessingApiKey(_getkeyscmd);
         Mockito.doReturn(null).when(apiKeyPairService).findByApiKey("invalidApiKey");
 
-        accountManagerImpl.getKeys(_getkeyscmd);
+        InvalidParameterValueException ex = Assert.assertThrows(InvalidParameterValueException.class,
+                () -> accountManagerImpl.getKeys(_getkeyscmd));
+        Assert.assertEquals("Unable to find API key pair for the accessing API key.", ex.getMessage());
     }
 
     @Test
@@ -468,11 +470,13 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
         Assert.assertEquals("apiKey", accountManagerImpl.getAccessingApiKey(_getkeyscmd));
     }
 
-    @Test(expected = CloudRuntimeException.class)
+    @Test
     public void getAllKeypairPermissionsFailsWhenApiKeyPairIsNotFound() {
         Mockito.doReturn(null).when(keyPairManager).findByApiKey("invalidApiKey");
 
-        accountManagerImpl.getAllKeypairPermissions("invalidApiKey");
+        InvalidParameterValueException ex = Assert.assertThrows(InvalidParameterValueException.class,
+                () -> accountManagerImpl.getAllKeypairPermissions("invalidApiKey"));
+        Assert.assertEquals("Unable to find API key pair by API key.", ex.getMessage());
     }
 
     @Test
