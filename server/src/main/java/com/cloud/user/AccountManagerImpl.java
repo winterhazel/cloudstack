@@ -4007,11 +4007,12 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
     @Override
     public UserAccount getUserByApiKey(String apiKey) {
         ApiKeyPairVO keyPair = apiKeyPairDao.findByApiKey(apiKey);
-        if (keyPair != null) {
-            return userAccountDao.findById(keyPair.getUserId());
+
+        if (keyPair == null) {
+            return null;
         }
 
-        return null;
+        return userAccountDao.findById(keyPair.getUserId());
     }
 
     @Override
