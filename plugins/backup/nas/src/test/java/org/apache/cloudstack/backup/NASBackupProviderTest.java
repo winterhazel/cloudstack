@@ -19,15 +19,20 @@ package org.apache.cloudstack.backup;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
+import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -36,24 +41,51 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.cloud.agent.AgentManager;
+import com.cloud.alert.AlertManager;
 import com.cloud.exception.AgentUnavailableException;
 import com.cloud.exception.OperationTimedoutException;
+import com.cloud.configuration.Resource;
 import com.cloud.host.Host;
+import com.cloud.host.DetailVO;
 import com.cloud.host.HostVO;
 import com.cloud.host.Status;
 import com.cloud.host.dao.HostDao;
+import com.cloud.host.dao.HostDetailsDao;
 import com.cloud.hypervisor.Hypervisor;
 import com.cloud.resource.ResourceManager;
+import com.cloud.resource.ResourceState;
+import com.cloud.storage.DataStoreRole;
+import com.cloud.storage.DiskOfferingVO;
+import com.cloud.storage.ScopeType;
+import com.cloud.storage.Storage;
+import java.util.Date;
 import com.cloud.storage.Volume;
 import com.cloud.storage.VolumeVO;
+import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VolumeDao;
+import com.cloud.user.ResourceLimitService;
 import com.cloud.utils.Pair;
+import com.cloud.utils.db.GlobalLock;
+import com.cloud.utils.exception.BackupProviderException;
+import org.apache.cloudstack.storage.datastore.db.SnapshotDataStoreVO;
+import org.apache.cloudstack.storage.datastore.db.SnapshotDataStoreDao;
+import org.apache.cloudstack.engine.subsystem.api.storage.ObjectInDataStoreStateMachine;
+import com.cloud.storage.dao.SnapshotDao;
+import com.cloud.storage.SnapshotVO;
+import com.cloud.utils.exception.CloudRuntimeException;
+import com.cloud.vm.VMInstanceDetailVO;
 import com.cloud.vm.VMInstanceVO;
+import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.dao.VMInstanceDao;
+import com.cloud.vm.dao.VMInstanceDetailsDao;
+
+import com.google.gson.Gson;
 
 import org.apache.cloudstack.backup.dao.BackupDao;
+import org.apache.cloudstack.backup.dao.BackupDetailsDao;
 import org.apache.cloudstack.backup.dao.BackupRepositoryDao;
 import org.apache.cloudstack.backup.dao.BackupOfferingDao;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.StoragePoolVO;
 
@@ -65,6 +97,12 @@ public class NASBackupProviderTest {
 
     @Mock
     private BackupDao backupDao;
+
+    @Mock
+    private SnapshotDao snapshotDao;
+
+    @Mock
+    private SnapshotDataStoreDao snapshotDataStoreDao;
 
     @Mock
     private BackupRepositoryDao backupRepositoryDao;
@@ -85,6 +123,9 @@ public class NASBackupProviderTest {
     private HostDao hostDao;
 
     @Mock
+    private HostDetailsDao hostDetailsDao;
+
+    @Mock
     private BackupManager backupManager;
 
     @Mock
@@ -95,6 +136,24 @@ public class NASBackupProviderTest {
 
     @Mock
     private VMSnapshotDao vmSnapshotDaoMock;
+
+    @Mock
+    private BackupDetailsDao backupDetailsDao;
+
+    @Mock
+    private VMInstanceDetailsDao vmInstanceDetailsDao;
+
+    @Mock
+    private DiskOfferingDao diskOfferingDao;
+
+    @Mock
+    private DataStoreManager dataStoreMgr;
+
+    @Mock
+    private ResourceLimitService resourceLimitMgr;
+
+    @Mock
+    private AlertManager alertManager;
 
     @Test
     public void testDeleteBackup() throws OperationTimedoutException, AgentUnavailableException {
@@ -173,16 +232,7 @@ public class NASBackupProviderTest {
         Assert.assertEquals(Long.valueOf(3000L), result.second());
     }
 
-    @Test
-    public void takeBackupSuccessfully() throws AgentUnavailableException, OperationTimedoutException {
-        Long vmId = 1L;
-        Long hostId = 2L;
-        Long backupOfferingId = 3L;
-        Long accountId = 4L;
-        Long domainId = 5L;
-        Long zoneId = 6L;
-        Long backupId = 7L;
-
+    private VMInstanceVO mockRunningVmForBackup(Long vmId, Long hostId, Long backupOfferingId, Long accountId, Long domainId, Long zoneId) {
         VMInstanceVO vm = mock(VMInstanceVO.class);
         Mockito.when(vm.getId()).thenReturn(vmId);
         Mockito.when(vm.getHostId()).thenReturn(hostId);
@@ -212,6 +262,16 @@ public class NASBackupProviderTest {
         Mockito.when(volume2.getState()).thenReturn(Volume.State.Ready);
         Mockito.when(volume2.getSize()).thenReturn(200L);
         Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(volume1, volume2));
+        return vm;
+    }
+
+    @Test
+    public void takeBackupSuccessfully() throws AgentUnavailableException, OperationTimedoutException {
+        Long backupOfferingId = 3L;
+        Long accountId = 4L;
+        Long domainId = 5L;
+        Long zoneId = 6L;
+        VMInstanceVO vm = mockRunningVmForBackup(1L, 2L, backupOfferingId, accountId, domainId, zoneId);
 
         BackupAnswer answer = mock(BackupAnswer.class);
         Mockito.when(answer.getResult()).thenReturn(true);
@@ -221,7 +281,7 @@ public class NASBackupProviderTest {
         Mockito.when(backupDao.persist(Mockito.any(BackupVO.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Mockito.when(backupDao.update(Mockito.anyLong(), Mockito.any(BackupVO.class))).thenReturn(true);
 
-        Pair<Boolean, Backup> result = nasBackupProvider.takeBackup(vm, false);
+        Pair<Boolean, Backup> result = nasBackupProvider.takeBackup(vm, false, false);
 
         Assert.assertTrue(result.first());
         Assert.assertNotNull(result.second());
@@ -238,6 +298,240 @@ public class NASBackupProviderTest {
         Mockito.verify(backupDao).persist(Mockito.any(BackupVO.class));
         Mockito.verify(backupDao).update(Mockito.anyLong(), Mockito.any(BackupVO.class));
         Mockito.verify(agentManager).send(anyLong(), Mockito.any(TakeBackupCommand.class));
+    }
+
+    private HostVO hostWithRbdCli(long id, boolean hasRbdCli, Long clusterId) {
+        HostVO host = mock(HostVO.class);
+        Mockito.lenient().when(host.getId()).thenReturn(id);
+        Mockito.lenient().when(host.getClusterId()).thenReturn(clusterId);
+        Mockito.lenient().when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.lenient().when(host.getResourceState()).thenReturn(ResourceState.Enabled);
+        Mockito.lenient().when(host.getHypervisorType()).thenReturn(Hypervisor.HypervisorType.KVM);
+        DetailVO detail = mock(DetailVO.class);
+        Mockito.lenient().when(detail.getValue()).thenReturn(String.valueOf(hasRbdCli));
+        Mockito.lenient().when(hostDetailsDao.findDetail(id, Host.HOST_RBD_CLI)).thenReturn(detail);
+        return host;
+    }
+
+    @Test
+    public void findHostForRbdBackupKeepsTheVmHostWhenItHasTheRbdCommand() {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        HostVO vmHost = hostWithRbdCli(2L, true, 10L);
+
+        Assert.assertSame(vmHost, nasBackupProvider.findHostForRbdBackup(vm, vmHost));
+    }
+
+    @Test
+    public void findHostForRbdBackupTreatsAHostThatNeverReportedTheCommandAsLackingIt() {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        HostVO vmHost = mock(HostVO.class);
+        Mockito.when(vmHost.getId()).thenReturn(2L);
+        Mockito.when(hostDetailsDao.findDetail(2L, Host.HOST_RBD_CLI)).thenReturn(null);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+
+        Assert.assertNull(nasBackupProvider.findHostForRbdBackup(vm, vmHost));
+    }
+
+    @Test
+    public void findHostForRbdBackupMovesAStoppedVmToAHostThatHasTheRbdCommand() {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Stopped);
+        HostVO vmHost = hostWithRbdCli(2L, false, 10L);
+        HostVO withoutCli = hostWithRbdCli(3L, false, 10L);
+        HostVO withCli = hostWithRbdCli(4L, true, 10L);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(List.of(vmHost, withoutCli, withCli));
+
+        Assert.assertSame(withCli, nasBackupProvider.findHostForRbdBackup(vm, vmHost));
+    }
+
+    @Test
+    public void findHostForRbdBackupSkipsHostsThatAreDownOrInMaintenance() {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Stopped);
+        HostVO vmHost = hostWithRbdCli(2L, false, 10L);
+        HostVO down = hostWithRbdCli(3L, true, 10L);
+        Mockito.when(down.getStatus()).thenReturn(Status.Down);
+        HostVO inMaintenance = hostWithRbdCli(4L, true, 10L);
+        Mockito.when(inMaintenance.getResourceState()).thenReturn(ResourceState.Maintenance);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(List.of(vmHost, down, inMaintenance));
+
+        Assert.assertNull(nasBackupProvider.findHostForRbdBackup(vm, vmHost));
+    }
+
+    @Test
+    public void findHostForRbdBackupDoesNotMoveARunningVm() {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+        HostVO vmHost = hostWithRbdCli(2L, false, 10L);
+
+        Assert.assertNull(nasBackupProvider.findHostForRbdBackup(vm, vmHost));
+        Mockito.verify(hostDao, Mockito.never()).findHypervisorHostInCluster(Mockito.anyLong());
+    }
+
+    @Test
+    public void findHostForRbdRestoreKeepsTheHostWhenItHasTheRbdCommand() {
+        HostVO host = hostWithRbdCli(2L, true, 10L);
+
+        Assert.assertSame(host, nasBackupProvider.findHostForRbdRestore(host, true));
+    }
+
+    @Test
+    public void findHostForRbdRestoreMovesToAHostThatHasTheRbdCommand() {
+        HostVO host = hostWithRbdCli(2L, false, 10L);
+        HostVO withCli = hostWithRbdCli(3L, true, 10L);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(List.of(host, withCli));
+
+        Assert.assertSame(withCli, nasBackupProvider.findHostForRbdRestore(host, true));
+    }
+
+    @Test
+    public void findHostForRbdRestoreStaysOnTheHostWhenTheVolumeIsAttachedThere() {
+        HostVO host = hostWithRbdCli(2L, false, 10L);
+        Mockito.when(host.getName()).thenReturn("kvm1");
+
+        CloudRuntimeException e = Assert.assertThrows(CloudRuntimeException.class,
+                () -> nasBackupProvider.findHostForRbdRestore(host, false));
+        Assert.assertTrue(e.getMessage().contains("ceph-common"));
+        Mockito.verify(hostDao, Mockito.never()).findHypervisorHostInCluster(Mockito.anyLong());
+    }
+
+    @Test
+    public void findHostForRbdRestoreFailsWhenNoHostOfTheClusterHasTheRbdCommand() {
+        HostVO host = hostWithRbdCli(2L, false, 10L);
+        Mockito.when(host.getName()).thenReturn("kvm1");
+        HostVO other = hostWithRbdCli(3L, false, 10L);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(List.of(host, other));
+
+        CloudRuntimeException e = Assert.assertThrows(CloudRuntimeException.class,
+                () -> nasBackupProvider.findHostForRbdRestore(host, true));
+        Assert.assertTrue(e.getMessage().contains("kvm1"));
+    }
+
+    /**
+     * No host with the rbd command: the backup must not fail on the missing command, it is taken
+     * as a plain full and sent to the host the VM runs on.
+     */
+    @Test
+    public void takeBackupFallsBackToAFullWhenNoHostHasTheRbdCommand() throws AgentUnavailableException, OperationTimedoutException {
+        Long vmId = 1L;
+        Long hostId = 2L;
+        Long backupOfferingId = 3L;
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getHostId()).thenReturn(hostId);
+        Mockito.when(vm.getInstanceName()).thenReturn("test-vm");
+        Mockito.when(vm.getBackupOfferingId()).thenReturn(backupOfferingId);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+
+        BackupRepository backupRepository = mock(BackupRepository.class);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(backupOfferingId)).thenReturn(backupRepository);
+
+        HostVO host = hostWithRbdCli(hostId, false, 10L);
+        Mockito.when(host.getName()).thenReturn("kvm1");
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of());
+
+        Mockito.doReturn(NASBackupProvider.ChainDecision.rbdFullStart("csbackup-1")).when(nasBackupProvider).decideChain(vm);
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(true);
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(TakeBackupCommand.class))).thenReturn(answer);
+        Mockito.when(backupDao.persist(Mockito.any(BackupVO.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Mockito.when(backupDao.update(Mockito.anyLong(), Mockito.any(BackupVO.class))).thenReturn(true);
+
+        Pair<Boolean, Backup> result = nasBackupProvider.takeBackup(vm, false, false);
+
+        Assert.assertTrue(result.first());
+        ArgumentCaptor<TakeBackupCommand> sent = ArgumentCaptor.forClass(TakeBackupCommand.class);
+        Mockito.verify(agentManager).send(Mockito.eq(hostId), sent.capture());
+        Assert.assertEquals(NASBackupChainKeys.TYPE_LEGACY_FULL, sent.getValue().getMode());
+        Assert.assertNull("a plain full needs no per-volume RBD paths", sent.getValue().getVolumePaths());
+    }
+
+    @Test
+    public void takeBackupSendsVolumePoolsForContentMethodOnRunningVm() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = mockRunningVmForBackup(1L, 2L, 3L, 4L, 5L, 6L);
+        Mockito.doReturn(NASBackupProvider.ChainDecision.contentFull()).when(nasBackupProvider).decideChain(vm);
+        VolumeVO volume = volumeDao.findByInstance(1L).get(0);
+        Mockito.when(volume.getPoolId()).thenReturn(11L);
+        Mockito.when(volume.getPath()).thenReturn("vol-uuid");
+        Mockito.when(volumeDao.findByInstance(1L)).thenReturn(new ArrayList<>(List.of(volume)));
+        StoragePoolVO pool = mock(StoragePoolVO.class);
+        Mockito.when(pool.getId()).thenReturn(11L);
+        Mockito.when(pool.getPoolType()).thenReturn(Storage.StoragePoolType.Linstor);
+        Mockito.when(storagePoolDao.findById(11L)).thenReturn(pool);
+        DataStore dataStore = mock(DataStore.class);
+        PrimaryDataStoreTO dataStoreTO = mock(PrimaryDataStoreTO.class);
+        Mockito.when(dataStore.getTO()).thenReturn(dataStoreTO);
+        Mockito.when(dataStoreMgr.getDataStore(11L, DataStoreRole.Primary)).thenReturn(dataStore);
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(false);
+        ArgumentCaptor<TakeBackupCommand> commandCaptor = ArgumentCaptor.forClass(TakeBackupCommand.class);
+        Mockito.when(agentManager.send(anyLong(), commandCaptor.capture())).thenReturn(answer);
+        Mockito.when(backupDao.persist(Mockito.any(BackupVO.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        nasBackupProvider.takeBackup(vm, false, false);
+
+        TakeBackupCommand command = commandCaptor.getValue();
+        Assert.assertEquals("content", command.getMethod());
+        Assert.assertEquals(List.of(dataStoreTO), command.getVolumePools());
+        Assert.assertEquals(List.of("/dev/drbd/by-res/cs-vol-uuid/0"), command.getVolumePaths());
+    }
+
+    @Test
+    public void takeBackupFailureNeedingCleanupReturnsErrorBackup() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = mockRunningVmForBackup(1L, 2L, 3L, 4L, 5L, 6L);
+        HostVO host = hostDao.findById(2L);
+        Mockito.when(host.getName()).thenReturn("kvm01");
+        Mockito.when(host.getPodId()).thenReturn(7L);
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(false);
+        Mockito.when(answer.getNeedsCleanup()).thenReturn(true);
+        Mockito.when(answer.getDetails()).thenReturn("leaving /tmp/csbackup.abcde/i-2-3-VM mounted at /tmp/csbackup.abcde");
+        ArgumentCaptor<TakeBackupCommand> commandCaptor = ArgumentCaptor.forClass(TakeBackupCommand.class);
+        Mockito.when(agentManager.send(anyLong(), commandCaptor.capture())).thenReturn(answer);
+
+        Mockito.when(backupDao.persist(Mockito.any(BackupVO.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Pair<Boolean, Backup> result = nasBackupProvider.takeBackup(vm, true, false);
+
+        Assert.assertFalse(result.first());
+        Assert.assertNotNull(result.second());
+        Assert.assertEquals(Backup.Status.Error, result.second().getStatus());
+        Mockito.verify(backupDao, Mockito.never()).remove(Mockito.anyLong());
+
+        TakeBackupCommand command = commandCaptor.getValue();
+        Assert.assertTrue(command.getQuiesce());
+        Assert.assertEquals(Integer.valueOf(30), command.getQuiesceTimeout());
+
+        ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(alertManager).sendAlert(Mockito.eq(AlertManager.AlertType.ALERT_TYPE_BACKUP_STORAGE), Mockito.eq(6L), Mockito.eq(7L),
+                subjectCaptor.capture(), bodyCaptor.capture());
+        Assert.assertTrue(subjectCaptor.getValue().contains("kvm01"));
+        Assert.assertTrue(bodyCaptor.getValue().contains("/tmp/csbackup.abcde"));
+    }
+
+    @Test
+    public void takeBackupFailureWithoutCleanupRemovesBackup() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = mockRunningVmForBackup(1L, 2L, 3L, 4L, 5L, 6L);
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(false);
+        Mockito.when(answer.getNeedsCleanup()).thenReturn(false);
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(TakeBackupCommand.class))).thenReturn(answer);
+
+        Mockito.when(backupDao.persist(Mockito.any(BackupVO.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Pair<Boolean, Backup> result = nasBackupProvider.takeBackup(vm, false, false);
+
+        Assert.assertFalse(result.first());
+        Assert.assertNull(result.second());
+        Mockito.verify(backupDao).remove(Mockito.anyLong());
+        Mockito.verifyNoInteractions(alertManager);
     }
 
     @Test
@@ -352,5 +646,1287 @@ public class NASBackupProviderTest {
         Mockito.verify(hostDao).findById(hostId);
         Mockito.verify(hostDao).findHypervisorHostInCluster(clusterId);
         Mockito.verify(resourceManager).findOneRandomRunningHostByHypervisor(Hypervisor.HypervisorType.KVM, zoneId);
+    }
+
+    private VolumeVO volume(String uuid, String path, long deviceId) {
+        VolumeVO volume = mock(VolumeVO.class);
+        Mockito.lenient().when(volume.getUuid()).thenReturn(uuid);
+        Mockito.lenient().when(volume.getPath()).thenReturn(path);
+        Mockito.lenient().when(volume.getDeviceId()).thenReturn(deviceId);
+        return volume;
+    }
+
+    private Backup.VolumeInfo backedVolume(String uuid, long deviceId) {
+        return new Backup.VolumeInfo(uuid, uuid, deviceId == 0 ? Volume.Type.ROOT : Volume.Type.DATADISK, 1024L, deviceId, null, null, null);
+    }
+
+    @Test
+    public void getVolumesToRestoreIntoMatchesByUuidNotByPathOrDeviceId() {
+        // data-a was migrated (its path is no longer its uuid) and the data disks swapped device ids
+        VolumeVO root = volume("root", "root", 0L);
+        VolumeVO dataB = volume("data-b", "data-b", 1L);
+        VolumeVO dataA = volume("data-a", "migrated-path-of-a", 2L);
+        List<Backup.VolumeInfo> backed = List.of(backedVolume("root", 0L), backedVolume("data-a", 1L), backedVolume("data-b", 2L));
+
+        List<VolumeVO> result = nasBackupProvider.getVolumesToRestoreInto(backed, List.of(root, dataB, dataA));
+
+        Assert.assertEquals(List.of(root, dataA, dataB), result);
+    }
+
+    @Test
+    public void getVolumesToRestoreIntoRefusesWhenABackedUpVolumeIsNoLongerAttached() {
+        List<Backup.VolumeInfo> backed = List.of(backedVolume("root", 0L), backedVolume("data-z", 1L));
+        List<VolumeVO> vmVolumes = List.of(volume("root", "root", 0L), volume("data-a", "data-a", 1L));
+
+        CloudRuntimeException e = Assert.assertThrows(CloudRuntimeException.class,
+                () -> nasBackupProvider.getVolumesToRestoreInto(backed, vmVolumes));
+        Assert.assertTrue(e.getMessage().contains("data-z"));
+    }
+
+    @Test
+    public void getVolumesToRestoreIntoUsesDeviceIdOrderForBrandNewVolumes() {
+        // an instance created from the backup: none of its volumes has a uuid recorded in the backup
+        VolumeVO newRoot = volume("new-root", "new-root", 0L);
+        VolumeVO newData = volume("new-data", "new-data", 1L);
+        List<Backup.VolumeInfo> backed = List.of(backedVolume("root", 0L), backedVolume("data-a", 1L));
+
+        Assert.assertEquals(List.of(newRoot, newData), nasBackupProvider.getVolumesToRestoreInto(backed, List.of(newRoot, newData)));
+    }
+
+    @Test(expected = CloudRuntimeException.class)
+    public void getVolumesToRestoreIntoRefusesBrandNewVolumesOfADifferentCount() {
+        nasBackupProvider.getVolumesToRestoreInto(List.of(backedVolume("root", 0L), backedVolume("data-a", 1L)),
+                List.of(volume("new-root", "new-root", 0L)));
+    }
+
+    @Test
+    public void restoreVMFromBackupSendsNothingWhenABackedUpVolumeIsNoLongerAttached() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(1L);
+        BackupVO backup = mock(BackupVO.class);
+        Mockito.when(backup.getBackedUpVolumes()).thenReturn(List.of(backedVolume("root", 0L), backedVolume("data-z", 1L)));
+        VolumeVO root = volume("root", "root", 0L);
+        VolumeVO dataA = volume("data-a", "data-a", 1L);
+        Mockito.when(volumeDao.findByInstance(1L)).thenReturn(List.of(root, dataA));
+
+        Assert.assertThrows(CloudRuntimeException.class, () -> nasBackupProvider.restoreVMFromBackup(vm, backup, false, null));
+        Mockito.verify(agentManager, Mockito.never()).send(anyLong(), Mockito.any(com.cloud.agent.api.Command.class));
+    }
+
+    // -- nas.backup.incremental.enabled master switch ------------------------------------
+
+    /**
+     * When the operator sets nas.backup.incremental.enabled=false at the zone level, every
+     * backup must be a fresh full anchor, regardless of VM state or nas.backup.full.every.
+     * This is a single toggle the
+     * operator can flip without having to count remaining backups in a chain.
+     */
+    @Test
+    public void decideChainReturnsLegacyFullWhenIncrementalDisabled() {
+        Long zoneId = 1L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.lenient().when(vm.getDataCenterId()).thenReturn(zoneId);
+
+        // Stub the master switch to false. ConfigKey.valueIn delegates to the framework's
+        // ConfigDepot at runtime; for the unit test we override the in-memory value via the
+        // ConfigKey's local override (set by ReflectionTestUtils on the spy provider).
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupIncrementalEnabled",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Boolean.class,
+                        "nas.backup.incremental.enabled", "false",
+                        "test override — disabled", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertNotNull(decision);
+        Assert.assertEquals(NASBackupChainKeys.TYPE_LEGACY_FULL, decision.mode);
+        Assert.assertNull("legacy-full must not carry a bitmap", decision.bitmapNew);
+        Assert.assertNull(decision.bitmapParent);
+        Assert.assertNull("legacy-full must not start a chain", decision.chainId);
+        Assert.assertEquals(0, decision.chainPosition);
+    }
+
+    // -- decideChain anchored on VM's active_checkpoint_id -------------------------------
+
+    /**
+     * No active_checkpoint_id on the VM (post-restore, first-ever backup, or detail purged) =>
+     * decideChain must return a fresh full. Relying on the last backup taken as the parent
+     * breaks after a restore, so the decision is anchored on the active checkpoint instead.
+     */
+    @Test
+    public void decideChainReturnsFullWhenVmHasNoActiveCheckpoint() {
+        Long zoneId = 1L;
+        Long vmId = 42L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(zoneId);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+
+        // Master switch defaults to false (opt-in by zone) — explicitly enable it for this
+        // test so we exercise the "no active_checkpoint_id" branch rather than short-circuit
+        // at the master-switch gate.
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupIncrementalEnabled",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Boolean.class,
+                        "nas.backup.incremental.enabled", "true",
+                        "test override - enabled", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+
+        Mockito.when(vmInstanceDetailsDao.findDetail(vmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(null);
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertNotNull(decision);
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_QCOW2, decision.method);
+        Assert.assertNull(decision.bitmapParent);
+        Assert.assertEquals(0, decision.chainPosition);
+    }
+
+    /** Enable the zone-level incremental master switch for a decideChain test. */
+    private void enableIncrementalBackups() {
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupIncrementalEnabled",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Boolean.class,
+                        "nas.backup.incremental.enabled", "true",
+                        "test override - enabled", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+    }
+
+    /** Give {@code vmId} a single volume on a Ceph-RBD pool. */
+    private void givenVmVolumesOnRbd(Long vmId) {
+        VolumeVO rbdVol = mock(VolumeVO.class);
+        Mockito.when(rbdVol.getPoolId()).thenReturn(9L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(rbdVol));
+        StoragePoolVO rbd = mock(StoragePoolVO.class);
+        Mockito.when(rbd.getPoolType()).thenReturn(Storage.StoragePoolType.RBD);
+        Mockito.when(storagePoolDao.findById(9L)).thenReturn(rbd);
+    }
+
+    /**
+     * A VM entirely on Ceph-RBD no longer drops to the legacy full-only path: it anchors its chain
+     * on an RBD snapshot and its backups are written as rbd export-diff streams.
+     */
+    @Test
+    public void decideChainStartsAnRbdChainForRbdBackedVm() {
+        Long vmId = 60L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(1L);
+        Mockito.lenient().when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+        enableIncrementalBackups();
+        givenVmVolumesOnRbd(vmId);
+        Mockito.when(vmInstanceDetailsDao.findDetail(vmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(null);
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_RBD, decision.method);
+        Assert.assertEquals(NASBackupChainKeys.FORMAT_RBD_DIFF, decision.format);
+        Assert.assertTrue("RBD chains anchor on an RBD snapshot, not a QEMU bitmap",
+                decision.bitmapNew.startsWith("csbackup-"));
+        Assert.assertNull("a full reads nothing from a parent anchor", decision.bitmapParent);
+        Assert.assertNull("RBD backups are replayed in order, not rebased onto a parent file", decision.parentPaths);
+        Assert.assertEquals(0, decision.chainPosition);
+    }
+
+    /**
+     * RBD snapshots are taken inside Ceph, so a stopped VM is no different from a running one. It
+     * must stay on the RBD path rather than being pushed onto a qcow2 full the way a stopped VM on
+     * file-based storage is (which has no live QEMU to hold a dirty bitmap).
+     */
+    @Test
+    public void decideChainKeepsStoppedRbdVmOnTheRbdPath() {
+        Long vmId = 61L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(1L);
+        Mockito.lenient().when(vm.getState()).thenReturn(VMInstanceVO.State.Stopped);
+        enableIncrementalBackups();
+        givenVmVolumesOnRbd(vmId);
+        Mockito.when(vmInstanceDetailsDao.findDetail(vmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(null);
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_RBD, decision.method);
+        Assert.assertEquals(NASBackupChainKeys.FORMAT_RBD_DIFF, decision.format);
+    }
+
+    /**
+     * When the agent reports it completed a full after failing to proceed as an incremental, the
+     * backup is re-registered as the start of a new chain — in the same storage flavour, so an RBD
+     * backup is not accidentally recorded as a qcow2 one.
+     */
+    @Test
+    public void asFullRestartKeepsTheRbdFlavour() {
+        NASBackupProvider.ChainDecision incremental =
+                NASBackupProvider.ChainDecision.rbdIncremental("csbackup-2", "csbackup-1", "chain-1", 3);
+
+        NASBackupProvider.ChainDecision restarted = incremental.asFullRestart();
+
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, restarted.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_RBD, restarted.method);
+        Assert.assertEquals(NASBackupChainKeys.FORMAT_RBD_DIFF, restarted.format);
+        Assert.assertEquals("csbackup-2", restarted.bitmapNew);
+        Assert.assertEquals(0, restarted.chainPosition);
+    }
+
+    // -- incremental storage-capability guard (Ceph-RBD / Linstor stay on legacy full) ----
+
+    /**
+     * Incremental checkpoints are only possible on file-based qcow2 storage. A VM whose every
+     * volume sits on NFS / HOST-scope local / SharedMountPoint is checkpoint-capable.
+     */
+    @Test
+    public void getIncrementalFlavorIsQcow2ForNfsHostAndSharedMount() {
+        Long vmId = 55L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+
+        VolumeVO nfsVol = mock(VolumeVO.class);
+        Mockito.when(nfsVol.getPoolId()).thenReturn(1L);
+        VolumeVO hostVol = mock(VolumeVO.class);
+        Mockito.when(hostVol.getPoolId()).thenReturn(2L);
+        VolumeVO smpVol = mock(VolumeVO.class);
+        Mockito.when(smpVol.getPoolId()).thenReturn(3L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(nfsVol, hostVol, smpVol));
+
+        StoragePoolVO nfs = mock(StoragePoolVO.class);
+        Mockito.when(nfs.getPoolType()).thenReturn(Storage.StoragePoolType.NetworkFilesystem);
+        StoragePoolVO host = mock(StoragePoolVO.class);
+        Mockito.when(host.getScope()).thenReturn(ScopeType.HOST);
+        StoragePoolVO smp = mock(StoragePoolVO.class);
+        Mockito.when(smp.getPoolType()).thenReturn(Storage.StoragePoolType.SharedMountPoint);
+        Mockito.when(storagePoolDao.findById(1L)).thenReturn(nfs);
+        Mockito.when(storagePoolDao.findById(2L)).thenReturn(host);
+        Mockito.when(storagePoolDao.findById(3L)).thenReturn(smp);
+
+        Assert.assertEquals(NASBackupProvider.IncrementalFlavor.QCOW2, nasBackupProvider.getIncrementalFlavor(vm));
+    }
+
+    /**
+     * The two mechanisms produce different on-NAS files, so a VM straddling file-based storage and
+     * Ceph-RBD cannot use either and stays on the legacy full-only path.
+     */
+    @Test
+    public void getIncrementalFlavorIsUnsupportedForMixedFileAndRbdStorage() {
+        Long vmId = 56L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+
+        VolumeVO nfsVol = mock(VolumeVO.class);
+        Mockito.when(nfsVol.getPoolId()).thenReturn(1L);
+        VolumeVO rbdVol = mock(VolumeVO.class);
+        Mockito.when(rbdVol.getPoolId()).thenReturn(9L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(nfsVol, rbdVol));
+
+        StoragePoolVO nfs = mock(StoragePoolVO.class);
+        Mockito.when(nfs.getPoolType()).thenReturn(Storage.StoragePoolType.NetworkFilesystem);
+        StoragePoolVO rbd = mock(StoragePoolVO.class);
+        Mockito.when(rbd.getPoolType()).thenReturn(Storage.StoragePoolType.RBD);
+        Mockito.when(storagePoolDao.findById(1L)).thenReturn(nfs);
+        Mockito.when(storagePoolDao.findById(9L)).thenReturn(rbd);
+
+        Assert.assertEquals(NASBackupProvider.IncrementalFlavor.UNSUPPORTED, nasBackupProvider.getIncrementalFlavor(vm));
+    }
+
+    /**
+     * Every volume on Ceph-RBD selects the Ceph-native mechanism: an RBD snapshot per cycle plus
+     * {@code rbd export-diff}, instead of a libvirt checkpoint that a raw RBD image cannot hold.
+     */
+    @Test
+    public void getIncrementalFlavorIsRbdWhenEveryVolumeIsOnRbd() {
+        Long vmId = 58L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+
+        VolumeVO rootVol = mock(VolumeVO.class);
+        Mockito.when(rootVol.getPoolId()).thenReturn(9L);
+        VolumeVO dataVol = mock(VolumeVO.class);
+        Mockito.when(dataVol.getPoolId()).thenReturn(10L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(rootVol, dataVol));
+
+        StoragePoolVO rbd = mock(StoragePoolVO.class);
+        Mockito.when(rbd.getPoolType()).thenReturn(Storage.StoragePoolType.RBD);
+        StoragePoolVO otherRbd = mock(StoragePoolVO.class);
+        Mockito.when(otherRbd.getPoolType()).thenReturn(Storage.StoragePoolType.RBD);
+        Mockito.when(storagePoolDao.findById(9L)).thenReturn(rbd);
+        Mockito.when(storagePoolDao.findById(10L)).thenReturn(otherRbd);
+
+        Assert.assertEquals(NASBackupProvider.IncrementalFlavor.RBD, nasBackupProvider.getIncrementalFlavor(vm));
+    }
+
+    /** Linstor supports neither mechanism, so it keeps the legacy full-only behaviour. */
+    @Test
+    public void getIncrementalFlavorIsUnsupportedForLinstor() {
+        Long vmId = 59L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        VolumeVO vol = mock(VolumeVO.class);
+        Mockito.when(vol.getPoolId()).thenReturn(1L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(vol));
+        StoragePoolVO linstor = mock(StoragePoolVO.class);
+        Mockito.when(linstor.getPoolType()).thenReturn(Storage.StoragePoolType.Linstor);
+        Mockito.when(storagePoolDao.findById(1L)).thenReturn(linstor);
+
+        Assert.assertEquals(NASBackupProvider.IncrementalFlavor.UNSUPPORTED, nasBackupProvider.getIncrementalFlavor(vm));
+    }
+
+    /** A volume whose storage pool can no longer be resolved is treated as incapable (safe). */
+    @Test
+    public void getIncrementalFlavorIsUnsupportedWhenPoolUnresolvable() {
+        Long vmId = 57L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        VolumeVO vol = mock(VolumeVO.class);
+        Mockito.when(vol.getPoolId()).thenReturn(1L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(vol));
+        Mockito.when(storagePoolDao.findById(1L)).thenReturn(null);
+
+        Assert.assertEquals(NASBackupProvider.IncrementalFlavor.UNSUPPORTED, nasBackupProvider.getIncrementalFlavor(vm));
+    }
+
+    // -- restore clears active_checkpoint_id ---------------------------------------------
+
+    /**
+     * After a successful restoreVMFromBackup, decideChain on the next backup must produce
+     * a full. We verify this end-to-end by checking that vmInstanceDetailsDao.removeDetail
+     * is called with the active_checkpoint_id key.
+     */
+    @Test
+    public void restoreClearsActiveCheckpointDetail() throws AgentUnavailableException, OperationTimedoutException {
+        Long vmId = 7L;
+        Long hostId = 8L;
+        Long backupOfferingId = 9L;
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        Mockito.when(vm.getRemoved()).thenReturn(null);
+        Mockito.when(vm.getName()).thenReturn("vm7");
+
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(host.getId()).thenReturn(hostId);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupVO backup = new BackupVO();
+        backup.setVmId(vmId);
+        backup.setBackupOfferingId(backupOfferingId);
+        backup.setExternalId("i-2-7-VM/2026.05.16.10.00.00");
+        ReflectionTestUtils.setField(backup, "id", 100L);
+        // backedUpVolumes defaults to null => BackupVO.getBackedUpVolumes returns emptyList().
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(backupOfferingId)).thenReturn(repo);
+
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(Collections.emptyList());
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(true);
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(RestoreBackupCommand.class))).thenReturn(answer);
+
+        // Pre-existing checkpoint detail so removeDetail has something to "clear".
+        VMInstanceDetailVO existing = mock(VMInstanceDetailVO.class);
+        Mockito.when(existing.getValue()).thenReturn("backup-1715000000");
+        Mockito.when(vmInstanceDetailsDao.findDetail(vmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(existing);
+
+        boolean ok = nasBackupProvider.restoreVMFromBackup(vm, backup, false, null);
+        Assert.assertTrue(ok);
+        Mockito.verify(vmInstanceDetailsDao).removeDetail(vmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID);
+    }
+
+    @Test
+    public void restoreVMFromBackupReportsTheReasonWhenTheAgentRefusesTheRestore() throws AgentUnavailableException, OperationTimedoutException {
+        Long vmId = 7L;
+        Long hostId = 8L;
+        Long backupOfferingId = 9L;
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        Mockito.when(vm.getRemoved()).thenReturn(null);
+        Mockito.when(vm.getName()).thenReturn("vm7");
+        Mockito.when(vm.getInstanceName()).thenReturn("i-2-7-VM");
+
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(host.getId()).thenReturn(hostId);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupVO backup = new BackupVO();
+        backup.setVmId(vmId);
+        backup.setBackupOfferingId(backupOfferingId);
+        backup.setExternalId("i-2-7-VM/2026.05.16.10.00.00");
+        ReflectionTestUtils.setField(backup, "id", 100L);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(backupOfferingId)).thenReturn(repo);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(Collections.emptyList());
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(false);
+        Mockito.when(answer.getDetails()).thenReturn("RBD image cloudstack/vol carries snapshot(s) which this backup path did not take");
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(RestoreBackupCommand.class))).thenReturn(answer);
+
+        BackupProviderException e = Assert.assertThrows(BackupProviderException.class,
+                () -> nasBackupProvider.restoreVMFromBackup(vm, backup, false, null));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("carries snapshot(s) which this backup path did not take"));
+        Mockito.verify(vmInstanceDetailsDao, Mockito.never()).removeDetail(Mockito.eq(vmId), Mockito.eq(NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID));
+    }
+
+    private VolumeVO rbdVolume(long id, String name, long poolId, Storage.StoragePoolType poolType) {
+        VolumeVO volume = mock(VolumeVO.class);
+        Mockito.lenient().when(volume.getId()).thenReturn(id);
+        Mockito.lenient().when(volume.getName()).thenReturn(name);
+        Mockito.lenient().when(volume.getUuid()).thenReturn(name + "-uuid");
+        Mockito.lenient().when(volume.getPoolId()).thenReturn(poolId);
+        StoragePoolVO pool = mock(StoragePoolVO.class);
+        Mockito.lenient().when(pool.getPoolType()).thenReturn(poolType);
+        Mockito.lenient().when(storagePoolDao.findById(poolId)).thenReturn(pool);
+        return volume;
+    }
+
+    private void volumeSnapshotOnPrimary(VolumeVO volume, long snapshotId, String name, ObjectInDataStoreStateMachine.State state) {
+        SnapshotDataStoreVO reference = mock(SnapshotDataStoreVO.class);
+        Mockito.lenient().when(reference.getSnapshotId()).thenReturn(snapshotId);
+        Mockito.lenient().when(reference.getState()).thenReturn(state);
+        Mockito.when(snapshotDataStoreDao.listAllByVolumeAndDataStore(volume.getId(), DataStoreRole.Primary)).thenReturn(List.of(reference));
+        SnapshotVO snapshot = mock(SnapshotVO.class);
+        Mockito.lenient().when(snapshot.getName()).thenReturn(name);
+        Mockito.lenient().when(snapshot.getUuid()).thenReturn(name + "-uuid");
+        Mockito.lenient().when(snapshotDao.findById(snapshotId)).thenReturn(snapshot);
+    }
+
+    @Test
+    public void failIfVolumesCarrySnapshotsOnPrimaryStorageRefusesAnRbdVolumeWithAVolumeSnapshot() {
+        VolumeVO root = rbdVolume(1L, "ROOT-7", 10L, Storage.StoragePoolType.RBD);
+        volumeSnapshotOnPrimary(root, 5L, "ux-foreign", ObjectInDataStoreStateMachine.State.Ready);
+
+        BackupProviderException e = Assert.assertThrows(BackupProviderException.class,
+                () -> nasBackupProvider.failIfVolumesCarrySnapshotsOnPrimaryStorage(List.of(root)));
+
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("ROOT-7"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("ux-foreign (ux-foreign-uuid)"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("restoring the volume would remove them"));
+    }
+
+    @Test
+    public void failIfVolumesCarrySnapshotsOnPrimaryStorageIgnoresASnapshotWhichIsNotReadyOnPrimaryStorage() {
+        VolumeVO root = rbdVolume(1L, "ROOT-7", 10L, Storage.StoragePoolType.RBD);
+        volumeSnapshotOnPrimary(root, 5L, "gone", ObjectInDataStoreStateMachine.State.Destroyed);
+
+        nasBackupProvider.failIfVolumesCarrySnapshotsOnPrimaryStorage(List.of(root)); // must not throw
+    }
+
+    @Test
+    public void failIfVolumesCarrySnapshotsOnPrimaryStorageIgnoresVolumesWhichAreNotOnRbd() {
+        VolumeVO root = rbdVolume(1L, "ROOT-7", 10L, Storage.StoragePoolType.NetworkFilesystem);
+
+        nasBackupProvider.failIfVolumesCarrySnapshotsOnPrimaryStorage(List.of(root)); // must not throw
+        Mockito.verifyNoInteractions(snapshotDataStoreDao);
+    }
+
+    @Test
+    public void failIfVolumesCarrySnapshotsOnPrimaryStorageAllowsAnRbdVolumeWithoutVolumeSnapshots() {
+        VolumeVO root = rbdVolume(1L, "ROOT-7", 10L, Storage.StoragePoolType.RBD);
+        Mockito.when(snapshotDataStoreDao.listAllByVolumeAndDataStore(1L, DataStoreRole.Primary)).thenReturn(Collections.emptyList());
+
+        nasBackupProvider.failIfVolumesCarrySnapshotsOnPrimaryStorage(List.of(root)); // must not throw
+    }
+
+    /**
+     * Single-volume restore (restoreBackedUpVolume) must also clear the target VM's
+     * active_checkpoint_id, so the next backup of that VM is a fresh full — the restored
+     * volume's image carries no QEMU bitmap.
+     */
+    @Test
+    public void restoreBackedUpVolumeClearsTargetVmActiveCheckpoint()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long targetVmId = 42L;
+        Long backupOfferingId = 9L;
+        String targetVmName = "i-2-42-VM";
+        String volUuid = "vol-uuid-1";
+        String hostIp = "10.0.0.5";
+        String dsUuid = "ds-uuid-1";
+
+        VolumeVO srcVolume = mock(VolumeVO.class);
+        Mockito.when(srcVolume.getUuid()).thenReturn(volUuid);
+        Mockito.when(srcVolume.getName()).thenReturn("data1");
+        Mockito.when(volumeDao.findByUuid(volUuid)).thenReturn(srcVolume);
+
+        DiskOfferingVO diskOffering = mock(DiskOfferingVO.class);
+        Mockito.when(diskOffering.getId()).thenReturn(5L);
+        Mockito.when(diskOffering.getProvisioningType()).thenReturn(Storage.ProvisioningType.THIN);
+        Mockito.when(diskOfferingDao.findByUuid(Mockito.anyString())).thenReturn(diskOffering);
+
+        StoragePoolVO pool = mock(StoragePoolVO.class);
+        Mockito.when(pool.getId()).thenReturn(11L);
+        Mockito.when(pool.getPoolType()).thenReturn(Storage.StoragePoolType.NetworkFilesystem);
+        Mockito.when(storagePoolDao.findByUuid(dsUuid)).thenReturn(pool);
+
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getId()).thenReturn(8L);
+        Mockito.when(hostDao.findByIp(hostIp)).thenReturn(host);
+
+        Backup.VolumeInfo backedUp = new Backup.VolumeInfo(volUuid, "i-2-99-VM/2026/data1.qcow2",
+                Volume.Type.DATADISK, 1024L, 1L, "disk-offering-uuid", null, null);
+
+        BackupVO backup = new BackupVO();
+        backup.setVmId(99L);
+        backup.setBackupOfferingId(backupOfferingId);
+        backup.setExternalId("i-2-99-VM/2026.06.22.10.00.00");
+        backup.setSize(1024L);
+        backup.setBackedUpVolumes(new Gson().toJson(Collections.singletonList(backedUp)));
+        ReflectionTestUtils.setField(backup, "id", 200L);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(backupOfferingId)).thenReturn(repo);
+
+        BackupAnswer answer = mock(BackupAnswer.class);
+        Mockito.when(answer.getResult()).thenReturn(true);
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(RestoreBackupCommand.class))).thenReturn(answer);
+
+        VMInstanceVO targetVm = mock(VMInstanceVO.class);
+        Mockito.when(targetVm.getId()).thenReturn(targetVmId);
+        Mockito.when(vmInstanceDao.findVMByInstanceName(targetVmName)).thenReturn(targetVm);
+
+        VMInstanceDetailVO existing = mock(VMInstanceDetailVO.class);
+        Mockito.when(existing.getValue()).thenReturn("backup-1718000000");
+        Mockito.when(vmInstanceDetailsDao.findDetail(targetVmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(existing);
+
+        Pair<Boolean, String> result = nasBackupProvider.restoreBackedUpVolume(
+                backup, backedUp, hostIp, dsUuid, new Pair<>(targetVmName, VirtualMachine.State.Stopped), null, false);
+
+        Assert.assertTrue(result.first());
+        Mockito.verify(vmInstanceDetailsDao).removeDetail(targetVmId, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID);
+    }
+
+    // -- delete-pending cascade ----------------------------------------------------------
+
+    /**
+     * Deleting an incremental that has a live child must mark the incremental as
+     * delete-pending in backup_details and NOT touch the on-NAS file or the backups row.
+     * A parent with live children is soft-deleted (delete-pending) rather than removed.
+     */
+    @Test
+    public void deleteWithLiveChildMarksDeletePendingAndPreservesFile()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long zoneId = 1L;
+        Long vmId = 2L;
+        Long hostId = 3L;
+        Long offeringId = 4L;
+
+        BackupVO parent = new BackupVO();
+        parent.setVmId(vmId);
+        parent.setBackupOfferingId(offeringId);
+        parent.setExternalId("i-2-2-VM/2026.05.10.10.00.00");
+        parent.setZoneId(zoneId);
+        ReflectionTestUtils.setField(parent, "id", 50L);
+        ReflectionTestUtils.setField(parent, "uuid", "parent-uuid");
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        // Note: host.getId() is intentionally not stubbed — the live-child path never
+        // contacts the agent (verified below), so the stub would be unnecessary.
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(offeringId)).thenReturn(repo);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(vmId)).thenReturn(vm);
+
+        // CHAIN_ID on the parent => not the no-chain fast path.
+        BackupDetailVO chainIdDetail = new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_ID, "chain-1", true);
+        BackupDetailVO chainPosDetail = new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_POSITION, "0", true);
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_ID)).thenReturn(chainIdDetail);
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(chainPosDetail);
+
+        // A live child sits deeper in the chain (higher CHAIN_POSITION).
+        BackupVO child = new BackupVO();
+        child.setVmId(vmId);
+        child.setBackupOfferingId(offeringId);
+        child.setExternalId("i-2-2-VM/2026.05.10.10.30.00");
+        child.setZoneId(zoneId);
+        child.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(child, "id", 51L);
+        ReflectionTestUtils.setField(child, "uuid", "child-uuid");
+
+        BackupDetailVO childChainId = new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_ID, "chain-1", true);
+        BackupDetailVO childChainPos = new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_POSITION, "1", true);
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_ID)).thenReturn(childChainId);
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(childChainPos);
+
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(parent, child));
+        // Re-read under the chain lock + markDeletePending both load the row by id.
+        Mockito.when(backupDao.findById(50L)).thenReturn(parent);
+        Mockito.doReturn(mock(GlobalLock.class)).when(nasBackupProvider).acquireChainDeleteLock(vmId);
+
+        boolean result = nasBackupProvider.deleteBackup(parent, false);
+        Assert.assertTrue(result);
+
+        // No agent traffic — the on-NAS file must be preserved while children are alive.
+        Mockito.verify(agentManager, Mockito.never()).send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class));
+        // No DB row removal — the row is the tombstone marker.
+        Mockito.verify(backupDao, Mockito.never()).remove(50L);
+        // A tombstoned backup is NOT decremented — its space is still occupied until swept.
+        Mockito.verify(resourceLimitMgr, Mockito.never()).decrementResourceCount(Mockito.anyLong(), Mockito.eq(Resource.ResourceType.backup));
+        // The tombstoned backup is moved to Status.Hidden (replaces the old DELETE_PENDING detail).
+        ArgumentCaptor<BackupVO> captor = ArgumentCaptor.forClass(BackupVO.class);
+        Mockito.verify(backupDao).update(Mockito.eq(50L), captor.capture());
+        Assert.assertEquals(Backup.Status.Hidden, captor.getValue().getStatus());
+        Mockito.verify(backupDetailsDao, Mockito.never()).persist(Mockito.any(BackupDetailVO.class));
+    }
+
+    /**
+     * Deleting a leaf incremental whose parent is delete-pending must (a) delete the leaf and
+     * then (b) sweep up the tombstoned parent. Mirrors DefaultSnapshotStrategy's
+     * "delete leaf, then walk up while parent is destroying-and-childless".
+     */
+    @Test
+    public void deletingLeafSweepsUpDeletePendingParent()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long zoneId = 1L;
+        Long vmId = 2L;
+        Long hostId = 3L;
+        Long offeringId = 4L;
+
+        BackupVO leaf = new BackupVO();
+        leaf.setVmId(vmId);
+        leaf.setBackupOfferingId(offeringId);
+        leaf.setExternalId("i-2-2-VM/2026.05.10.11.00.00");
+        leaf.setZoneId(zoneId);
+        ReflectionTestUtils.setField(leaf, "id", 51L);
+        ReflectionTestUtils.setField(leaf, "uuid", "leaf-uuid");
+
+        BackupVO parent = new BackupVO();
+        parent.setVmId(vmId);
+        parent.setBackupOfferingId(offeringId);
+        parent.setExternalId("i-2-2-VM/2026.05.10.10.30.00");
+        parent.setZoneId(zoneId);
+        ReflectionTestUtils.setField(parent, "id", 50L);
+        ReflectionTestUtils.setField(parent, "uuid", "parent-uuid");
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(host.getId()).thenReturn(hostId);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(offeringId)).thenReturn(repo);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(vmId)).thenReturn(vm);
+
+        // Leaf details. CHAIN_POSITION=1 puts the leaf after the full anchor in the
+        // ordered chain — getChainOrderedLeafToRoot sorts by CHAIN_POSITION descending.
+        BackupDetailVO leafChainId = new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_ID, "chain-1", true);
+        BackupDetailVO leafChainPos = new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_POSITION, "1", true);
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_ID)).thenReturn(leafChainId);
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(leafChainPos);
+
+        // Parent is the tombstoned full anchor (CHAIN_POSITION=0).
+        BackupDetailVO parentChainId = new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_ID, "chain-1", true);
+        BackupDetailVO parentChainPos = new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_POSITION, "0", true);
+        // The parent is the tombstone — now represented by Status.Hidden (was the DELETE_PENDING detail).
+        parent.setStatus(Backup.Status.Hidden);
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_ID)).thenReturn(parentChainId);
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(parentChainPos);
+
+        // We still use a mutable list + remove() answer so the DAO contract is realistic.
+        java.util.List<Backup> liveBackups = new java.util.ArrayList<>(List.of(parent, leaf));
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenAnswer(inv -> new java.util.ArrayList<>(liveBackups));
+        // The target row is re-read under the chain lock before any chain decision.
+        Mockito.when(backupDao.findById(51L)).thenReturn(leaf);
+        Mockito.doReturn(mock(GlobalLock.class)).when(nasBackupProvider).acquireChainDeleteLock(vmId);
+
+        // Agent acknowledges every delete.
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class)))
+                .thenReturn(new BackupAnswer(new DeleteBackupCommand(null, null, null, null), true, "ok"));
+        // backupDao.remove(id) drops the corresponding row from the live list so the next
+        // listByVmId call reflects post-delete state — mirrors the real DAO contract.
+        Mockito.when(backupDao.remove(Mockito.anyLong())).thenAnswer(inv -> {
+            Long id = inv.getArgument(0);
+            liveBackups.removeIf(b -> b.getId() == id);
+            return true;
+        });
+
+        boolean result = nasBackupProvider.deleteBackup(leaf, false);
+        Assert.assertTrue(result);
+
+        // Both backups must be physically deleted (leaf first, then tombstoned parent).
+        Mockito.verify(agentManager, Mockito.times(2))
+                .send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class));
+        Mockito.verify(backupDao).remove(51L);
+        Mockito.verify(backupDao).remove(50L);
+        // Exactly-once resource accounting: decremented for BOTH physically-removed backups
+        // (leaf + swept ancestor), not just one.
+        Mockito.verify(resourceLimitMgr, Mockito.times(2))
+                .decrementResourceCount(Mockito.anyLong(), Mockito.eq(Resource.ResourceType.backup));
+        Mockito.verify(resourceLimitMgr, Mockito.times(2))
+                .decrementResourceCount(Mockito.anyLong(), Mockito.eq(Resource.ResourceType.backup_storage), Mockito.any());
+    }
+
+    @Test
+    public void deletingLastLiveMemberCollectsDeeperOrphanTombstones()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long zoneId = 1L;
+        Long vmId = 2L;
+        Long hostId = 3L;
+        Long offeringId = 4L;
+
+        BackupVO full = new BackupVO();
+        full.setVmId(vmId);
+        full.setBackupOfferingId(offeringId);
+        full.setExternalId("i-2-2-VM/2026.05.10.10.00.00");
+        full.setZoneId(zoneId);
+        full.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(full, "id", 50L);
+
+        // The last live incremental — the one being deleted.
+        BackupVO inc1 = new BackupVO();
+        inc1.setVmId(vmId);
+        inc1.setBackupOfferingId(offeringId);
+        inc1.setExternalId("i-2-2-VM/2026.05.10.10.30.00");
+        inc1.setZoneId(zoneId);
+        inc1.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(inc1, "id", 51L);
+
+        // A stranded tombstone deeper in the chain: its own descendants are long gone, so
+        // only a sweep triggered by an ancestor's deletion can ever collect it.
+        BackupVO orphan = new BackupVO();
+        orphan.setVmId(vmId);
+        orphan.setBackupOfferingId(offeringId);
+        orphan.setExternalId("i-2-2-VM/2026.05.10.11.00.00");
+        orphan.setZoneId(zoneId);
+        orphan.setStatus(Backup.Status.Hidden);
+        ReflectionTestUtils.setField(orphan, "id", 52L);
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(host.getId()).thenReturn(hostId);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(offeringId)).thenReturn(repo);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(vmId)).thenReturn(vm);
+
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_POSITION, "0", true));
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_POSITION, "1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_POSITION, "2", true));
+
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(full, inc1, orphan));
+        Mockito.when(backupDao.findById(51L)).thenReturn(inc1);
+        Mockito.doReturn(mock(GlobalLock.class)).when(nasBackupProvider).acquireChainDeleteLock(vmId);
+
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class)))
+                .thenReturn(new BackupAnswer(new DeleteBackupCommand(null, null, null, null), true, "ok"));
+
+        Assert.assertTrue(nasBackupProvider.deleteBackup(inc1, false));
+
+        // inc1 and the deeper orphan tombstone are physically removed; the live full survives.
+        Mockito.verify(agentManager, Mockito.times(2))
+                .send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class));
+        Mockito.verify(backupDao).remove(51L);
+        Mockito.verify(backupDao).remove(52L);
+        Mockito.verify(backupDao, Mockito.never()).remove(50L);
+    }
+
+    @Test
+    public void deletingAncestorOfTombstoneWithLiveDescendantTombstonesIt()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long zoneId = 1L;
+        Long vmId = 2L;
+        Long hostId = 3L;
+        Long offeringId = 4L;
+
+        BackupVO full = new BackupVO();
+        full.setVmId(vmId);
+        full.setBackupOfferingId(offeringId);
+        full.setExternalId("i-2-2-VM/2026.05.10.10.00.00");
+        full.setZoneId(zoneId);
+        full.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(full, "id", 50L);
+
+        BackupVO inc1 = new BackupVO();
+        inc1.setVmId(vmId);
+        inc1.setBackupOfferingId(offeringId);
+        inc1.setExternalId("i-2-2-VM/2026.05.10.10.30.00");
+        inc1.setZoneId(zoneId);
+        inc1.setStatus(Backup.Status.Hidden);
+        ReflectionTestUtils.setField(inc1, "id", 51L);
+
+        BackupVO inc2 = new BackupVO();
+        inc2.setVmId(vmId);
+        inc2.setBackupOfferingId(offeringId);
+        inc2.setExternalId("i-2-2-VM/2026.05.10.11.00.00");
+        inc2.setZoneId(zoneId);
+        inc2.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(inc2, "id", 52L);
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(offeringId)).thenReturn(repo);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(vmId)).thenReturn(vm);
+
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_POSITION, "0", true));
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_POSITION, "2", true));
+
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(full, inc1, inc2));
+        Mockito.when(backupDao.findById(50L)).thenReturn(full);
+        Mockito.doReturn(mock(GlobalLock.class)).when(nasBackupProvider).acquireChainDeleteLock(vmId);
+
+        Assert.assertTrue(nasBackupProvider.deleteBackup(full, false));
+
+        // The full anchor must NOT be physically deleted — inc2 (live) still restores
+        // through inc1's and full's files. It becomes a tombstone instead.
+        Mockito.verify(agentManager, Mockito.never()).send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class));
+        Mockito.verify(backupDao, Mockito.never()).remove(Mockito.anyLong());
+        ArgumentCaptor<BackupVO> captor = ArgumentCaptor.forClass(BackupVO.class);
+        Mockito.verify(backupDao).update(Mockito.eq(50L), captor.capture());
+        Assert.assertEquals(Backup.Status.Hidden, captor.getValue().getStatus());
+    }
+
+    @Test
+    public void sweepContinuesPastFailedTombstoneDelete()
+            throws AgentUnavailableException, OperationTimedoutException {
+        Long zoneId = 1L;
+        Long vmId = 2L;
+        Long hostId = 3L;
+        Long offeringId = 4L;
+
+        BackupVO full = new BackupVO();
+        full.setVmId(vmId);
+        full.setBackupOfferingId(offeringId);
+        full.setExternalId("i-2-2-VM/2026.05.10.10.00.00");
+        full.setZoneId(zoneId);
+        full.setStatus(Backup.Status.Hidden);
+        ReflectionTestUtils.setField(full, "id", 50L);
+
+        BackupVO inc1 = new BackupVO();
+        inc1.setVmId(vmId);
+        inc1.setBackupOfferingId(offeringId);
+        inc1.setExternalId("i-2-2-VM/2026.05.10.10.30.00");
+        inc1.setZoneId(zoneId);
+        inc1.setStatus(Backup.Status.Hidden);
+        ReflectionTestUtils.setField(inc1, "id", 51L);
+
+        // The last live member — deleting it triggers the sweep of both tombstones.
+        BackupVO inc2 = new BackupVO();
+        inc2.setVmId(vmId);
+        inc2.setBackupOfferingId(offeringId);
+        inc2.setExternalId("i-2-2-VM/2026.05.10.11.00.00");
+        inc2.setZoneId(zoneId);
+        inc2.setStatus(Backup.Status.BackedUp);
+        ReflectionTestUtils.setField(inc2, "id", 52L);
+
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getLastHostId()).thenReturn(hostId);
+        HostVO host = mock(HostVO.class);
+        Mockito.when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.when(host.getId()).thenReturn(hostId);
+        Mockito.when(hostDao.findById(hostId)).thenReturn(host);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(offeringId)).thenReturn(repo);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(vmId)).thenReturn(vm);
+
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(50L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(50L, NASBackupChainKeys.CHAIN_POSITION, "0", true));
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(51L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(51L, NASBackupChainKeys.CHAIN_POSITION, "1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_ID))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_ID, "chain-1", true));
+        Mockito.when(backupDetailsDao.findDetail(52L, NASBackupChainKeys.CHAIN_POSITION))
+                .thenReturn(new BackupDetailVO(52L, NASBackupChainKeys.CHAIN_POSITION, "2", true));
+
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(full, inc1, inc2));
+        Mockito.when(backupDao.findById(52L)).thenReturn(inc2);
+        Mockito.doReturn(mock(GlobalLock.class)).when(nasBackupProvider).acquireChainDeleteLock(vmId);
+
+        // Deletes run leaf-to-root: inc2 succeeds, inc1's rm FAILS, full succeeds.
+        DeleteBackupCommand dummy = new DeleteBackupCommand(null, null, null, null);
+        Mockito.when(agentManager.send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class)))
+                .thenReturn(new BackupAnswer(dummy, true, "ok"),
+                        new BackupAnswer(dummy, false, "rm failed"),
+                        new BackupAnswer(dummy, true, "ok"));
+
+        Assert.assertTrue(nasBackupProvider.deleteBackup(inc2, false));
+
+        // All three members were attempted; the failed inc1 keeps its row, full is collected.
+        Mockito.verify(agentManager, Mockito.times(3))
+                .send(Mockito.anyLong(), Mockito.any(DeleteBackupCommand.class));
+        Mockito.verify(backupDao).remove(52L);
+        Mockito.verify(backupDao, Mockito.never()).remove(51L);
+        Mockito.verify(backupDao).remove(50L);
+    }
+
+    // -- the backup anchors are removed once the chain is gone ---------------------------
+
+    private void setRbdCliOfHost(long hostId, boolean hasRbdCli) {
+        DetailVO detail = mock(DetailVO.class);
+        Mockito.lenient().when(detail.getValue()).thenReturn(String.valueOf(hasRbdCli));
+        Mockito.lenient().when(hostDetailsDao.findDetail(hostId, Host.HOST_RBD_CLI)).thenReturn(detail);
+    }
+
+    // Defaults for an Instance with one RBD volume; lenient, as a test may override a stub or
+    // return before reaching it.
+    private VMInstanceVO vmWithRbdVolume(long vmId, long hostId, long poolId) {
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.lenient().when(vm.getId()).thenReturn(vmId);
+        Mockito.lenient().when(vm.getLastHostId()).thenReturn(hostId);
+
+        HostVO host = mock(HostVO.class);
+        Mockito.lenient().when(host.getStatus()).thenReturn(Status.Up);
+        Mockito.lenient().when(host.getId()).thenReturn(hostId);
+        Mockito.lenient().when(hostDao.findById(hostId)).thenReturn(host);
+        setRbdCliOfHost(hostId, true);
+
+        VolumeVO volume = mock(VolumeVO.class);
+        Mockito.lenient().when(volume.getPoolId()).thenReturn(poolId);
+        Mockito.lenient().when(volume.getDeviceId()).thenReturn(0L);
+        Mockito.lenient().when(volume.getPath()).thenReturn("volume-path");
+        Mockito.lenient().when(volumeDao.findByInstance(vmId)).thenReturn(Collections.singletonList(volume));
+
+        StoragePoolVO pool = mock(StoragePoolVO.class);
+        Mockito.lenient().when(pool.getId()).thenReturn(poolId);
+        Mockito.lenient().when(pool.getPoolType()).thenReturn(Storage.StoragePoolType.RBD);
+        Mockito.lenient().when(pool.getPath()).thenReturn("rbd-pool");
+        Mockito.lenient().when(storagePoolDao.findById(poolId)).thenReturn(pool);
+        return vm;
+    }
+
+    /**
+     * Taking the Instance out of its backup offering ends the chain: the next backup, if the
+     * Instance is ever assigned an offering again, is a full one, so the anchor is not read
+     * again and is removed rather than left holding the data it references in the pool.
+     */
+    @Test
+    public void removingTheOfferingRemovesTheBackupAnchors() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = vmWithRbdVolume(21L, 22L, 23L);
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(RemoveBackupAnchorsCommand.class)))
+                .thenReturn(new BackupAnswer(null, true, null));
+
+        Assert.assertTrue(nasBackupProvider.removeVMFromBackupOffering(vm));
+
+        Mockito.verify(vmInstanceDetailsDao).findDetail(21L, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID);
+        Mockito.verify(agentManager).send(Mockito.eq(22L), Mockito.any(RemoveBackupAnchorsCommand.class));
+    }
+
+    /**
+     * A stopped Instance can be backed up on another host than its own when that one lacks the rbd
+     * command, so the anchor it left on the images can be on any host: removing it must not be sent
+     * to a host which cannot run the command either.
+     */
+    @Test
+    public void removingTheOfferingRemovesTheBackupAnchorsOnAHostThatHasTheRbdCommand() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = vmWithRbdVolume(51L, 52L, 53L);
+        setRbdCliOfHost(52L, false);
+        HostVO ownHost = (HostVO) hostDao.findById(52L);
+        Mockito.lenient().when(ownHost.getClusterId()).thenReturn(10L);
+        HostVO withCli = hostWithRbdCli(54L, true, 10L);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(Arrays.asList(ownHost, withCli));
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(RemoveBackupAnchorsCommand.class)))
+                .thenReturn(new BackupAnswer(null, true, null));
+
+        Assert.assertTrue(nasBackupProvider.removeVMFromBackupOffering(vm));
+
+        Mockito.verify(agentManager).send(Mockito.eq(54L), Mockito.any(RemoveBackupAnchorsCommand.class));
+        Mockito.verify(agentManager, Mockito.never()).send(Mockito.eq(52L), Mockito.any(RemoveBackupAnchorsCommand.class));
+    }
+
+    @Test
+    public void removingTheOfferingSendsNoCommandWhenNoHostHasTheRbdCommand() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = vmWithRbdVolume(61L, 62L, 63L);
+        setRbdCliOfHost(62L, false);
+        HostVO ownHost = (HostVO) hostDao.findById(62L);
+        Mockito.lenient().when(ownHost.getClusterId()).thenReturn(10L);
+        HostVO otherWithoutCli = hostWithRbdCli(64L, false, 10L);
+        Mockito.when(hostDao.findHypervisorHostInCluster(10L)).thenReturn(Arrays.asList(ownHost, otherWithoutCli));
+
+        Assert.assertTrue(nasBackupProvider.removeVMFromBackupOffering(vm));
+
+        Mockito.verify(agentManager, Mockito.never()).send(anyLong(), Mockito.any(RemoveBackupAnchorsCommand.class));
+    }
+
+    /**
+     * An Instance whose volumes are on no RBD pool carries no anchor, so no command is sent to
+     * its host at all.
+     */
+    @Test
+    public void removingTheOfferingSendsNoCommandWithoutAnRbdVolume() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = vmWithRbdVolume(31L, 32L, 33L);
+        StoragePoolVO nfsPool = mock(StoragePoolVO.class);
+        Mockito.when(nfsPool.getPoolType()).thenReturn(Storage.StoragePoolType.NetworkFilesystem);
+        Mockito.when(storagePoolDao.findById(33L)).thenReturn(nfsPool);
+
+        Assert.assertTrue(nasBackupProvider.removeVMFromBackupOffering(vm));
+
+        Mockito.verify(agentManager, Mockito.never()).send(anyLong(), Mockito.any(RemoveBackupAnchorsCommand.class));
+    }
+
+    /**
+     * Deleting the backup the VM's active_checkpoint_id points to leaves no chain to export the
+     * next incremental from, so the anchor of that chain goes with it.
+     */
+    @Test
+    public void deletingTheBackupHoldingTheActiveAnchorRemovesIt() throws AgentUnavailableException, OperationTimedoutException {
+        VMInstanceVO vm = vmWithRbdVolume(41L, 42L, 43L);
+        Mockito.when(vmInstanceDao.findByIdIncludingRemoved(41L)).thenReturn(vm);
+
+        BackupVO backup = new BackupVO();
+        backup.setVmId(41L);
+        backup.setBackupOfferingId(44L);
+        backup.setExternalId("i-2-41-VM/2026.10.21.10.00.00");
+        ReflectionTestUtils.setField(backup, "id", 45L);
+
+        BackupRepositoryVO repo = new BackupRepositoryVO(1L, "nas", "test-repo",
+                "nfs", "address", "sync", 1024L, null);
+        Mockito.when(backupRepositoryDao.findByBackupOfferingId(44L)).thenReturn(repo);
+        Mockito.when(backupDao.remove(45L)).thenReturn(true);
+
+        // The deleted backup owns the bitmap the VM is anchored on.
+        BackupDetailVO bitmapDetail = mock(BackupDetailVO.class);
+        Mockito.when(bitmapDetail.getValue()).thenReturn("csbackup-1791");
+        Mockito.when(backupDetailsDao.findDetail(45L, NASBackupChainKeys.BITMAP_NAME)).thenReturn(bitmapDetail);
+        VMInstanceDetailVO active = mock(VMInstanceDetailVO.class);
+        Mockito.when(active.getValue()).thenReturn("csbackup-1791");
+        Mockito.when(vmInstanceDetailsDao.findDetail(41L, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID)).thenReturn(active);
+
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(DeleteBackupCommand.class)))
+                .thenReturn(new BackupAnswer(null, true, null));
+        Mockito.when(agentManager.send(anyLong(), Mockito.any(RemoveBackupAnchorsCommand.class)))
+                .thenReturn(new BackupAnswer(null, true, null));
+
+        Assert.assertTrue(nasBackupProvider.deleteBackup(backup, false));
+
+        Mockito.verify(vmInstanceDetailsDao).removeDetail(41L, NASBackupChainKeys.VM_ACTIVE_CHECKPOINT_ID);
+        Mockito.verify(agentManager).send(Mockito.eq(42L), Mockito.any(RemoveBackupAnchorsCommand.class));
+    }
+
+    // -- content-based (pull mode) chain decisions for raw block storage -----------------
+
+    /**
+     * With the incremental master switch off, a LINSTOR-backed VM keeps the legacy push-mode full
+     * like every other VM: enabling incrementals is the opt-in to the content-based path and its
+     * host-local scratch space. The storage is not even looked at.
+     */
+    @Test
+    public void decideChainReturnsLegacyFullForLinstorWhenIncrementalDisabled() {
+        Long vmId = 70L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.lenient().when(vm.getId()).thenReturn(vmId);
+        Mockito.lenient().when(vm.getDataCenterId()).thenReturn(1L);
+
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupIncrementalEnabled",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Boolean.class,
+                        "nas.backup.incremental.enabled", "false",
+                        "test override — disabled", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertTrue(decision.isLegacyFull());
+        Assert.assertEquals(NASBackupChainKeys.METHOD_QCOW2, decision.method);
+        Assert.assertFalse(decision.isContentBased());
+        Assert.assertNull("legacy full anchors no chain", decision.chainId);
+        Mockito.verify(volumeDao, Mockito.never()).findByInstance(vmId);
+    }
+
+    /**
+     * Stopped VMs are imaged straight from the disk by qemu-img, with no point-in-time export to
+     * diff against a parent, so a LINSTOR VM that is stopped must take a content full.
+     */
+    @Test
+    public void decideChainReturnsContentFullForStoppedLinstorVm() {
+        Long vmId = 71L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(1L);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Stopped);
+        stubAllVolumesOnLinstor(vmId, 1);
+        enableIncrementals();
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_CONTENT, decision.method);
+    }
+
+    /**
+     * Running LINSTOR VM with a healthy parent inside the cadence => content incremental, carrying
+     * the parent's chain id, the next position, the parent uuid (resolved directly since there is
+     * no bitmap to look it up by) and the per-volume parent paths the script rebases onto.
+     */
+    @Test
+    public void decideChainReturnsContentIncrementalForLinstorWithValidParent() {
+        Long vmId = 72L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(1L);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+        stubAllVolumesOnLinstor(vmId, 1);
+        enableIncrementals();
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupFullEvery",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Integer.class,
+                        "nas.backup.full.every", "3", "test override", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+
+        Backup parent = mock(Backup.class);
+        Mockito.when(parent.getId()).thenReturn(900L);
+        Mockito.when(parent.getStatus()).thenReturn(Backup.Status.BackedUp);
+        Mockito.lenient().when(parent.getDate()).thenReturn(new Date());
+        Mockito.when(parent.getUuid()).thenReturn("parent-uuid");
+        Mockito.when(parent.getExternalId()).thenReturn("i-2-3-VM/2026.01.01.00.00.00");
+        Backup.VolumeInfo pv = mock(Backup.VolumeInfo.class);
+        Mockito.when(pv.getPath()).thenReturn("volpath1");
+        Mockito.<List<Backup.VolumeInfo>>when(parent.getBackedUpVolumes()).thenReturn(List.of(pv));
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(parent));
+
+        BackupDetailVO chainId = mock(BackupDetailVO.class);
+        Mockito.when(chainId.getValue()).thenReturn("chain-1");
+        BackupDetailVO chainPos = mock(BackupDetailVO.class);
+        Mockito.when(chainPos.getValue()).thenReturn("0");
+        Mockito.when(backupDetailsDao.findDetail(900L, NASBackupChainKeys.CHAIN_ID)).thenReturn(chainId);
+        Mockito.when(backupDetailsDao.findDetail(900L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(chainPos);
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertEquals(NASBackupChainKeys.TYPE_INCREMENTAL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_CONTENT, decision.method);
+        Assert.assertTrue(decision.isIncremental());
+        Assert.assertTrue(decision.isContentBased());
+        Assert.assertNull("a content incremental carries no bitmap", decision.bitmapNew);
+        Assert.assertNull(decision.bitmapParent);
+        Assert.assertEquals("chain-1", decision.chainId);
+        Assert.assertEquals(1, decision.chainPosition);
+        Assert.assertEquals("parent-uuid", decision.parentBackupUuid);
+        Assert.assertEquals(List.of("i-2-3-VM/2026.01.01.00.00.00/root.volpath1.qcow2"),
+                decision.parentPaths);
+    }
+
+    /**
+     * Once the chain reaches nas.backup.full.every, the next LINSTOR backup must anchor a new
+     * chain with a content full rather than extending the existing one.
+     */
+    @Test
+    public void decideChainReturnsContentFullForLinstorAtChainEnd() {
+        Long vmId = 73L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(vm.getDataCenterId()).thenReturn(1L);
+        Mockito.when(vm.getState()).thenReturn(VMInstanceVO.State.Running);
+        stubAllVolumesOnLinstor(vmId, 1);
+        enableIncrementals();
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupFullEvery",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Integer.class,
+                        "nas.backup.full.every", "2", "test override", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+
+        Backup parent = mock(Backup.class);
+        Mockito.when(parent.getId()).thenReturn(901L);
+        Mockito.when(parent.getStatus()).thenReturn(Backup.Status.BackedUp);
+        Mockito.lenient().when(parent.getDate()).thenReturn(new Date());
+        Mockito.when(backupDao.listByVmId(null, vmId)).thenReturn(List.of(parent));
+        BackupDetailVO chainId = mock(BackupDetailVO.class);
+        Mockito.when(chainId.getValue()).thenReturn("chain-9");
+        BackupDetailVO chainPos = mock(BackupDetailVO.class);
+        Mockito.when(chainPos.getValue()).thenReturn("1"); // 1 + 1 >= 2 => new full
+        Mockito.when(backupDetailsDao.findDetail(901L, NASBackupChainKeys.CHAIN_ID)).thenReturn(chainId);
+        Mockito.when(backupDetailsDao.findDetail(901L, NASBackupChainKeys.CHAIN_POSITION)).thenReturn(chainPos);
+
+        NASBackupProvider.ChainDecision decision = nasBackupProvider.decideChain(vm);
+        Assert.assertEquals(NASBackupChainKeys.TYPE_FULL, decision.mode);
+        Assert.assertEquals(NASBackupChainKeys.METHOD_CONTENT, decision.method);
+    }
+
+    /**
+     * A VM straddling LINSTOR and file-based storage is not content-diff capable: one backup run
+     * uses a single mode, so it must not be routed down the content path.
+     */
+    @Test
+    public void allVolumesOnContentDiffCapableStorageFalseForMixedStorage() {
+        Long vmId = 74L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+
+        VolumeVO linVol = mock(VolumeVO.class);
+        Mockito.when(linVol.getPoolId()).thenReturn(1L);
+        VolumeVO nfsVol = mock(VolumeVO.class);
+        Mockito.when(nfsVol.getPoolId()).thenReturn(2L);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of(linVol, nfsVol));
+
+        StoragePoolVO lin = mock(StoragePoolVO.class);
+        Mockito.when(lin.getPoolType()).thenReturn(Storage.StoragePoolType.Linstor);
+        StoragePoolVO nfs = mock(StoragePoolVO.class);
+        Mockito.when(nfs.getPoolType()).thenReturn(Storage.StoragePoolType.NetworkFilesystem);
+        Mockito.when(storagePoolDao.findById(1L)).thenReturn(lin);
+        Mockito.when(storagePoolDao.findById(2L)).thenReturn(nfs);
+
+        Assert.assertFalse(nasBackupProvider.allVolumesOnContentDiffCapableStorage(vm));
+    }
+
+    /** A VM with no volumes is not content-diff capable (safe default). */
+    @Test
+    public void allVolumesOnContentDiffCapableStorageFalseForNoVolumes() {
+        Long vmId = 75L;
+        VMInstanceVO vm = mock(VMInstanceVO.class);
+        Mockito.when(vm.getId()).thenReturn(vmId);
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(List.of());
+        Assert.assertFalse(nasBackupProvider.allVolumesOnContentDiffCapableStorage(vm));
+    }
+
+    private void enableIncrementals() {
+        ReflectionTestUtils.setField(nasBackupProvider, "NASBackupIncrementalEnabled",
+                new org.apache.cloudstack.framework.config.ConfigKey<>("Advanced", Boolean.class,
+                        "nas.backup.incremental.enabled", "true",
+                        "test override — enabled", true,
+                        org.apache.cloudstack.framework.config.ConfigKey.Scope.Zone));
+    }
+
+    /** Point every volume of {@code vmId} at a LINSTOR pool. */
+    private void stubAllVolumesOnLinstor(Long vmId, int count) {
+        List<VolumeVO> vols = new java.util.ArrayList<>();
+        StoragePoolVO lin = mock(StoragePoolVO.class);
+        Mockito.lenient().when(lin.getPoolType()).thenReturn(Storage.StoragePoolType.Linstor);
+        for (int i = 0; i < count; i++) {
+            VolumeVO v = mock(VolumeVO.class);
+            long poolId = 100L + i;
+            Mockito.when(v.getPoolId()).thenReturn(poolId);
+            Mockito.when(storagePoolDao.findById(poolId)).thenReturn(lin);
+            vols.add(v);
+        }
+        Mockito.when(volumeDao.findByInstance(vmId)).thenReturn(vols);
     }
 }

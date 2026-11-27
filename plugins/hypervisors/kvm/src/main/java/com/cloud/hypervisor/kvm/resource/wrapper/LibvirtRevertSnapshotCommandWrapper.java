@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import com.cloud.agent.properties.AgentProperties;
 import com.cloud.agent.properties.AgentPropertiesFileHandler;
+import com.cloud.storage.Storage;
 import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
 import org.apache.cloudstack.storage.to.SnapshotObjectTO;
@@ -50,6 +51,7 @@ import com.cloud.resource.CommandWrapper;
 import com.cloud.resource.ResourceWrapper;
 import com.cloud.storage.DataStoreRole;
 import com.cloud.storage.Storage.StoragePoolType;
+import com.cloud.utils.RbdUtils;
 import com.cloud.utils.Pair;
 import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.script.Script;
@@ -57,6 +59,8 @@ import org.apache.cloudstack.utils.qemu.QemuImg;
 import org.apache.cloudstack.utils.qemu.QemuImgException;
 import org.apache.cloudstack.utils.qemu.QemuImgFile;
 import org.libvirt.LibvirtException;
+
+import static com.cloud.hypervisor.kvm.storage.KVMStorageProcessor.poolTypesToDeleteChainInfo;
 
 @ResourceWrapper(handles = RevertSnapshotCommand.class)
 public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSnapshotCommand, Answer, LibvirtComputingResource> {
@@ -93,7 +97,7 @@ public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSn
 
             if (primaryPool.getType() == StoragePoolType.RBD) {
                 Rados rados = new Rados(primaryPool.getAuthUserName());
-                rados.confSet(MON_HOST, primaryPool.getSourceHost() + ":" + primaryPool.getSourcePort());
+                rados.confSet(MON_HOST, RbdUtils.getRbdMonitors(primaryPool.getSourceHost(), primaryPool.getSourcePort()));
                 rados.confSet(KEY, primaryPool.getAuthSecret());
                 rados.confSet(CLIENT_MOUNT_TIMEOUT, RADOS_CONNECTION_TIMEOUT);
                 rados.connect();
@@ -117,7 +121,7 @@ public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSn
                     secondaryStoragePool = storagePoolMgr.getStoragePoolByURI(snapshotImageStore.getUrl());
                 }
 
-                if (primaryPool.getType() == StoragePoolType.CLVM) {
+                if (primaryPool.getType() == StoragePoolType.CLVM || primaryPool.getType() == StoragePoolType.CLVM_NG) {
                     Script cmd = new Script(libvirtComputingResource.manageSnapshotPath(), libvirtComputingResource.getCmdsTimeout(), logger);
                     cmd.add("-v", getFullPathAccordingToStorage(secondaryStoragePool, snapshotRelPath));
                     cmd.add("-n", snapshotDisk.getName());
@@ -128,7 +132,7 @@ public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSn
                         return new Answer(command, false, result);
                     }
                 } else {
-                    revertVolumeToSnapshot(secondaryStoragePool, snapshotOnPrimaryStorage, snapshot, primaryPool, libvirtComputingResource);
+                    revertVolumeToSnapshot(secondaryStoragePool, snapshotOnPrimaryStorage, snapshot, primaryPool, libvirtComputingResource, command.isDeleteChain());
                 }
             }
 
@@ -161,7 +165,7 @@ public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSn
      * Reverts the volume to the snapshot.
      */
     protected void revertVolumeToSnapshot(KVMStoragePool kvmStoragePoolSecondary, SnapshotObjectTO snapshotOnPrimaryStorage, SnapshotObjectTO snapshotOnSecondaryStorage,
-                                          KVMStoragePool kvmStoragePoolPrimary, LibvirtComputingResource resource) {
+                                          KVMStoragePool kvmStoragePoolPrimary, LibvirtComputingResource resource, boolean deleteChain) {
         VolumeObjectTO volumeObjectTo = snapshotOnSecondaryStorage.getVolume();
         String volumePath = getFullPathAccordingToStorage(kvmStoragePoolPrimary, volumeObjectTo.getPath());
 
@@ -178,6 +182,11 @@ public class LibvirtRevertSnapshotCommandWrapper extends CommandWrapper<RevertSn
 
         try {
             replaceVolumeWithSnapshot(volumePath, snapshotPath);
+            if (volumeObjectTo.getChainInfo() != null && poolTypesToDeleteChainInfo.contains(kvmStoragePoolPrimary.getType()) &&
+                    volumeObjectTo.getFormat() == Storage.ImageFormat.QCOW2 && deleteChain) {
+                logger.debug("Deleting leftover backup delta at [{}].", volumeObjectTo.getChainInfo());
+                kvmStoragePoolPrimary.deletePhysicalDisk(volumeObjectTo.getChainInfo(), volumeObjectTo.getFormat());
+            }
             logger.debug(String.format("Successfully reverted volume [%s] to snapshot [%s].", volumeObjectTo, snapshotToPrint));
         } catch (LibvirtException | QemuImgException ex) {
             throw new CloudRuntimeException(String.format("Unable to revert volume [%s] to snapshot [%s] due to [%s].", volumeObjectTo, snapshotToPrint, ex.getMessage()), ex);

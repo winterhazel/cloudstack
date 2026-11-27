@@ -133,7 +133,10 @@ import org.apache.cloudstack.api.command.admin.management.ListMgmtsCmd;
 import org.apache.cloudstack.api.command.admin.management.RemoveManagementServerCmd;
 import org.apache.cloudstack.api.command.admin.network.AddNetworkDeviceCmd;
 import org.apache.cloudstack.api.command.admin.network.AddNetworkServiceProviderCmd;
+import org.apache.cloudstack.api.command.admin.network.AssociateNetworkToNicCmd;
+import org.apache.cloudstack.api.command.admin.network.ChangeNicPrimaryNetworkCmd;
 import org.apache.cloudstack.api.command.admin.network.CloneNetworkOfferingCmd;
+import org.apache.cloudstack.api.command.admin.network.DisassociateNetworkFromNicCmd;
 import org.apache.cloudstack.api.command.admin.network.CreateManagementNetworkIpRangeCmd;
 import org.apache.cloudstack.api.command.admin.network.CreateNetworkCmdByAdmin;
 import org.apache.cloudstack.api.command.admin.network.CreateNetworkOfferingCmd;
@@ -345,7 +348,6 @@ import org.apache.cloudstack.api.command.admin.vpc.UpdateVPCOfferingCmd;
 import org.apache.cloudstack.api.command.admin.zone.CreateZoneCmd;
 import org.apache.cloudstack.api.command.admin.zone.DeleteZoneCmd;
 import org.apache.cloudstack.api.command.admin.zone.ListZonesCmdByAdmin;
-import org.apache.cloudstack.api.command.admin.zone.MarkDefaultZoneForAccountCmd;
 import org.apache.cloudstack.api.command.admin.zone.UpdateZoneCmd;
 import org.apache.cloudstack.api.command.user.account.AddAccountToProjectCmd;
 import org.apache.cloudstack.api.command.user.account.AddUserToProjectCmd;
@@ -685,6 +687,7 @@ import com.cloud.agent.api.GetVncPortAnswer;
 import com.cloud.agent.api.GetVncPortCommand;
 import com.cloud.agent.api.PatchSystemVmAnswer;
 import com.cloud.agent.api.PatchSystemVmCommand;
+import com.cloud.agent.api.VlanTrunkMigrationHelper;
 import com.cloud.agent.api.proxy.AllowConsoleAccessCommand;
 import com.cloud.agent.api.routing.NetworkElementCommand;
 import com.cloud.agent.manager.Commands;
@@ -738,7 +741,6 @@ import com.cloud.domain.dao.DomainDao;
 import com.cloud.event.ActionEvent;
 import com.cloud.event.ActionEventUtils;
 import com.cloud.event.EventTypes;
-import com.cloud.event.EventVO;
 import com.cloud.event.dao.EventDao;
 import com.cloud.exception.AgentUnavailableException;
 import com.cloud.exception.ConcurrentOperationException;
@@ -1225,57 +1227,73 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
     }
 
     @Override
-    public boolean archiveEvents(final ArchiveEventsCmd cmd) {
-        final Account caller = getCaller();
-        final List<Long> ids = cmd.getIds();
-        boolean result = true;
-        List<Long> permittedAccountIds = new ArrayList<>();
+    public boolean archiveEvents(ArchiveEventsCmd cmd) {
+        List<Long> ids = cmd.getIds();
+        String type = cmd.getType();
+        Date startDate = cmd.getStartDate();
+        Date endDate = cmd.getEndDate();
 
-        if (_accountService.isNormalUser(caller.getId()) || caller.getType() == Account.Type.PROJECT) {
-            permittedAccountIds.add(caller.getId());
-        } else {
-            final DomainVO domain = _domainDao.findById(caller.getDomainId());
-            final List<Long> permittedDomainIds = _domainDao.getDomainChildrenIds(domain.getPath());
-            permittedAccountIds = _accountDao.getAccountIdsForDomains(permittedDomainIds);
+        validateEventOperationParameters(ids, type, startDate, endDate);
+
+        Long accountId = null;
+        List<Long> domainIds = null;
+        Account caller = getCaller();
+        Account.Type callerType = caller.getType();
+
+        if (callerType == Account.Type.NORMAL || callerType == Account.Type.PROJECT) {
+            accountId = caller.getId();
+        } else if (callerType != Account.Type.ADMIN) {
+            domainIds = _domainDao.getDomainAndChildrenIds(caller.getDomainId());
+            if (CollectionUtils.isEmpty(domainIds)) {
+                throw new CloudRuntimeException(String.format("Unable to determine the domains of account %s", caller.getUuid()));
+            }
         }
 
-        final List<EventVO> events = _eventDao.listToArchiveOrDeleteEvents(ids, cmd.getType(), cmd.getStartDate(), cmd.getEndDate(), permittedAccountIds);
-        final ControlledEntity[] sameOwnerEvents = events.toArray(new ControlledEntity[events.size()]);
-        _accountMgr.checkAccess(CallContext.current().getCallingAccount(), null, false, sameOwnerEvents);
+        long totalArchived = _eventDao.archiveEvents(ids, type, startDate, endDate, accountId, domainIds,
+                ConfigurationManagerImpl.DELETE_QUERY_BATCH_SIZE.value());
 
-        if (ids != null && events.size() < ids.size()) {
-            return false;
-        }
-        _eventDao.archiveEvents(events);
-        return result;
+        return CollectionUtils.isEmpty(ids) || totalArchived > 0;
     }
 
     @Override
-    public boolean deleteEvents(final DeleteEventsCmd cmd) {
-        final Account caller = getCaller();
-        final List<Long> ids = cmd.getIds();
-        boolean result = true;
-        List<Long> permittedAccountIds = new ArrayList<>();
+    public boolean deleteEvents(DeleteEventsCmd cmd) {
+        List<Long> ids = cmd.getIds();
+        String type = cmd.getType();
+        Date startDate = cmd.getStartDate();
+        Date endDate = cmd.getEndDate();
 
-        if (_accountMgr.isNormalUser(caller.getId()) || caller.getType() == Account.Type.PROJECT) {
-            permittedAccountIds.add(caller.getId());
-        } else {
-            final DomainVO domain = _domainDao.findById(caller.getDomainId());
-            final List<Long> permittedDomainIds = _domainDao.getDomainChildrenIds(domain.getPath());
-            permittedAccountIds = _accountDao.getAccountIdsForDomains(permittedDomainIds);
+        validateEventOperationParameters(ids, type, startDate, endDate);
+
+        Long accountId = null;
+        List<Long> domainIds = null;
+        Account caller = getCaller();
+        Account.Type callerType = caller.getType();
+
+        if (callerType == Account.Type.NORMAL || callerType == Account.Type.PROJECT) {
+            accountId = caller.getId();
+        } else if (callerType != Account.Type.ADMIN) {
+            domainIds = _domainDao.getDomainAndChildrenIds(caller.getDomainId());
+            if (CollectionUtils.isEmpty(domainIds)) {
+                throw new CloudRuntimeException(String.format("Unable to determine the domains of account %s", caller.getUuid()));
+            }
         }
 
-        final List<EventVO> events = _eventDao.listToArchiveOrDeleteEvents(ids, cmd.getType(), cmd.getStartDate(), cmd.getEndDate(), permittedAccountIds);
-        final ControlledEntity[] sameOwnerEvents = events.toArray(new ControlledEntity[events.size()]);
-        _accountMgr.checkAccess(CallContext.current().getCallingAccount(), null, false, sameOwnerEvents);
+        long totalRemoved = _eventDao.deleteEvents(ids, startDate, endDate, null, type, accountId, domainIds,
+                ConfigurationManagerImpl.DELETE_QUERY_BATCH_SIZE.value());
 
-        if (ids != null && events.size() < ids.size()) {
-            return false;
+        return CollectionUtils.isEmpty(ids) || totalRemoved > 0;
+    }
+
+    protected void validateEventOperationParameters(List<Long> ids, String type, Date startDate, Date endDate) {
+        if (ids != null && ids.isEmpty()) {
+            throw new InvalidParameterValueException("'ids' must not be empty when provided.");
         }
-        for (final EventVO event : events) {
-            _eventDao.remove(event.getId());
+        if (CollectionUtils.isEmpty(ids) && ObjectUtils.allNull(type, endDate)) {
+            throw new InvalidParameterValueException("Either 'ids', 'type' or 'enddate' must be specified.");
         }
-        return result;
+        if (startDate != null && endDate == null) {
+            throw new InvalidParameterValueException("'enddate' must be specified when 'startdate' parameter is provided.");
+        }
     }
 
     @Override
@@ -1507,6 +1525,7 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
      */
     Ternary<Pair<List<? extends Host>, Integer>, List<? extends Host>, Map<Host, Boolean>> getTechnicallyCompatibleHosts(
             final VirtualMachine vm,
+            final Host srcHost,
             final Long startIndex,
             final Long pageSize,
             final String keyword) {
@@ -1515,31 +1534,6 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         if (_serviceOfferingDetailsDao.findDetail(vm.getServiceOfferingId(), GPU.Keys.pciDevice.toString()) != null) {
             logger.info("Live Migration of GPU enabled VM : {} is not supported", vm);
             return new Ternary<>(new Pair<>(new ArrayList<>(), 0), new ArrayList<>(), new HashMap<>());
-        }
-
-        final long srcHostId = vm.getHostId();
-        final Host srcHost = _hostDao.findById(srcHostId);
-        if (srcHost == null) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to find the host with ID: " + srcHostId + " of this Instance: " + vm);
-            }
-            final InvalidParameterValueException ex = new InvalidParameterValueException("Unable to find the host (with specified ID) of instance with specified ID");
-            ex.addProxyObject(String.valueOf(srcHostId), "hostId");
-            ex.addProxyObject(vm.getUuid(), "vmId");
-            throw ex;
-        }
-
-        String srcHostVersion = srcHost.getHypervisorVersion();
-        if (HypervisorType.KVM.equals(srcHost.getHypervisorType()) && srcHostVersion == null) {
-            srcHostVersion = "";
-        }
-
-        // Check if the vm can be migrated with storage.
-        boolean canMigrateWithStorage = false;
-
-        List<HypervisorType> hypervisorTypes = Arrays.asList(new HypervisorType[]{HypervisorType.VMware, HypervisorType.KVM});
-        if (VirtualMachine.Type.User.equals(vm.getType()) || hypervisorTypes.contains(vm.getHypervisorType())) {
-            canMigrateWithStorage = _hypervisorCapabilitiesDao.isStorageMotionSupported(srcHost.getHypervisorType(), srcHostVersion);
         }
 
         // Check if the vm is using any disks on local storage.
@@ -1555,12 +1549,14 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
             }
         }
 
+        boolean canMigrateWithStorage = isStorageMigrationSupported(vm, srcHost);
         if (!canMigrateWithStorage && usesLocal) {
             throw new InvalidParameterValueException("Unsupported operation, instance uses Local storage, cannot migrate");
         }
 
         validateVgpuProfileForVmMigration(vmProfile);
 
+        final String srcHostVersion = getHypervisorVersionOfHost(srcHost);
         final Type hostType = srcHost.getType();
         Pair<List<HostVO>, Integer> allHostsPair;
         List<HostVO> allHosts;
@@ -1636,6 +1632,23 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         return new Ternary<>(allHostsPairResult, filteredHosts, requiresStorageMotion);
     }
 
+    protected boolean isStorageMigrationSupported(final VirtualMachine vm, final Host srcHost) {
+        final List<HypervisorType> hypervisorTypes = Arrays.asList(HypervisorType.VMware, HypervisorType.KVM);
+        if (VirtualMachine.Type.User.equals(vm.getType()) || hypervisorTypes.contains(vm.getHypervisorType())) {
+            final String srcHostVersion = getHypervisorVersionOfHost(srcHost);
+            return _hypervisorCapabilitiesDao.isStorageMotionSupported(srcHost.getHypervisorType(), srcHostVersion);
+        }
+        return false;
+    }
+
+    protected String getHypervisorVersionOfHost(final Host host) {
+        final String version = host.getHypervisorVersion();
+        if (version == null && HypervisorType.KVM.equals(host.getHypervisorType())) {
+            return "";
+        }
+        return version;
+    }
+
     /**
      * Apply affinity group constraints and other exclusion rules for VM migration.
      * This builds an ExcludeList based on affinity groups, DPDK requirements, and dedicated resources.
@@ -1656,6 +1669,8 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
                 excludeNonDPDKEnabledHosts((DataCenterDeployment) plan, excludes);
             }
         }
+
+        _dpMgr.avoidHostsNotReadyForMultiNetworkNics(vmProfile, _dcDao.findById(plan.getDataCenterId()), excludes);
 
         // call affinitygroup chain
         final long vmGroupCount = _affinityGroupVMMapDao.countAffinityGroupsForVm(vm.getId());
@@ -1727,9 +1742,19 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
 
         validateVmForHostMigration(vm);
 
+        final long srcHostId = vm.getHostId();
+        final Host srcHost = _hostDao.findById(srcHostId);
+        if (srcHost == null) {
+            logger.debug("Unable to find the host with ID: {} of this Instance: {}", srcHostId, vm);
+            final InvalidParameterValueException ex = new InvalidParameterValueException("Unable to find the host (with specified ID) of instance with specified ID");
+            ex.addProxyObject(String.valueOf(srcHostId), "hostId");
+            ex.addProxyObject(vm.getUuid(), "vmId");
+            throw ex;
+        }
+
         // Get technically compatible hosts (storage, hypervisor, UEFI)
         Ternary<Pair<List<? extends Host>, Integer>, List<? extends Host>, Map<Host, Boolean>> compatibilityResult =
-            getTechnicallyCompatibleHosts(vm, startIndex, pageSize, keyword);
+            getTechnicallyCompatibleHosts(vm, srcHost, startIndex, pageSize, keyword);
 
         Pair<List<? extends Host>, Integer> allHostsPair = compatibilityResult.first();
         List<? extends Host> filteredHosts = compatibilityResult.second();
@@ -1742,9 +1767,7 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         }
 
         // Create deployment plan and VM profile
-        final Host srcHost = _hostDao.findById(vm.getHostId());
-        final DataCenterDeployment plan = new DataCenterDeployment(
-            srcHost.getDataCenterId(), srcHost.getPodId(), srcHost.getClusterId(), null, null, null);
+        final DataCenterDeployment plan = createDeploymentPlanForMigrationListing(vm, srcHost);
         final VirtualMachineProfile vmProfile = new VirtualMachineProfileImpl(
             vm, null, _offeringDao.findById(vm.getId(), vm.getServiceOfferingId()), null, null);
 
@@ -1758,6 +1781,28 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         return new Ternary<>(otherHosts, suitableHosts, requiresStorageMotion);
     }
 
+    @Override
+    public String getMultiNetworkNicUnsuitableReason(final VirtualMachine vm, final Host host) {
+        return VlanTrunkMigrationHelper.getVlanFilteringUnsuitableReason(vm.getId(), host.getId(), nicDao, networkDao, _detailsDao);
+    }
+
+    @Override
+    public String getGuestBridgeStpMigrationCaution(final Host host) {
+        // a legacy host's guest nics use per-VLAN dynamic bridges instead, so stp on the shared bridge is irrelevant there
+        final DetailVO vlanFilteringDetail = _detailsDao.findDetail(host.getId(), Host.HOST_VLAN_FILTERING_ENABLED);
+        final boolean vlanFilteringEnabled = vlanFilteringDetail != null && Boolean.parseBoolean(vlanFilteringDetail.getValue());
+        if (!vlanFilteringEnabled) {
+            return null;
+        }
+        final DetailVO stpDetail = _detailsDao.findDetail(host.getId(), Host.HOST_GUEST_BRIDGE_STP_ENABLED);
+        final boolean stpEnabled = stpDetail != null && Boolean.parseBoolean(stpDetail.getValue());
+        if (!stpEnabled) {
+            return null;
+        }
+        return "This host's guest bridge has STP enabled; a new NIC here (from this migration, a nic plug, or a VM start) "
+                + "will be unreachable for about the bridge's forward delay x2 while STP's listening/learning states run";
+    }
+
     private void validateVgpuProfileForVmMigration(final VirtualMachineProfile vmProfile) {
         // Validate if the VM is using a vGPU profile that supports migration.
         ServiceOffering serviceOffering = vmProfile.getServiceOffering();
@@ -1767,6 +1812,14 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
                 throw new InvalidParameterValueException("Unsupported operation, VM uses host passthrough, cannot migrate");
             }
         }
+    }
+
+    protected DataCenterDeployment createDeploymentPlanForMigrationListing(final VirtualMachine vm, final Host srcHost) {
+        final boolean canMigrateWithStorage = isStorageMigrationSupported(vm, srcHost);
+        if (canMigrateWithStorage) {
+            return new DataCenterDeployment(srcHost.getDataCenterId(), srcHost.getPodId(), null, null, null, null);
+        }
+        return new DataCenterDeployment(srcHost.getDataCenterId(), srcHost.getPodId(), srcHost.getClusterId(), null, null, null);
     }
 
     /**
@@ -2357,6 +2410,7 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         final Long clusterId = cmd.getClusterId();
         final Long storagepoolId = cmd.getStoragepoolId();
         final Long imageStoreId = cmd.getImageStoreId();
+        final Long managementServerId = cmd.getManagementServerId();
         Long accountId = cmd.getAccountId();
         Long domainId = cmd.getDomainId();
         final String groupName = cmd.getGroupName();
@@ -2408,6 +2462,11 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         if (imageStoreId != null) {
             scope = ConfigKey.Scope.ImageStore;
             id = imageStoreId;
+            paramCountCheck++;
+        }
+        if (managementServerId != null) {
+            scope = ConfigKey.Scope.ManagementServer;
+            id = managementServerId;
             paramCountCheck++;
         }
 
@@ -2481,7 +2540,14 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
                 if (configVo != null) {
                     final ConfigKey<?> key = _configDepot.get(param.getName());
                     if (key != null) {
-                        Object value = key.valueInScope(scope, id);
+                        boolean useStrictLookup = key.isStrictScope()
+                                && scope == ConfigKey.Scope.Domain
+                                && id != null
+                                && id.longValue() != Domain.ROOT_DOMAIN;
+                        Object value = key.valueInScope(scope, id, useStrictLookup);
+                        if (value == null && useStrictLookup) {
+                            value = key.defaultValue();
+                        }
                         configVo.setValue(value == null ? null : value.toString());
                         configVOList.add(configVo);
                     } else {
@@ -3077,10 +3143,11 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
 
         if (osDisplayName != null) {
             List<GuestOSVO> guestOSVOS = _guestOSDao.listLikeDisplayName(osDisplayName);
-            if (CollectionUtils.isNotEmpty(guestOSVOS)) {
-                List<Long> guestOSids = guestOSVOS.stream().map(mo -> mo.getId()).collect(Collectors.toList());
-                sc.addAnd(guestOsId, SearchCriteria.Op.IN, guestOSids.toArray());
+            if (CollectionUtils.isEmpty(guestOSVOS)) {
+                return new Pair<>(Collections.emptyList(), 0);
             }
+            List<Long> guestOSids = guestOSVOS.stream().map(mo -> mo.getId()).collect(Collectors.toList());
+            sc.addAnd(guestOsId, SearchCriteria.Op.IN, guestOSids.toArray());
         }
 
         final Pair<List<GuestOSHypervisorVO>, Integer> result = _guestOSHypervisorDao.searchAndCount(sc, searchFilter);
@@ -3983,7 +4050,6 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         cmdList.add(UpdateVPCOfferingCmd.class);
         cmdList.add(CreateZoneCmd.class);
         cmdList.add(DeleteZoneCmd.class);
-        cmdList.add(MarkDefaultZoneForAccountCmd.class);
         cmdList.add(UpdateZoneCmd.class);
         cmdList.add(AddAccountToProjectCmd.class);
         cmdList.add(AddUserToProjectCmd.class);
@@ -4331,6 +4397,9 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
         cmdList.add(ListPublicIpAddressesCmdByAdmin.class);
         cmdList.add(CreateNetworkCmdByAdmin.class);
         cmdList.add(UpdateNetworkCmdByAdmin.class);
+        cmdList.add(AssociateNetworkToNicCmd.class);
+        cmdList.add(DisassociateNetworkFromNicCmd.class);
+        cmdList.add(ChangeNicPrimaryNetworkCmd.class);
         cmdList.add(ListNetworksCmdByAdmin.class);
         cmdList.add(CreateVPCCmdByAdmin.class);
         cmdList.add(ListVPCsCmdByAdmin.class);
@@ -4444,12 +4513,10 @@ public class ManagementServerImpl extends MutualExclusiveIdsManagerBase implemen
                     final Calendar purgeCal = Calendar.getInstance();
                     purgeCal.add(Calendar.DAY_OF_YEAR, -_purgeDelay);
                     final Date purgeTime = purgeCal.getTime();
-                    logger.debug("Deleting events older than: " + purgeTime);
-                    final List<EventVO> oldEvents = _eventDao.listOlderEvents(purgeTime);
-                    logger.debug("Found " + oldEvents.size() + " events to be purged");
-                    for (final EventVO event : oldEvents) {
-                        _eventDao.expunge(event.getId());
-                    }
+                    logger.debug("Starting to purge all event rows older than [{}].", purgeTime);
+                    long totalRemoved = _eventDao.deleteEvents(null, null, null, purgeTime, null, null, null,
+                            ConfigurationManagerImpl.DELETE_QUERY_BATCH_SIZE.value());
+                    logger.info("Purged a total of [{}] event rows older than [{}].", totalRemoved, purgeTime);
                 } catch (final Exception e) {
                     logger.error("Exception ", e);
                 } finally {

@@ -43,6 +43,7 @@ import com.cloud.network.dao.IPAddressDao;
 import com.cloud.network.dao.IPAddressVO;
 import com.cloud.network.dao.NetworkDao;
 import com.cloud.network.element.NetworkElement;
+import com.cloud.network.element.VpcProvider;
 import com.cloud.network.router.CommandSetupHelper;
 import com.cloud.network.router.NetworkHelper;
 import com.cloud.network.router.VirtualRouter;
@@ -72,7 +73,10 @@ import org.apache.cloudstack.api.command.admin.vpc.CreateVPCOfferingCmd;
 import org.apache.cloudstack.api.command.user.vpc.UpdateVPCCmd;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
+import org.apache.cloudstack.extension.Extension;
+import org.apache.cloudstack.extension.ExtensionHelper;
 import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.impl.ConfigDepotImpl;
 import org.apache.cloudstack.network.Ipv4GuestSubnetNetworkMap;
 import org.apache.cloudstack.network.RoutedIpv4Manager;
 import org.junit.After;
@@ -90,6 +94,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,6 +104,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -247,14 +253,21 @@ public class VpcManagerImplTest {
     @Test
     public void getVpcOffSvcProvidersMapForEmptyServiceTest() {
         long vpcOffId = 1L;
+        VpcOfferingServiceMapVO svcMap = mock(VpcOfferingServiceMapVO.class);
+        Mockito.when(svcMap.getService()).thenReturn(Service.SourceNat.getName());
+        Mockito.when(svcMap.getProvider()).thenReturn(Provider.VPCVirtualRouter.getName());
+        Mockito.when(networkModel.resolveProvider(Provider.VPCVirtualRouter.getName()))
+               .thenReturn(Provider.VPCVirtualRouter);
         List<VpcOfferingServiceMapVO> list = new ArrayList<VpcOfferingServiceMapVO>();
-        list.add(mock(VpcOfferingServiceMapVO.class));
+        list.add(svcMap);
         Mockito.when(manager._vpcOffSvcMapDao.listByVpcOffId(vpcOffId)).thenReturn(list);
 
         Map<Service, Set<Provider>> map = manager.getVpcOffSvcProvidersMap(vpcOffId);
 
         assertNotNull(map);
         assertEquals(map.size(), 1);
+        assertTrue(map.containsKey(Service.SourceNat));
+        assertTrue(map.get(Service.SourceNat).contains(Provider.VPCVirtualRouter));
     }
 
     protected Map<String, String> createFakeCapabilityInputMap() {
@@ -350,7 +363,6 @@ public class VpcManagerImplTest {
     @Test
     public void testCreateVpcNetwork() throws InsufficientCapacityException, ResourceAllocationException {
         final long VPC_ID = 201L;
-        manager._maxNetworks = 3;
         VpcVO vpcMockVO = Mockito.mock(VpcVO.class);
         Vpc vpcMock = Mockito.mock(Vpc.class);
         Account accountMock = Mockito.mock(Account.class);
@@ -386,6 +398,27 @@ public class VpcManagerImplTest {
                 physicalNetwork, zoneId, null, null, 1L, null, null,
                 true, null, null, null, null,
                 null, null, null, null, null, new Pair<>(1000, 1000), null);
+    }
+
+    @Test
+    public void validateNewVpcGuestNetworkTestLimitReadFromDynamicSetting() {
+        final long vpcId = 301L;
+        Vpc vpcMock = Mockito.mock(Vpc.class);
+        Mockito.when(vpcMock.getId()).thenReturn(vpcId);
+        Mockito.when(vpcDao.acquireInLockTable(vpcId)).thenReturn(Mockito.mock(VpcVO.class));
+        Mockito.when(networkDao.countVpcNetworks(vpcId)).thenReturn(2L);
+        ConfigDepotImpl configDepot = Mockito.mock(ConfigDepotImpl.class);
+        Mockito.when(configDepot.getConfigStringValue(VpcManager.VpcMaxNetworks.key(), ConfigKey.Scope.Global, null)).thenReturn("2");
+
+        Object originalDepot = ReflectionTestUtils.getField(VpcManager.VpcMaxNetworks, "s_depot");
+        ReflectionTestUtils.setField(VpcManager.VpcMaxNetworks, "s_depot", configDepot);
+        try {
+            InvalidParameterValueException e = Assert.assertThrows(InvalidParameterValueException.class,
+                    () -> manager.validateNewVpcGuestNetwork("10.10.10.0/24", "10.10.10.1", Mockito.mock(Account.class), vpcMock, "cs1cloud.internal"));
+            assertTrue(e.getMessage().contains("maximum of 2 networks"));
+        } finally {
+            ReflectionTestUtils.setField(VpcManager.VpcMaxNetworks, "s_depot", originalDepot);
+        }
     }
 
     @Test
@@ -599,6 +632,51 @@ public class VpcManagerImplTest {
         Mockito.when(vpcOfferingDao.findById(Mockito.eq(vpcOfferingId))).thenReturn(vpcOffering);
         Mockito.when(vpcOffering.isConserveMode()).thenReturn(true);
         Assert.assertTrue(manager.isNetworkOnVpcEnabledConserveMode(network));
+    }
+
+    // -----------------------------------------------------------------------
+    // Tests for getVpcElements with extension-backed NetworkOrchestrator
+    // -----------------------------------------------------------------------
+
+    @Test
+    public void getVpcElementsIncludesExtensionBackedVpcProvider() {
+        manager.setVpcElements(null);
+
+        Mockito.when(networkModel.getElementImplementingProvider(Provider.VPCVirtualRouter.getName())).thenReturn(null);
+        Mockito.when(networkModel.getElementImplementingProvider(Provider.JuniperContrailVpcRouter.getName())).thenReturn(null);
+
+        Extension ext = mock(Extension.class);
+        Mockito.when(ext.getName()).thenReturn("my-vpc-ext");
+
+        ExtensionHelper extHelper = mock(ExtensionHelper.class);
+        Mockito.when(extHelper.listExtensionsByType(Extension.Type.NetworkOrchestrator))
+                .thenReturn(List.of(ext));
+        manager.extensionHelper = extHelper;
+
+        // The element for the extension also implements VpcProvider
+        VpcProvider vpcProviderElement = mock(VpcProvider.class);
+        Mockito.when(networkModel.getElementImplementingProvider("my-vpc-ext")).thenReturn((NetworkElement) vpcProviderElement);
+
+        List<VpcProvider> result = manager.getVpcElements();
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.contains(vpcProviderElement));
+    }
+
+    @Test
+    public void getVpcElementsReturnsEmptyListWhenNoStaticNorExtensionProviders() {
+        manager.setVpcElements(null);
+
+        Mockito.when(networkModel.getElementImplementingProvider(Provider.VPCVirtualRouter.getName())).thenReturn(null);
+        Mockito.when(networkModel.getElementImplementingProvider(Provider.JuniperContrailVpcRouter.getName())).thenReturn(null);
+
+        ExtensionHelper extHelper = mock(ExtensionHelper.class);
+        Mockito.when(extHelper.listExtensionsByType(Extension.Type.NetworkOrchestrator))
+                .thenReturn(Collections.emptyList());
+        manager.extensionHelper = extHelper;
+
+        List<VpcProvider> result = manager.getVpcElements();
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.isEmpty());
     }
 
 }

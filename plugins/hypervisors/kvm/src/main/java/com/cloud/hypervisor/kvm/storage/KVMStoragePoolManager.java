@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
 import org.apache.cloudstack.storage.to.VolumeObjectTO;
@@ -37,6 +38,7 @@ import org.reflections.Reflections;
 
 import com.cloud.agent.api.to.DiskTO;
 import com.cloud.agent.api.to.VirtualMachineTO;
+import com.cloud.ha.HighAvailabilityManager;
 import com.cloud.hypervisor.kvm.resource.KVMHABase;
 import com.cloud.hypervisor.kvm.resource.KVMHABase.PoolType;
 import com.cloud.hypervisor.kvm.resource.KVMHAMonitor;
@@ -72,7 +74,9 @@ public class KVMStoragePoolManager {
 
     private void addStoragePool(String uuid, StoragePoolInformation pool) {
         synchronized (_storagePools) {
-            if (!_storagePools.containsKey(uuid)) {
+            // Insert on first registration; on subsequent calls (e.g. ModifyStoragePoolCommand)
+            // overwrite when new details are present so config changes are reflected
+            if (!_storagePools.containsKey(uuid) || MapUtils.isNotEmpty(pool.getDetails())) {
                 _storagePools.put(uuid, pool);
             }
         }
@@ -81,6 +85,10 @@ public class KVMStoragePoolManager {
     public KVMStoragePoolManager(StorageLayer storagelayer, KVMHAMonitor monitor) {
         this._haMonitor = monitor;
         this._storageMapper.put("libvirt", new LibvirtStorageAdaptor(storagelayer));
+        // Register CLVM/CLVM_NG adaptor explicitly for both types (one shared instance)
+        ClvmStorageAdaptor clvmAdaptor = new ClvmStorageAdaptor(storagelayer);
+        this._storageMapper.put(StoragePoolType.CLVM.toString(), clvmAdaptor);
+        this._storageMapper.put(StoragePoolType.CLVM_NG.toString(), clvmAdaptor);
         // add other storage adaptors manually here
 
         // add any adaptors that wish to register themselves via call to adaptor.getStoragePoolType()
@@ -92,8 +100,8 @@ public class KVMStoragePoolManager {
                 logger.debug("Skipping registration of abstract class / interface " + storageAdaptorClass.getName());
                 continue;
             }
-            if (storageAdaptorClass.isAssignableFrom(LibvirtStorageAdaptor.class)) {
-                logger.debug("Skipping re-registration of LibvirtStorageAdaptor");
+            if (storageAdaptorClass == LibvirtStorageAdaptor.class || storageAdaptorClass == ClvmStorageAdaptor.class) {
+                logger.debug("Skipping re-registration of explicitly registered adaptor: {}", storageAdaptorClass.getSimpleName());
                 continue;
             }
             try {
@@ -269,10 +277,10 @@ public class KVMStoragePoolManager {
     }
 
     public KVMStoragePool getStoragePool(StoragePoolType type, String uuid) {
-        return this.getStoragePool(type, uuid, false);
+        return this.getStoragePool(type, uuid, false, true);
     }
 
-    public KVMStoragePool getStoragePool(StoragePoolType type, String uuid, boolean refreshInfo) {
+    public synchronized KVMStoragePool getStoragePool(StoragePoolType type, String uuid, boolean refreshInfo, boolean addDetails) {
 
         StorageAdaptor adaptor = getStorageAdaptor(type);
         KVMStoragePool pool = null;
@@ -287,12 +295,33 @@ public class KVMStoragePoolManager {
             }
         }
 
-        if (pool instanceof LibvirtStoragePool) {
-            addPoolDetails(uuid, (LibvirtStoragePool) pool);
+        if (pool instanceof LibvirtStoragePool && addDetails) {
+            LibvirtStoragePool libvirtPool = (LibvirtStoragePool) pool;
+            addPoolDetails(uuid, libvirtPool);
             ((LibvirtStoragePool) pool).setType(type);
+            updatePoolTypeIfApplicable(libvirtPool, pool, type, uuid);
         }
 
         return pool;
+    }
+
+    private void updatePoolTypeIfApplicable(LibvirtStoragePool libvirtPool, KVMStoragePool pool,
+                                            StoragePoolType type, String uuid) {
+        StoragePoolType correctType = type;
+        if (correctType == null || correctType == StoragePoolType.CLVM) {
+            StoragePoolInformation info = _storagePools.get(uuid);
+            if (info != null && info.getPoolType() != null) {
+                correctType = info.getPoolType();
+            }
+        }
+
+        if (correctType != null && correctType != pool.getType() &&
+                (correctType == StoragePoolType.CLVM || correctType == StoragePoolType.CLVM_NG) &&
+                (pool.getType() == StoragePoolType.CLVM || pool.getType() == StoragePoolType.CLVM_NG)) {
+            logger.debug("Correcting pool type from {} to {} for pool {} based on caller/cached information",
+                    pool.getType(), correctType, uuid);
+            libvirtPool.setType(correctType);
+        }
     }
 
     /**
@@ -301,6 +330,10 @@ public class KVMStoragePoolManager {
      */
     private void addPoolDetails(String uuid, LibvirtStoragePool pool) {
         StoragePoolInformation storagePoolInformation = _storagePools.get(uuid);
+        if (storagePoolInformation == null) {
+            logger.warn("No cached StoragePoolInformation found for pool UUID {}, pool details will not be set.", uuid);
+            return;
+        }
         Map<String, String> details = storagePoolInformation.getDetails();
 
         if (MapUtils.isNotEmpty(details)) {
@@ -397,8 +430,14 @@ public class KVMStoragePoolManager {
 
         // LibvirtStorageAdaptor-specific statement
         if (pool.isPoolSupportHA() && primaryStorage) {
-            KVMHABase.HAStoragePool storagePool = new KVMHABase.HAStoragePool(pool, host, path, PoolType.PrimaryStorage);
-            _haMonitor.addStoragePool(storagePool);
+            String heartBeatPrerequisiteError = pool.getHeartBeatPrerequisiteError();
+            if (heartBeatPrerequisiteError == null) {
+                KVMHABase.HAStoragePool storagePool = new KVMHABase.HAStoragePool(pool, host, path, PoolType.PrimaryStorage);
+                _haMonitor.addStoragePool(storagePool);
+            } else {
+                // without the heartbeat the host would fail to write it at each cycle, and would be fenced
+                logger.error("The storage pool {} is not monitored for HA on this host, as its heartbeat can not be used: {}", pool.getUuid(), heartBeatPrerequisiteError);
+            }
         }
         StoragePoolInformation info = new StoragePoolInformation(name, host, port, path, userInfo, type, details, primaryStorage);
         addStoragePool(pool.getUuid(), info);
@@ -412,26 +451,52 @@ public class KVMStoragePoolManager {
         return adaptor.disconnectPhysicalDisk(volPath, pool);
     }
 
-    public boolean deleteStoragePool(StoragePoolType type, String uuid) {
+    public synchronized boolean deleteStoragePool(StoragePoolType type, String uuid) {
         StorageAdaptor adaptor = getStorageAdaptor(type);
-        if (type == StoragePoolType.NetworkFilesystem) {
-            _haMonitor.removeStoragePool(uuid);
-        }
-        boolean deleteStatus = adaptor.deleteStoragePool(uuid);;
-        synchronized (_storagePools) {
-            _storagePools.remove(uuid);
-        }
-        return deleteStatus;
+        return deleteStoragePoolWithoutHaMonitoring(type, uuid, () -> adaptor.deleteStoragePool(uuid));
     }
 
     public boolean deleteStoragePool(StoragePoolType type, String uuid, Map<String, String> details) {
         StorageAdaptor adaptor = getStorageAdaptor(type);
-        if (type == StoragePoolType.NetworkFilesystem) {
-            _haMonitor.removeStoragePool(uuid);
+        return deleteStoragePoolWithoutHaMonitoring(type, uuid, () -> {
+            if (type == StoragePoolType.NetworkFilesystem) {
+                return adaptor.deleteStoragePool(uuid);
+            }
+            // the other pool types, also RBD and SharedMountPoint, keep the delete which takes the details: it does not
+            // destroy the libvirt pool of a pool which is still used by the VMs, e.g. in maintenance of the pool
+            return adaptor.deleteStoragePool(uuid, details);
+        });
+    }
+
+    /**
+     * Deletes a storage pool after it is no longer monitored for HA. The monitor writes the heartbeats while it holds its lock,
+     * so none is on going when the pool is unregistered, and none is written while the pool is removed, which could fail
+     * and fence the host. If the pool is not deleted (the delete does not succeed or throws) it is still there, so it is
+     * monitored for HA again: the heartbeat of the host on it must go on, and it stays known to the manager as well.
+     * The types with HA support are libvirt storage pools: the delete of the libvirt adaptor returns true if libvirt has no such
+     * pool (it is already removed) and throws if the pool can not be removed, so for these types a delete which is not
+     * successful means that the pool is still there. For the other types a delete which does not succeed means that the adaptor has no such pool, so it is forgotten as before.
+     */
+    private boolean deleteStoragePoolWithoutHaMonitoring(StoragePoolType type, String uuid, BooleanSupplier delete) {
+        boolean haSupported = HighAvailabilityManager.LIBVIRT_STORAGE_POOL_TYPES_WITH_HA_SUPPORT.contains(type);
+        KVMHABase.HAStoragePool haPool = null;
+        if (haSupported) {
+            haPool = _haMonitor.getStoragePool(uuid);
+            _haMonitor.unregisterStoragePool(uuid);
         }
-        boolean deleteStatus = adaptor.deleteStoragePool(uuid, details);
-        synchronized (_storagePools) {
-            _storagePools.remove(uuid);
+        boolean deleteStatus = false;
+        try {
+            deleteStatus = delete.getAsBoolean();
+        } finally {
+            if (!deleteStatus && haPool != null) {
+                logger.warn("The storage pool {} was not deleted, so it is monitored for HA again.", uuid);
+                _haMonitor.addStoragePool(haPool);
+            }
+        }
+        if (deleteStatus || !haSupported) {
+            synchronized (_storagePools) {
+                _storagePools.remove(uuid);
+            }
         }
         return deleteStatus;
     }
@@ -453,6 +518,10 @@ public class KVMStoragePoolManager {
         } else if (destPool.getType() == StoragePoolType.CLVM) {
             return adaptor.createDiskFromTemplate(template, name,
                     PhysicalDiskFormat.RAW, provisioningType,
+                    size, destPool, timeout, passphrase);
+        } else if (destPool.getType() == StoragePoolType.CLVM_NG) {
+            return adaptor.createDiskFromTemplate(template, name,
+                    PhysicalDiskFormat.QCOW2, provisioningType,
                     size, destPool, timeout, passphrase);
         } else if (template.getFormat() == PhysicalDiskFormat.DIR) {
             return adaptor.createDiskFromTemplate(template, name,
@@ -493,6 +562,11 @@ public class KVMStoragePoolManager {
     public KVMPhysicalDisk createPhysicalDiskFromDirectDownloadTemplate(String templateFilePath, String destTemplatePath, KVMStoragePool destPool, Storage.ImageFormat format, int timeout) {
         StorageAdaptor adaptor = getStorageAdaptor(destPool.getType());
         return adaptor.createTemplateFromDirectDownloadFile(templateFilePath, destTemplatePath, destPool, format, timeout);
+    }
+
+    public void createTemplateOnClvmNg(String templatePath, String templateUuid, int timeout, KVMStoragePool pool) {
+        StorageAdaptor adaptor = getStorageAdaptor(pool.getType());
+        adaptor.createTemplate(templatePath, templateUuid, timeout, pool);
     }
 
     public Ternary<Boolean, Map<String, String>, String> prepareStorageClient(StoragePoolType type, String uuid, Map<String, String> details) {
