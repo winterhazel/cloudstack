@@ -3318,8 +3318,11 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         ApiKeyPair keyPair;
         if (accessingApiKey != null) {
             ApiKeyPair accessingKeyPair = apiKeyPairService.findByApiKey(accessingApiKey);
-            if (accessingKeyPair != null && userId == accessingKeyPair.getUserId()) {
-                keyPair = apiKeyPairService.findByApiKey(accessingApiKey);
+            if (accessingKeyPair == null) {
+                throw new CloudRuntimeException("Unable to find API key pair for the accessing API key.");
+            }
+            if (userId == accessingKeyPair.getUserId()) {
+                keyPair = accessingKeyPair;
             } else {
                 keyPair = _accountService.getLatestUserKeyPair(userId);
             }
