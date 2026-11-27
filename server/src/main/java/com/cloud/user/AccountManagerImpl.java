@@ -3732,8 +3732,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         }
         ApiKeyPair apiKeyPair = keyPairManager.findByApiKey(apiKey);
         if (apiKeyPair == null) {
-            logger.warn("Unable to find API key pair by API key.");
-            return new ArrayList<>();
+            throw new CloudRuntimeException("Unable to find API key pair by API key.");
         }
         Account account = _accountDao.findById(apiKeyPair.getAccountId());
         List<ApiKeyPairPermission> keyPairPermissions = keyPairManager.findAllPermissionsByKeyPairId(apiKeyPair.getId(), account.getRoleId());
