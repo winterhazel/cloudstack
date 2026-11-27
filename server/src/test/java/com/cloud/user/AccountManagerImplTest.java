@@ -52,6 +52,7 @@ import org.apache.cloudstack.acl.apikeypair.ApiKeyPairService;
 import org.apache.cloudstack.acl.dao.ApiKeyPairDao;
 import org.apache.cloudstack.acl.dao.ApiKeyPairPermissionsDao;
 import org.apache.cloudstack.api.ApiConstants;
+import org.apache.cloudstack.api.BaseAsyncCmd;
 import org.apache.cloudstack.api.command.admin.user.DeleteUserCmd;
 import org.apache.cloudstack.api.command.admin.user.GetUserKeysCmd;
 import org.apache.cloudstack.api.command.admin.user.ListUserKeysCmd;
@@ -63,6 +64,7 @@ import org.apache.cloudstack.auth.UserAuthenticator.ActionOnFailedAuthentication
 import org.apache.cloudstack.auth.UserTwoFactorAuthenticator;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.jobs.impl.AsyncJobVO;
 import org.apache.cloudstack.resourcedetail.UserDetailVO;
 import org.apache.cloudstack.webhook.WebhookHelper;
 import org.junit.Assert;
@@ -449,6 +451,18 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
         Mockito.doReturn(null).when(_getkeyscmd).getFullUrlParams();
 
         Assert.assertNull(accountManagerImpl.getAccessingApiKey(_getkeyscmd));
+    }
+
+    @Test
+    public void getAccessingApiKeyFailsOnMalformedAsyncJobPayload() {
+        BaseAsyncCmd asyncCmd = Mockito.mock(BaseAsyncCmd.class);
+        AsyncJobVO job = Mockito.mock(AsyncJobVO.class);
+        Mockito.doReturn(job).when(asyncCmd).getJob();
+        Mockito.doReturn("{not-json").when(job).getCmdInfo();
+
+        CloudRuntimeException ex = Assert.assertThrows(CloudRuntimeException.class,
+                () -> accountManagerImpl.getAccessingApiKey(asyncCmd));
+        Assert.assertEquals("Unable to parse the async job payload.", ex.getMessage());
     }
 
     @Test

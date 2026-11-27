@@ -3456,8 +3456,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
             try {
                 requestPayload = GsonHelper.getGson().fromJson(asyncJobPayload, new TypeToken<HashMap<String, String>>() {}.getType());
             } catch (JsonSyntaxException e) {
-                logger.trace("Unable to parse the async job payload: {}.", e.getMessage());
-                requestPayload = null;
+                throw new CloudRuntimeException("Unable to parse the async job payload.", e);
             }
         }
 
