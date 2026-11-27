@@ -432,6 +432,19 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
     }
 
     @Test
+    public void listKeysFailsWhenAccessingApiKeyPairIsNotFound() {
+        ApiKeyPair accessedKeyPair = Mockito.mock(ApiKeyPair.class);
+        Mockito.doReturn(1L).when(listUserKeysCmd).getKeyId();
+        Mockito.doReturn(accessedKeyPair).when(_accountService).getKeyPairById(1L);
+        Mockito.doReturn("invalidApiKey").when(accountManagerImpl).getAccessingApiKey(listUserKeysCmd);
+        Mockito.doReturn(null).when(apiKeyPairService).findByApiKey("invalidApiKey");
+
+        PermissionDeniedException ex = Assert.assertThrows(PermissionDeniedException.class,
+                () -> accountManagerImpl.listKeys(listUserKeysCmd));
+        Assert.assertEquals("Could not complete request.", ex.getMessage());
+    }
+
+    @Test
     public void getKeysFailsWhenAccessingApiKeyPairIsNotFound() {
         Mockito.doReturn(1L).when(_getkeyscmd).getId();
         Mockito.doReturn(userVoMock).when(accountManagerImpl).getActiveUser(1L);
