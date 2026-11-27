@@ -3444,7 +3444,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
             logger.warn("Unable to find API key pair for the accessing API key.");
             return Boolean.FALSE;
         }
-        return isApiKeySupersetOfPermission(new ArrayList<>(getAllKeypairPermissions(accessingKeyPair.getApiKey())), new ArrayList<>(getAllKeypairPermissions(accessedKeyPair.getApiKey())));
+        return isApiKeySupersetOfPermission(getAllKeypairPermissions(accessingKeyPair), getAllKeypairPermissions(accessedKeyPair));
     }
 
     @Override
@@ -3686,9 +3686,13 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
     private ApiKeyPairVO validateAndPersistKeyPairAndPermissions(Account account, ApiKeyPairVO newApiKeyPair,
                                                                  List<Map<String, Object>> rules, RegisterUserKeysCmd cmd) {
         String accessingApiKey = getAccessingApiKey(cmd);
+        ApiKeyPair accessingKeyPair = accessingApiKey == null ? null : keyPairManager.findByApiKey(accessingApiKey);
+        if (accessingApiKey != null && accessingKeyPair == null) {
+            throw new InvalidParameterValueException("Unable to find API key pair by API key.");
+        }
         final Role accountRole = roleService.findRole(account.getRoleId());
-        List<RolePermissionEntity> allPermissions = accessingApiKey == null ?
-                roleService.findAllRolePermissionsEntityBy(accountRole.getId(), true) : getAllKeypairPermissions(accessingApiKey);
+        List<RolePermissionEntity> allPermissions = accessingKeyPair == null ?
+                roleService.findAllRolePermissionsEntityBy(accountRole.getId(), true) : getAllKeypairPermissions(accessingKeyPair);
 
         List<RolePermissionEntity> permissions = new ArrayList<>();
         for (Map<String, Object> ruleDetail : rules) {
@@ -3698,7 +3702,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
             permissions.add(new ApiKeyPairPermissionVO(0, rule, rulePermission, ruleDescription));
         }
 
-        if (permissions.isEmpty() && accessingApiKey != null && doesKeyPairHaveExplicitPermissions(accessingApiKey)) {
+        if (permissions.isEmpty() && doesKeyPairHaveExplicitPermissions(accessingKeyPair)) {
             logger.debug("No rules were specified for the new API key pair. Since the accessing API key" +
                     " has explicit permissions, these permissions will be defined as the rule set for the new pair.");
             permissions = allPermissions.stream().map(permission -> (
@@ -3720,14 +3724,8 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         return savedApiKeyPair;
     }
 
-    private boolean doesKeyPairHaveExplicitPermissions(String apiKey) {
-        ApiKeyPair apiKeyPair = keyPairManager.findByApiKey(apiKey);
-        if (apiKeyPair == null) {
-            logger.info("Unable to find API key pair entity for the given API key.");
-            return false;
-        }
-
-        return !getAllExplicitKeyPairPermissions(apiKeyPair.getId()).isEmpty();
+    private boolean doesKeyPairHaveExplicitPermissions(ApiKeyPair apiKeyPair) {
+        return apiKeyPair != null && !getAllExplicitKeyPairPermissions(apiKeyPair.getId()).isEmpty();
     }
 
     @Override
@@ -3739,6 +3737,10 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         if (apiKeyPair == null) {
             throw new InvalidParameterValueException("Unable to find API key pair by API key.");
         }
+        return getAllKeypairPermissions(apiKeyPair);
+    }
+
+    private List<RolePermissionEntity> getAllKeypairPermissions(ApiKeyPair apiKeyPair) {
         Account account = _accountDao.findById(apiKeyPair.getAccountId());
         List<ApiKeyPairPermission> keyPairPermissions = keyPairManager.findAllPermissionsByKeyPairId(apiKeyPair.getId(), account.getRoleId());
         return new ArrayList<>(keyPairPermissions);
