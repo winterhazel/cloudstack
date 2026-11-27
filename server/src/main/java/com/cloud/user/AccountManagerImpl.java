@@ -3320,7 +3320,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         if (accessingApiKey != null) {
             ApiKeyPair accessingKeyPair = apiKeyPairService.findByApiKey(accessingApiKey);
             if (accessingKeyPair == null) {
-                throw new CloudRuntimeException("Unable to find API key pair for the accessing API key.");
+                throw new InvalidParameterValueException("Unable to find API key pair for the accessing API key.");
             }
             if (userId == accessingKeyPair.getUserId()) {
                 keyPair = accessingKeyPair;
@@ -3738,7 +3738,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         }
         ApiKeyPair apiKeyPair = keyPairManager.findByApiKey(apiKey);
         if (apiKeyPair == null) {
-            throw new CloudRuntimeException("Unable to find API key pair by API key.");
+            throw new InvalidParameterValueException("Unable to find API key pair by API key.");
         }
         Account account = _accountDao.findById(apiKeyPair.getAccountId());
         List<ApiKeyPairPermission> keyPairPermissions = keyPairManager.findAllPermissionsByKeyPairId(apiKeyPair.getId(), account.getRoleId());
