@@ -3316,9 +3316,10 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         verifyCallerPrivilegeForUserOrAccountOperations(user);
 
         String accessingApiKey = getAccessingApiKey(cmd);
+        ApiKeyPair accessingKeyPair = null;
         ApiKeyPair keyPair;
         if (accessingApiKey != null) {
-            ApiKeyPair accessingKeyPair = apiKeyPairService.findByApiKey(accessingApiKey);
+            accessingKeyPair = apiKeyPairService.findByApiKey(accessingApiKey);
             if (accessingKeyPair == null) {
                 throw new InvalidParameterValueException("Unable to find API key pair for the accessing API key.");
             }
@@ -3332,7 +3333,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         }
 
         Map<String, String> keys = new HashMap<>();
-        boolean isAllowed = keyPair != null && isAccessingKeypairSuperset(keyPair, cmd);
+        boolean isAllowed = keyPair != null && (accessingKeyPair == null || isKeyPairSupersetOf(accessingKeyPair, keyPair));
         keys.put("apikey", isAllowed ? keyPair.getApiKey() : null);
         keys.put("secretkey", isAllowed ? keyPair.getSecretKey() : null);
 
@@ -3444,6 +3445,10 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
             logger.warn("Unable to find API key pair for the accessing API key.");
             return Boolean.FALSE;
         }
+        return isKeyPairSupersetOf(accessingKeyPair, accessedKeyPair);
+    }
+
+    private Boolean isKeyPairSupersetOf(ApiKeyPair accessingKeyPair, ApiKeyPair accessedKeyPair) {
         return isApiKeySupersetOfPermission(getAllKeypairPermissions(accessingKeyPair), getAllKeypairPermissions(accessedKeyPair));
     }
 
