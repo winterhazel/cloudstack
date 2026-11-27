@@ -3700,8 +3700,8 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
         }
 
         if (permissions.isEmpty() && accessingApiKey != null && doesKeyPairHaveExplicitPermissions(accessingApiKey)) {
-            logger.debug("No rules were specified for the new API key pair. Since the accessing API key [{}]" +
-                    " has explicit permissions, these permissions will be defined as the rule set for the new pair.", accessingApiKey);
+            logger.debug("No rules were specified for the new API key pair. Since the accessing API key" +
+                    " has explicit permissions, these permissions will be defined as the rule set for the new pair.");
             permissions = allPermissions.stream().map(permission -> (
                         new ApiKeyPairPermissionVO(0, permission.getRule().getRuleString(), permission.getPermission(), permission.getDescription())
                     )).collect(Collectors.toList());
@@ -3724,7 +3724,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
     private boolean doesKeyPairHaveExplicitPermissions(String apiKey) {
         ApiKeyPair apiKeyPair = keyPairManager.findByApiKey(apiKey);
         if (apiKeyPair == null) {
-            logger.info("Unable to find API key pair entity with the API key [{}].", apiKey);
+            logger.info("Unable to find API key pair entity for the given API key.");
             return false;
         }
 
