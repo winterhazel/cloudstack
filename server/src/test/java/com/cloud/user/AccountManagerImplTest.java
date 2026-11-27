@@ -460,6 +460,35 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
     }
 
     @Test
+    public void getKeysReturnsAccessingKeyPairAndResolvesItOnce() {
+        long userId = userVoIdMock;
+        ApiKeyPair accessingKeyPair = Mockito.mock(ApiKeyPair.class);
+
+        Mockito.doReturn(userId).when(_getkeyscmd).getId();
+        Mockito.doReturn(userVoMock).when(accountManagerImpl).getActiveUser(userId);
+        Mockito.doReturn(accountMock).when(accountManagerImpl).getAccount(accountMockId);
+        Mockito.doNothing().when(accountManagerImpl).checkAccess(Mockito.any(User.class), Mockito.any(Account.class));
+        Mockito.doNothing().when(accountManagerImpl).verifyCallerPrivilegeForUserOrAccountOperations(userVoMock);
+        Mockito.doReturn(Boolean.TRUE).when(userVoMock).getApiKeyAccess();
+
+        Mockito.doReturn("validApiKey").when(accountManagerImpl).getAccessingApiKey(_getkeyscmd);
+        Mockito.doReturn(accessingKeyPair).when(apiKeyPairService).findByApiKey("validApiKey");
+        Mockito.doReturn(userId).when(accessingKeyPair).getUserId();
+        Mockito.doReturn("theApiKey").when(accessingKeyPair).getApiKey();
+        Mockito.doReturn("theSecretKey").when(accessingKeyPair).getSecretKey();
+
+        Mockito.when(_accountDao.findById(Mockito.anyLong())).thenReturn(accountVoMock);
+        Mockito.when(roleService.roleHasPermission(Mockito.anyMap(), Mockito.anyList())).thenReturn(true);
+
+        Pair<Boolean, Map<String, String>> result = accountManagerImpl.getKeys(_getkeyscmd);
+
+        Assert.assertEquals(Boolean.TRUE, result.first());
+        Assert.assertEquals("theApiKey", result.second().get("apikey"));
+        Assert.assertEquals("theSecretKey", result.second().get("secretkey"));
+        Mockito.verify(apiKeyPairService, Mockito.times(1)).findByApiKey("validApiKey");
+    }
+
+    @Test
     public void getAccessingApiKeyReturnsNullWhenFullUrlParamsIsNull() {
         Mockito.doReturn(null).when(_getkeyscmd).getFullUrlParams();
 
