@@ -37,6 +37,7 @@ import org.apache.cloudstack.acl.ControlledEntity;
 import org.apache.cloudstack.acl.Role;
 import org.apache.cloudstack.acl.RoleService;
 import org.apache.cloudstack.acl.RoleType;
+import org.apache.cloudstack.acl.ApiKeyPairManagerImpl;
 import org.apache.cloudstack.acl.ApiKeyPairPermissionVO;
 import org.apache.cloudstack.acl.ApiKeyPairVO;
 import org.apache.cloudstack.acl.RolePermission;
@@ -126,6 +127,9 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
 
     @Mock
     private ApiKeyPairService apiKeyPairService;
+
+    @Mock
+    private ApiKeyPairManagerImpl keyPairManager;
 
     @Mock
     private ApiKeyPairVO apiKeyPairVOMock;
@@ -423,6 +427,52 @@ public class AccountManagerImplTest extends AccountManagentImplTestBase {
         Mockito.lenient().when(accountMock.getAccountId()).thenReturn(2L);
 
         accountManagerImpl.getKeys(_getkeyscmd);
+    }
+
+    @Test(expected = CloudRuntimeException.class)
+    public void getKeysFailsWhenAccessingApiKeyPairIsNotFound() {
+        Mockito.doReturn(1L).when(_getkeyscmd).getId();
+        Mockito.doReturn(userVoMock).when(accountManagerImpl).getActiveUser(1L);
+        Mockito.doReturn(accountMock).when(accountManagerImpl).getAccount(accountMockId);
+        Mockito.doNothing().when(accountManagerImpl).checkAccess(Mockito.any(User.class), Mockito.any(Account.class));
+        Mockito.doNothing().when(accountManagerImpl).verifyCallerPrivilegeForUserOrAccountOperations(userVoMock);
+        Mockito.doReturn("invalidApiKey").when(accountManagerImpl).getAccessingApiKey(_getkeyscmd);
+        Mockito.doReturn(null).when(apiKeyPairService).findByApiKey("invalidApiKey");
+
+        accountManagerImpl.getKeys(_getkeyscmd);
+    }
+
+    @Test
+    public void getAccessingApiKeyReturnsNullWhenFullUrlParamsIsNull() {
+        Mockito.doReturn(null).when(_getkeyscmd).getFullUrlParams();
+
+        Assert.assertNull(accountManagerImpl.getAccessingApiKey(_getkeyscmd));
+    }
+
+    @Test
+    public void getAccessingApiKeyReturnsNullWhenApiKeyIsMissing() {
+        Map<String, String> requestPayload = new HashMap<>();
+        requestPayload.put(ApiConstants.SIGNATURE, "signature");
+        Mockito.doReturn(requestPayload).when(_getkeyscmd).getFullUrlParams();
+
+        Assert.assertNull(accountManagerImpl.getAccessingApiKey(_getkeyscmd));
+    }
+
+    @Test
+    public void getAccessingApiKeyReturnsApiKeyWhenAuthenticatedWithApiKey() {
+        Map<String, String> requestPayload = new HashMap<>();
+        requestPayload.put(ApiConstants.SIGNATURE, "signature");
+        requestPayload.put(ApiConstants.API_KEY, "apiKey");
+        Mockito.doReturn(requestPayload).when(_getkeyscmd).getFullUrlParams();
+
+        Assert.assertEquals("apiKey", accountManagerImpl.getAccessingApiKey(_getkeyscmd));
+    }
+
+    @Test(expected = CloudRuntimeException.class)
+    public void getAllKeypairPermissionsFailsWhenApiKeyPairIsNotFound() {
+        Mockito.doReturn(null).when(keyPairManager).findByApiKey("invalidApiKey");
+
+        accountManagerImpl.getAllKeypairPermissions("invalidApiKey");
     }
 
     @Test
