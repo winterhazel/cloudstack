@@ -52,6 +52,7 @@ import com.cloud.user.dao.AccountDao;
 import com.cloud.user.dao.SSHKeyPairDao;
 import com.cloud.user.dao.UserAccountDao;
 import com.cloud.user.dao.UserDao;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.cloud.utils.db.TransactionCallbackWithException;
 
@@ -3448,26 +3449,28 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
 
     @Override
     public String getAccessingApiKey(BaseCmd cmd) {
-        try {
-            Map<String, String> requestPayload = cmd.getFullUrlParams();
+        Map<String, String> requestPayload = cmd.getFullUrlParams();
 
-            if (cmd instanceof BaseAsyncCmd && ((BaseAsyncCmd) cmd).getJob() instanceof AsyncJobVO) {
-                String asyncJobPayload = ((AsyncJobVO) ((BaseAsyncCmd) cmd).getJob()).getCmdInfo();
+        if (cmd instanceof BaseAsyncCmd && ((BaseAsyncCmd) cmd).getJob() instanceof AsyncJobVO) {
+            String asyncJobPayload = ((AsyncJobVO) ((BaseAsyncCmd) cmd).getJob()).getCmdInfo();
+            try {
                 requestPayload = GsonHelper.getGson().fromJson(asyncJobPayload, new TypeToken<HashMap<String, String>>() {}.getType());
+            } catch (JsonSyntaxException e) {
+                logger.trace("Unable to parse the async job payload: {}.", e.getMessage());
+                requestPayload = null;
             }
+        }
 
+        if (requestPayload != null) {
             boolean accessedByApiKey = requestPayload.keySet().stream().anyMatch(ApiConstants.SIGNATURE::equalsIgnoreCase);
             if (accessedByApiKey) {
                 String apiKey = requestPayload.entrySet().stream()
                         .filter(e -> ApiConstants.API_KEY.equalsIgnoreCase(e.getKey()))
                         .map(Map.Entry::getValue).findFirst().orElse(null);
                 if (apiKey != null) {
-                    logger.info("Request's API key is [{}].", apiKey);
                     return apiKey;
                 }
             }
-        } catch (Exception e) {
-            logger.trace("Unable to identify request API key due to: {}.", e.getMessage());
         }
 
         logger.info("Request's signature or API key were not identified; assuming it has been authenticated via session.");
